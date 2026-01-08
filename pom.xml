@@ -15,6 +15,7 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>grpc-proto</module>
         <module>maplestory</module>
         <module>login</module>
     </modules>
@@ -28,14 +29,43 @@
 
         <graalvm-js.version>23.0.4</graalvm-js.version>
         <graalvm-js-scriptengine.version>24.0.1</graalvm-js-scriptengine.version>
-        <netty.version>4.2.2.Final</netty.version>
-        <yamlbeans.version>1.17</yamlbeans.version>
+        <grpc.version>1.77.0</grpc.version>
         <jcip-annotations.version>1.0</jcip-annotations.version>
         <jdbi-version>3.49.5</jdbi-version>
+        <netty.version>4.2.2.Final</netty.version>
+        <protobuf-java.version>4.33.1</protobuf-java.version>
+        <spring-grpc.version>1.0.0</spring-grpc.version>
+        <yamlbeans.version>1.17</yamlbeans.version>
+
+        <protobuf-maven-plugin.version>4.0.3</protobuf-maven-plugin.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>dev.jaczerob.delfino.grpc</groupId>
+                <artifactId>grpc-proto</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-protobuf</artifactId>
+                <version>${grpc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java</artifactId>
+                <version>${protobuf-java.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.grpc</groupId>
+                <artifactId>spring-grpc-dependencies</artifactId>
+                <version>${spring-grpc.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
             <dependency>
                 <groupId>com.esotericsoftware.yamlbeans</groupId>
                 <artifactId>yamlbeans</artifactId>
@@ -86,4 +116,35 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>io.github.ascopes</groupId>
+                    <artifactId>protobuf-maven-plugin</artifactId>
+                    <version>${protobuf-maven-plugin.version}</version>
+                    <configuration>
+                        <protoc>${protobuf-java.version}</protoc>
+                        <binaryMavenPlugins>
+                            <binaryMavenPlugin>
+                                <groupId>io.grpc</groupId>
+                                <artifactId>protoc-gen-grpc-java</artifactId>
+                                <version>${grpc.version}</version>
+                                <options>@generated=omit</options>
+                            </binaryMavenPlugin>
+                        </binaryMavenPlugins>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>generate</id>
+                            <goals>
+                                <goal>generate</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 </project>

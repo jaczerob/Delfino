@@ -24,7 +24,7 @@ package dev.jaczerob.delfino.maplestory.net.server.handlers.login;
 import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.client.DefaultDates;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
-import dev.jaczerob.delfino.maplestory.net.PacketHandler;
+import dev.jaczerob.delfino.maplestory.net.AbstractPacketHandler;
 import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.session.Hwid;
@@ -46,7 +46,8 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.Calendar;
 
-public final class LoginPasswordHandler implements PacketHandler {
+public final class LoginPasswordHandler extends AbstractPacketHandler {
+
 
     @Override
     public boolean validateState(Client c) {

@@ -1,6 +1,6 @@
 services:
   maplestory:
-    build: .
+    build: Dockerfile-maplestory
     depends_on:
       - db
     ports:
@@ -12,6 +12,21 @@ services:
       - ./wz:/opt/server/wz
     environment:
       DB_HOST: "db"
+
+  login:
+    build: Dockerfile-login
+    depends_on:
+      - db
+    ports:
+      - "8484:8484"
+      - "7575-7577:7575-7577"
+    volumes:
+      - ./config.yaml:/opt/server/config.yaml
+      - ./scripts:/opt/server/scripts
+      - ./wz:/opt/server/wz
+    environment:
+      DB_HOST: "db"
+
   db:
     image: mysql:8.4.0
     environment:

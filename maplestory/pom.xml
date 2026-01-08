@@ -14,8 +14,21 @@
 
     <dependencies>
         <dependency>
+            <groupId>dev.jaczerob.delfino.grpc</groupId>
+            <artifactId>grpc-proto</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-services</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.grpc</groupId>
+            <artifactId>spring-grpc-spring-boot-starter</artifactId>
         </dependency>
 
         <dependency>

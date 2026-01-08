@@ -1,0 +1,27 @@
+import "google/protobuf/empty.proto";
+
+option java_multiple_files = true;
+option java_package = "dev.jaczerob.delfino.grpc.proto";
+option java_outer_classname = "WorldProto";
+
+message Channel {
+  required int32 id = 1;
+  required int32 capacity = 2;
+}
+
+message World {
+  required int32 id = 1;
+  required string name = 2;
+  required int32 flag = 3;
+  required string eventMessage = 4;
+  repeated Channel channels = 5;
+  required int32 amountPlayers = 6;
+}
+
+message WorldsResponse {
+  repeated World worlds = 1;
+}
+
+service WorldService {
+  rpc GetWorlds (google.protobuf.Empty) returns (WorldsResponse);
+}

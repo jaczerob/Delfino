@@ -1,0 +1,58 @@
+import "google/protobuf/empty.proto";
+
+option java_multiple_files = true;
+option java_package = "dev.jaczerob.delfino.grpc.proto.character";
+option java_outer_classname = "CharacterProto";
+
+message Equipment {
+  required int32 position = 1;
+  required int32 id = 2;
+}
+
+message Character {
+  required int32 id = 1;
+  required string name = 2;
+  required int32 gender = 3;
+  required int32 skinColor = 4;
+  required int32 face = 5;
+  required int32 hair = 6;
+  repeated int32 pets = 7;
+  required int32 level = 8;
+  required int32 job = 9;
+  required int32 str = 10;
+  required int32 dex = 11;
+  required int32 int = 12;
+  required int32 luk = 13;
+  required int32 hp = 14;
+  required int32 maxHp = 15;
+  required int32 mp = 16;
+  required int32 maxMp = 17;
+  required int32 remainingAp = 18;
+  required int32 remainingSp = 19;
+  required int32 exp = 20;
+  required int32 fame = 21;
+  required int32 gachaExp = 22;
+  required int32 mapId = 23;
+  required int32 spawnPoint = 24;
+  repeated Equipment maskedEquipment = 25;
+  repeated Equipment equipment = 26;
+  repeated Equipment petEquipment = 27;
+  required Equipment weapon = 28;
+  required int32 rank = 29;
+  required int32 rankMove = 30;
+  required int32 jobRank = 31;
+  required int32 jobRankMove = 32;
+  required int32 gmLevel = 33;
+}
+
+message CharactersRequest {
+  required int32 accountId = 1;
+}
+
+message CharactersResponse {
+  repeated Character characters = 1;
+}
+
+service CharacterService {
+  rpc GetCharacters (CharactersRequest) returns (CharactersResponse);
+}

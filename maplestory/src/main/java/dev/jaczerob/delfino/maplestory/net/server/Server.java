@@ -906,9 +906,9 @@ public class Server {
             }
         }
 
-        loginServer = initLoginServer(8484);
-
-        log.info("Listening on port 8484");
+//        loginServer = initLoginServer(8484);
+//
+//        log.info("Listening on port 8484");
 
         online = true;
         Duration initDuration = Duration.between(beforeInit, Instant.now());
