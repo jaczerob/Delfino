@@ -37,7 +37,7 @@ message Character {
   repeated Equipment maskedEquipment = 25;
   repeated Equipment equipment = 26;
   repeated Equipment petEquipment = 27;
-  required Equipment weapon = 28;
+  required int32 weapon = 28;
   required int32 rank = 29;
   required int32 rankMove = 30;
   required int32 jobRank = 31;

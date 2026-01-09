@@ -41,7 +41,11 @@ import dev.jaczerob.delfino.maplestory.net.server.coordinator.session.SessionCoo
 import dev.jaczerob.delfino.maplestory.net.server.guild.Guild;
 import dev.jaczerob.delfino.maplestory.net.server.guild.GuildCharacter;
 import dev.jaczerob.delfino.maplestory.net.server.guild.GuildPackets;
-import dev.jaczerob.delfino.maplestory.net.server.world.*;
+import dev.jaczerob.delfino.maplestory.net.server.world.MessengerCharacter;
+import dev.jaczerob.delfino.maplestory.net.server.world.Party;
+import dev.jaczerob.delfino.maplestory.net.server.world.PartyCharacter;
+import dev.jaczerob.delfino.maplestory.net.server.world.PartyOperation;
+import dev.jaczerob.delfino.maplestory.net.server.world.World;
 import dev.jaczerob.delfino.maplestory.scripting.AbstractPlayerInteraction;
 import dev.jaczerob.delfino.maplestory.scripting.event.EventInstanceManager;
 import dev.jaczerob.delfino.maplestory.scripting.event.EventManager;
@@ -73,9 +77,23 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -144,11 +162,6 @@ public class Client extends ChannelInboundHandlerAdapter {
         this.packetProcessor = packetProcessor;
         this.world = world;
         this.channel = channel;
-    }
-
-    public static Client createLoginClient(long sessionId, String remoteAddress, PacketProcessor packetProcessor,
-                                           int world, int channel) {
-        return new Client(Type.LOGIN, sessionId, remoteAddress, packetProcessor, world, channel);
     }
 
     public static Client createChannelClient(long sessionId, String remoteAddress, PacketProcessor packetProcessor,

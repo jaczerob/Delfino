@@ -20,11 +20,29 @@
  */
 package dev.jaczerob.delfino.maplestory.tools;
 
-import dev.jaczerob.delfino.maplestory.client.*;
+import dev.jaczerob.delfino.maplestory.client.BuddylistEntry;
+import dev.jaczerob.delfino.maplestory.client.BuffStat;
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Character.SkillEntry;
-import dev.jaczerob.delfino.maplestory.client.inventory.*;
+import dev.jaczerob.delfino.maplestory.client.Client;
+import dev.jaczerob.delfino.maplestory.client.Disease;
+import dev.jaczerob.delfino.maplestory.client.FamilyEntitlement;
+import dev.jaczerob.delfino.maplestory.client.FamilyEntry;
+import dev.jaczerob.delfino.maplestory.client.MonsterBook;
+import dev.jaczerob.delfino.maplestory.client.Mount;
+import dev.jaczerob.delfino.maplestory.client.QuestStatus;
+import dev.jaczerob.delfino.maplestory.client.Ring;
+import dev.jaczerob.delfino.maplestory.client.Skill;
+import dev.jaczerob.delfino.maplestory.client.SkillMacro;
+import dev.jaczerob.delfino.maplestory.client.Stat;
+import dev.jaczerob.delfino.maplestory.client.inventory.Equip;
 import dev.jaczerob.delfino.maplestory.client.inventory.Equip.ScrollResult;
+import dev.jaczerob.delfino.maplestory.client.inventory.Inventory;
+import dev.jaczerob.delfino.maplestory.client.inventory.InventoryType;
+import dev.jaczerob.delfino.maplestory.client.inventory.Item;
+import dev.jaczerob.delfino.maplestory.client.inventory.ItemFactory;
+import dev.jaczerob.delfino.maplestory.client.inventory.ModifyInventory;
+import dev.jaczerob.delfino.maplestory.client.inventory.Pet;
 import dev.jaczerob.delfino.maplestory.client.keybind.KeyBinding;
 import dev.jaczerob.delfino.maplestory.client.keybind.QuickslotBinding;
 import dev.jaczerob.delfino.maplestory.client.newyear.NewYearCardRecord;
@@ -61,22 +79,50 @@ import dev.jaczerob.delfino.maplestory.net.server.world.Party;
 import dev.jaczerob.delfino.maplestory.net.server.world.PartyCharacter;
 import dev.jaczerob.delfino.maplestory.net.server.world.PartyOperation;
 import dev.jaczerob.delfino.maplestory.net.server.world.World;
-import dev.jaczerob.delfino.maplestory.server.*;
+import dev.jaczerob.delfino.maplestory.server.CashShop;
 import dev.jaczerob.delfino.maplestory.server.CashShop.CashItem;
 import dev.jaczerob.delfino.maplestory.server.CashShop.CashItemFactory;
 import dev.jaczerob.delfino.maplestory.server.CashShop.SpecialCashItem;
+import dev.jaczerob.delfino.maplestory.server.DueyPackage;
+import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
+import dev.jaczerob.delfino.maplestory.server.MTSItemInfo;
+import dev.jaczerob.delfino.maplestory.server.ShopItem;
+import dev.jaczerob.delfino.maplestory.server.Trade;
 import dev.jaczerob.delfino.maplestory.server.events.gm.Snowball;
-import dev.jaczerob.delfino.maplestory.server.life.*;
-import dev.jaczerob.delfino.maplestory.server.maps.*;
+import dev.jaczerob.delfino.maplestory.server.life.MobSkill;
+import dev.jaczerob.delfino.maplestory.server.life.MobSkillId;
+import dev.jaczerob.delfino.maplestory.server.life.Monster;
+import dev.jaczerob.delfino.maplestory.server.life.NPC;
+import dev.jaczerob.delfino.maplestory.server.life.PlayerNPC;
+import dev.jaczerob.delfino.maplestory.server.maps.AbstractMapObject;
+import dev.jaczerob.delfino.maplestory.server.maps.Door;
+import dev.jaczerob.delfino.maplestory.server.maps.DoorObject;
+import dev.jaczerob.delfino.maplestory.server.maps.Dragon;
+import dev.jaczerob.delfino.maplestory.server.maps.HiredMerchant;
+import dev.jaczerob.delfino.maplestory.server.maps.MapItem;
+import dev.jaczerob.delfino.maplestory.server.maps.MapleMap;
+import dev.jaczerob.delfino.maplestory.server.maps.MiniGame;
 import dev.jaczerob.delfino.maplestory.server.maps.MiniGame.MiniGameResult;
+import dev.jaczerob.delfino.maplestory.server.maps.Mist;
+import dev.jaczerob.delfino.maplestory.server.maps.PlayerShop;
+import dev.jaczerob.delfino.maplestory.server.maps.PlayerShopItem;
+import dev.jaczerob.delfino.maplestory.server.maps.Reactor;
+import dev.jaczerob.delfino.maplestory.server.maps.Summon;
 import dev.jaczerob.delfino.maplestory.server.movement.LifeMovementFragment;
 
 import java.awt.*;
 import java.net.InetAddress;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 /**
@@ -867,6 +913,7 @@ public class PacketCreator {
 
         p.writeByte(YamlConfig.config.server.ENABLE_PIC && !c.canBypassPic() ? (c.getPic() == null || c.getPic().equals("") ? 0 : 1) : 2);
         p.writeInt(YamlConfig.config.server.COLLECTIVE_CHARSLOT ? chars.size() + c.getAvailableCharacterSlots() : c.getCharacterSlots());
+        System.out.println(Arrays.toString(p.getBytes()));
         return p;
     }
 

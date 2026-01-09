@@ -3,6 +3,12 @@ package dev.jaczerob.delfino.maplestory.net.netty;
 import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
 import dev.jaczerob.delfino.maplestory.constants.net.ServerConstants;
+import dev.jaczerob.delfino.maplestory.net.encryption.ClientCyphers;
+import dev.jaczerob.delfino.maplestory.net.encryption.InitializationVector;
+import dev.jaczerob.delfino.maplestory.net.encryption.PacketCodec;
+import dev.jaczerob.delfino.maplestory.net.packet.logging.InPacketLogger;
+import dev.jaczerob.delfino.maplestory.net.packet.logging.OutPacketLogger;
+import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
@@ -10,14 +16,8 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
-import dev.jaczerob.delfino.maplestory.net.encryption.ClientCyphers;
-import dev.jaczerob.delfino.maplestory.net.encryption.InitializationVector;
-import dev.jaczerob.delfino.maplestory.net.encryption.PacketCodec;
-import dev.jaczerob.delfino.maplestory.net.packet.logging.InPacketLogger;
-import dev.jaczerob.delfino.maplestory.net.packet.logging.OutPacketLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.AtomicLong;
@@ -58,10 +58,7 @@ public abstract class ServerChannelInitializer extends ChannelInitializer<Socket
         pipeline.addLast("IdleStateHandler", new IdleStateHandler(0, 0, IDLE_TIME_SECONDS));
         pipeline.addLast("PacketCodec", new PacketCodec(ClientCyphers.of(sendIv, recvIv)));
         pipeline.addLast("Client", client);
-
-        if (LOG_PACKETS) {
-            pipeline.addBefore("Client", "SendPacketLogger", sendPacketLogger);
-            pipeline.addBefore("Client", "ReceivePacketLogger", receivePacketLogger);
-        }
+        pipeline.addBefore("Client", "SendPacketLogger", sendPacketLogger);
+        pipeline.addBefore("Client", "ReceivePacketLogger", receivePacketLogger);
     }
 }

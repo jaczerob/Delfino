@@ -31,6 +31,7 @@ import dev.jaczerob.delfino.login.net.packet.Packet;
 import dev.jaczerob.delfino.login.net.server.Server;
 
 import java.net.InetAddress;
+import java.util.Arrays;
 import java.util.List;
 import java.util.TimeZone;
 
@@ -97,19 +98,19 @@ public class PacketCreator {
 
     private static void addCharEquips(final OutPacket p, final Character chr) {
         for (final var equip : chr.getEquipmentList()) {
-            p.writeByte(equip.getPosition());
+            p.writeByte(Math.abs(equip.getPosition()));
             p.writeInt(equip.getId());
         }
 
         p.writeByte(0xFF);
 
         for (final var equip : chr.getMaskedEquipmentList()) {
-            p.writeByte(equip.getPosition());
+            p.writeByte(Math.abs(equip.getPosition()));
             p.writeInt(equip.getId());
         }
 
         p.writeByte(0xFF);
-        p.writeInt(chr.getId());
+        p.writeInt(0);
 
         for (final var pet : chr.getPetEquipmentList()) {
             p.writeInt(pet.getId());
@@ -210,8 +211,8 @@ public class PacketCreator {
 
         p.writeInt(1); // 1: Remove the "Select the world you want to play in"
 
-        p.writeByte(YamlConfig.config.server.ENABLE_PIN ? 0 : 1); // 0 = Pin-System Enabled, 1 = Disabled
-        p.writeByte(YamlConfig.config.server.ENABLE_PIC ? (c.getPic() == null || c.getPic().equals("") ? 0 : 1) : 2); // 0 = Register PIC, 1 = Ask for PIC, 2 = Disabled
+        p.writeByte(1); // 0 = Pin-System Enabled, 1 = Disabled
+        p.writeByte(2); // 0 = Register PIC, 1 = Ask for PIC, 2 = Disabled
 
         return p;
     }
@@ -300,16 +301,21 @@ public class PacketCreator {
 
     public static Packet getCharList(Client c, int status) {
         // TODO: Load characters from RPC
-        final OutPacket p = OutPacket.create(SendOpcode.CHARLIST);
+        final var p = OutPacket.create(SendOpcode.CHARLIST);
         p.writeByte(status);
-        List<Character> chars = Server.getInstance().loadCharacters(c.getAccID());
+
+        final var chars = Server.getInstance().loadCharacters(c.getAccID());
         p.writeByte((byte) chars.size());
-        for (Character chr : chars) {
+
+        for (final var chr : chars) {
             addCharEntry(p, chr, false);
         }
 
-        p.writeByte(YamlConfig.config.server.ENABLE_PIC ? (c.getPic() == null || c.getPic().equals("") ? 0 : 1) : 2);
+
+//        p.writeByte(YamlConfig.config.server.ENABLE_PIC ? (c.getPic() == null || c.getPic().equals("") ? 0 : 1) : 2);
+        p.writeByte(1);
         p.writeInt(YamlConfig.config.server.COLLECTIVE_CHARSLOT ? chars.size() + c.getAvailableCharacterSlots() : c.getCharacterSlots());
+        System.out.println(Arrays.toString(p.getBytes()));
         return p;
     }
 

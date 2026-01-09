@@ -39,7 +39,6 @@ import dev.jaczerob.delfino.maplestory.constants.net.ServerConstants;
 import dev.jaczerob.delfino.maplestory.database.note.NoteDao;
 import dev.jaczerob.delfino.maplestory.net.ChannelDependencies;
 import dev.jaczerob.delfino.maplestory.net.PacketProcessor;
-import dev.jaczerob.delfino.maplestory.net.netty.LoginServer;
 import dev.jaczerob.delfino.maplestory.net.packet.Packet;
 import dev.jaczerob.delfino.maplestory.net.server.channel.Channel;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.session.IpAddresses;
@@ -47,7 +46,17 @@ import dev.jaczerob.delfino.maplestory.net.server.coordinator.session.SessionCoo
 import dev.jaczerob.delfino.maplestory.net.server.guild.Alliance;
 import dev.jaczerob.delfino.maplestory.net.server.guild.Guild;
 import dev.jaczerob.delfino.maplestory.net.server.guild.GuildCharacter;
-import dev.jaczerob.delfino.maplestory.net.server.task.*;
+import dev.jaczerob.delfino.maplestory.net.server.task.BossLogTask;
+import dev.jaczerob.delfino.maplestory.net.server.task.CharacterDiseaseTask;
+import dev.jaczerob.delfino.maplestory.net.server.task.CouponTask;
+import dev.jaczerob.delfino.maplestory.net.server.task.DueyFredrickTask;
+import dev.jaczerob.delfino.maplestory.net.server.task.EventRecallCoordinatorTask;
+import dev.jaczerob.delfino.maplestory.net.server.task.InvitationTask;
+import dev.jaczerob.delfino.maplestory.net.server.task.LoginCoordinatorTask;
+import dev.jaczerob.delfino.maplestory.net.server.task.LoginStorageTask;
+import dev.jaczerob.delfino.maplestory.net.server.task.RankingCommandTask;
+import dev.jaczerob.delfino.maplestory.net.server.task.RankingLoginTask;
+import dev.jaczerob.delfino.maplestory.net.server.task.RespawnTask;
 import dev.jaczerob.delfino.maplestory.net.server.world.World;
 import dev.jaczerob.delfino.maplestory.server.CashShop.CashItemFactory;
 import dev.jaczerob.delfino.maplestory.server.SkillbookInformationProvider;
@@ -70,8 +79,20 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TimeZone;
+import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -81,7 +102,10 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static java.util.concurrent.TimeUnit.*;
+import static java.util.concurrent.TimeUnit.DAYS;
+import static java.util.concurrent.TimeUnit.HOURS;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 @Component
 public class Server {
@@ -97,7 +121,6 @@ public class Server {
     private static final List<Integer> activeCoupons = new LinkedList<>();
     private static ChannelDependencies channelDependencies;
 
-    private LoginServer loginServer;
     private final List<Map<Integer, String>> channels = new LinkedList<>();
     private final List<World> worlds = new ArrayList<>();
     private final Properties subnetInfo = new Properties();
@@ -906,10 +929,6 @@ public class Server {
             }
         }
 
-//        loginServer = initLoginServer(8484);
-//
-//        log.info("Listening on port 8484");
-
         online = true;
         Duration initDuration = Duration.between(beforeInit, Instant.now());
         log.info("Cosmic is now online after {} ms.", initDuration.toMillis());
@@ -930,12 +949,6 @@ public class Server {
         PacketProcessor.registerGameHandlerDependencies(channelDependencies);
 
         return channelDependencies;
-    }
-
-    private LoginServer initLoginServer(int port) {
-        LoginServer loginServer = new LoginServer(port);
-        loginServer.start();
-        return loginServer;
     }
 
     private static void setAllLoggedOut(Connection con) throws SQLException {
@@ -1938,7 +1951,7 @@ public class Server {
         TimerManager.getInstance().stop();
 
         log.info("Worlds and channels are offline.");
-        loginServer.stop();
+
         if (!restart) {
             new Thread(() -> System.exit(0)).start();
         } else {

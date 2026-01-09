@@ -21,7 +21,6 @@
  */
 package dev.jaczerob.delfino.maplestory.net;
 
-import dev.jaczerob.delfino.maplestory.net.netty.LoginServer;
 import dev.jaczerob.delfino.maplestory.net.opcodes.RecvOpcode;
 import dev.jaczerob.delfino.maplestory.net.server.channel.handlers.AcceptFamilyHandler;
 import dev.jaczerob.delfino.maplestory.net.server.channel.handlers.AdminChatHandler;
@@ -217,10 +216,6 @@ public final class PacketProcessor {
 
     public static void registerGameHandlerDependencies(ChannelDependencies channelDependencies) {
         PacketProcessor.channelDeps = channelDependencies;
-    }
-
-    public static PacketProcessor getLoginServerProcessor() {
-        return getProcessor(LoginServer.WORLD_ID, LoginServer.CHANNEL_ID);
     }
 
     public static PacketProcessor getChannelServerProcessor(int world, int channel) {
