@@ -3,7 +3,7 @@ CREATE TABLE questactions
     questactionid INT UNSIGNED NOT NULL AUTO_INCREMENT,
     questid       INT          NOT NULL DEFAULT '0',
     status        INT          NOT NULL DEFAULT '0',
-    data          BLOB         NOT NULL,
+    data          TEXT         NOT NULL,
     PRIMARY KEY (questactionid)
 );
 
@@ -22,7 +22,7 @@ CREATE TABLE questrequirements
     questrequirementid INT UNSIGNED NOT NULL AUTO_INCREMENT,
     questid            INT          NOT NULL DEFAULT '0',
     status             INT          NOT NULL DEFAULT '0',
-    data               BLOB         NOT NULL,
+    data               TEXT         NOT NULL,
     PRIMARY KEY (questrequirementid)
 );
 

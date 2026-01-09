@@ -73,12 +73,5 @@ CREATE TABLE characters
     lastLogoutTime       TIMESTAMP        NOT NULL DEFAULT '2015-01-01 05:00:00',
     lastExpGainTime      TIMESTAMP        NOT NULL DEFAULT '2015-01-01 05:00:00',
     partySearch          TINYINT          NOT NULL DEFAULT '1',
-    jailexpire           BIGINT           NOT NULL DEFAULT '0',
-    PRIMARY KEY (id),
-    KEY accountid (accountid),
-    KEY party (party),
-    KEY ranking1 (`level`, exp),
-    KEY ranking2 (gm, job),
-    INDEX (id, accountid, world),
-    INDEX (id, accountid, `name`)
+    jailexpire           BIGINT           NOT NULL DEFAULT '0'
 );

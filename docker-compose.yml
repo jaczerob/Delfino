@@ -2,7 +2,7 @@ services:
   maplestory:
     build: Dockerfile-maplestory
     depends_on:
-      - db
+      - delfino-db
     ports:
       - "8484:8484"
       - "7575-7577:7575-7577"
@@ -11,29 +11,33 @@ services:
       - ./scripts:/opt/server/scripts
       - ./wz:/opt/server/wz
     environment:
-      DB_HOST: "db"
+      DB_HOST: "delfino-db"
 
   login:
     build: Dockerfile-login
     depends_on:
-      - db
+      - delfino-db
     ports:
       - "8484:8484"
       - "7575-7577:7575-7577"
     volumes:
       - ./config.yaml:/opt/server/config.yaml
-      - ./scripts:/opt/server/scripts
-      - ./wz:/opt/server/wz
     environment:
-      DB_HOST: "db"
+      DB_HOST: "delfino-db"
 
-  db:
-    image: mysql:8.4.0
+  delfino-db:
+    image: postgres:latest
+    container_name: delfino-db
+    restart: unless-stopped
     environment:
-      MYSQL_DATABASE: "delfino"
-      MYSQL_ROOT_PASSWORD: "delfino"
-      MYSQL_ALLOW_EMPTY_PASSWORD: yes
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: delfino
+      POSTGRES_DB: delfino
+      PGDATA: /data/postgres
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
-      - ./database/docker-db-data:/var/lib/mysql
+      - delfino-db-volume:/data/postgres
+
+volumes:
+  delfino-db-volume:

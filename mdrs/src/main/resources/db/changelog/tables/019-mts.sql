@@ -1,0 +1,50 @@
+CREATE TABLE mts_cart
+(
+    id     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    cid    INT NOT NULL,
+    itemid INT NOT NULL
+);
+
+CREATE TABLE mts_items
+(
+    id           INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    tab          INT         NOT NULL DEFAULT '0',
+    type         INT         NOT NULL DEFAULT '0',
+    itemid       INT         NOT NULL DEFAULT '0',
+    quantity     INT         NOT NULL DEFAULT '1',
+    seller       INT         NOT NULL DEFAULT '0',
+    price        INT         NOT NULL DEFAULT '0',
+    bid_incre    INT                  DEFAULT '0',
+    buy_now      INT                  DEFAULT '0',
+    position     INT                  DEFAULT '0',
+    upgradeslots INT                  DEFAULT '0',
+    level        INT                  DEFAULT '0',
+    itemlevel    INT         NOT NULL DEFAULT '1',
+    itemexp      INT         NOT NULL DEFAULT '0',
+    ringid       INT         NOT NULL DEFAULT '-1',
+    str          INT                  DEFAULT '0',
+    dex          INT                  DEFAULT '0',
+    int          INT                  DEFAULT '0',
+    luk          INT                  DEFAULT '0',
+    hp           INT                  DEFAULT '0',
+    mp           INT                  DEFAULT '0',
+    watk         INT                  DEFAULT '0',
+    matk         INT                  DEFAULT '0',
+    wdef         INT                  DEFAULT '0',
+    mdef         INT                  DEFAULT '0',
+    acc          INT                  DEFAULT '0',
+    avoid        INT                  DEFAULT '0',
+    hands        INT                  DEFAULT '0',
+    speed        INT                  DEFAULT '0',
+    jump         INT                  DEFAULT '0',
+    locked       INT                  DEFAULT '0',
+    isequip      INT                  DEFAULT '0',
+    owner        VARCHAR(16)          DEFAULT '',
+    sellername   VARCHAR(16) NOT NULL,
+    sell_ends    VARCHAR(16) NOT NULL,
+    transfer     INT                  DEFAULT '0',
+    vicious      INT         NOT NULL DEFAULT '0',
+    flag         INT         NOT NULL DEFAULT '0',
+    expiration   BIGINT      NOT NULL DEFAULT '-1',
+    giftFrom     VARCHAR(26) NOT NULL
+);

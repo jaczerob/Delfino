@@ -1,0 +1,47 @@
+delfino:
+  world:
+    id: 0
+    name: 'Delfino'
+    flag: 0
+    messages:
+      event: 'Welcome!'
+      server: 'Welcome!'
+      recommended: 'Welcome!'
+    rates:
+      exp: 1
+      meso: 1
+      drop: 1
+      boss-drop: 1
+      quest: 1
+      fishing: 1
+      travel: 1
+    channels:
+      - id: 0
+        capacity: 1000
+      - id: 1
+        capacity: 1000
+      - id: 2
+        capacity: 1000
+
+server:
+  port: 9990
+
+spring:
+  application:
+    name: mdrs
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/delfino
+    username: root
+    password: delfino
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+      naming:
+        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+
+  liquibase:
+    enabled: true
+    change-log: classpath:/db/changelog/db.changelog-master.xml
