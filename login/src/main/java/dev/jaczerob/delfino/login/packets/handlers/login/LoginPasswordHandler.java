@@ -21,6 +21,12 @@
  */
 package dev.jaczerob.delfino.login.packets.handlers.login;
 
+import dev.jaczerob.delfino.grpc.proto.account.Account;
+import dev.jaczerob.delfino.grpc.proto.account.AccountRequest;
+import dev.jaczerob.delfino.grpc.proto.account.AccountServiceGrpc;
+import dev.jaczerob.delfino.grpc.proto.character.Character;
+import dev.jaczerob.delfino.grpc.proto.character.CharacterServiceGrpc;
+import dev.jaczerob.delfino.grpc.proto.character.CharactersRequest;
 import dev.jaczerob.delfino.login.client.LoginClient;
 import dev.jaczerob.delfino.login.packets.AbstractPacketHandler;
 import dev.jaczerob.delfino.login.packets.coordinators.session.HWID;
@@ -28,50 +34,75 @@ import dev.jaczerob.delfino.login.tools.HexTool;
 import dev.jaczerob.delfino.login.tools.LoginPacketCreator;
 import dev.jaczerob.delfino.network.opcodes.RecvOpcode;
 import dev.jaczerob.delfino.network.packets.InPacket;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
-public final class LoginPasswordHandler extends AbstractPacketHandler {
+public class LoginPasswordHandler extends AbstractPacketHandler {
+    private final Logger log = LoggerFactory.getLogger(LoginPasswordHandler.class);
+    private final AccountServiceGrpc.AccountServiceBlockingV2Stub accountService;
+    private final CharacterServiceGrpc.CharacterServiceBlockingV2Stub characterService;
+
+    public LoginPasswordHandler(
+            final AccountServiceGrpc.AccountServiceBlockingV2Stub accountService,
+            final CharacterServiceGrpc.CharacterServiceBlockingV2Stub characterService
+    ) {
+        this.accountService = accountService;
+        this.characterService = characterService;
+    }
+
     @Override
     public RecvOpcode getOpcode() {
         return RecvOpcode.LOGIN_PASSWORD;
     }
 
     @Override
-    public boolean validateState(LoginClient c) {
-        return !c.isLoggedIn();
+    public boolean validateState(final LoginClient client) {
+        return !client.isLoggedIn();
     }
 
     @Override
-    public void handlePacket(final InPacket p, final LoginClient c) {
-        String remoteHost = c.getRemoteAddress();
+    public void handlePacket(final InPacket packet, final LoginClient client) {
+        final var remoteHost = client.getRemoteAddress();
         if (remoteHost.contentEquals("null")) {
-            c.sendPacket(LoginPacketCreator.getInstance().getLoginFailed(14));
+            client.sendPacket(LoginPacketCreator.getInstance().getLoginFailed(14));
             return;
         }
 
-        String login = p.readString();
-        String pwd = p.readString();
-        c.setAccountName(login);
+        final var username = packet.readString();
+        final Account account;
+        final List<Character> characters;
+        try {
+            account = this.accountService.getAccount(AccountRequest.newBuilder().setUsername(username).build()).getAccount();
+            characters = this.characterService.getCharacters(CharactersRequest.newBuilder().setAccountId(account.getId()).build()).getCharactersList();
+        } catch (final Exception exc) {
+            log.error("Error retrieving account for username {}", username, exc);
+            client.sendPacket(LoginPacketCreator.getInstance().getLoginFailed(5));
+            return;
+        }
 
-        p.skip(6);   // localhost masked the initial part with zeroes...
-        byte[] hwidNibbles = p.readBytes(4);
-        HWID hwid = new HWID(HexTool.toCompactHexString(hwidNibbles));
-        int loginok = c.login(login, pwd, hwid);
+        final var pwd = packet.readString();
+        client.setAccount(account);
+        client.setCharacters(characters);
+        client.setAccountName(username);
+
+        packet.skip(6);
+        final var hwidNibbles = packet.readBytes(4);
+        final var hwid = new HWID(HexTool.toCompactHexString(hwidNibbles));
+        final var loginok = client.login(username, pwd, hwid);
 
         if (loginok != 0) {
-            c.sendPacket(LoginPacketCreator.getInstance().getLoginFailed(loginok));
+            client.sendPacket(LoginPacketCreator.getInstance().getLoginFailed(loginok));
             return;
         }
 
-        if (c.finishLogin() == 0) {
-            login(c);
+        if (client.finishLogin() == 0) {
+            client.sendPacket(LoginPacketCreator.getInstance().getAuthSuccess(client));
         } else {
-            c.sendPacket(LoginPacketCreator.getInstance().getLoginFailed(7));
+            client.sendPacket(LoginPacketCreator.getInstance().getLoginFailed(7));
         }
-    }
-
-    private static void login(LoginClient c) {
-        c.sendPacket(LoginPacketCreator.getInstance().getAuthSuccess(c));
     }
 }

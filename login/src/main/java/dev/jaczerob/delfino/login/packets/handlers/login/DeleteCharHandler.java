@@ -37,7 +37,7 @@ public final class DeleteCharHandler extends AbstractPacketHandler {
 
     @Override
     public void handlePacket(final InPacket p, final LoginClient c) {
-        final var pic = p.readString();
+        p.readString();
         final var cid = p.readInt();
         // TODO: implement character deletion
         c.sendPacket(LoginPacketCreator.getInstance().deleteCharResponse(cid, 0));

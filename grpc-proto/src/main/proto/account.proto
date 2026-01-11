@@ -1,0 +1,26 @@
+import "google/protobuf/empty.proto";
+
+option java_multiple_files = true;
+option java_package = "dev.jaczerob.delfino.grpc.proto.account";
+option java_outer_classname = "AccountProto";
+
+message Account {
+  required int32 id = 1;
+  required string name = 2;
+  required string password = 3;
+  required string pic = 4;
+  required string pin = 5;
+  required int32 gm = 6;
+}
+
+message AccountRequest {
+  required string username = 1;
+}
+
+message AccountResponse {
+  required Account account = 1;
+}
+
+service AccountService {
+  rpc GetAccount (AccountRequest) returns (AccountResponse);
+}

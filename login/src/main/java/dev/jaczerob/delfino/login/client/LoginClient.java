@@ -21,11 +21,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package dev.jaczerob.delfino.login.client;
 
+import dev.jaczerob.delfino.grpc.proto.account.Account;
+import dev.jaczerob.delfino.grpc.proto.character.Character;
 import dev.jaczerob.delfino.login.packets.PacketProcessor;
 import dev.jaczerob.delfino.login.packets.coordinators.session.HWID;
 import dev.jaczerob.delfino.login.packets.coordinators.session.SessionCoordinator;
 import dev.jaczerob.delfino.login.server.LoginServer;
-import dev.jaczerob.delfino.login.tools.BCrypt;
 import dev.jaczerob.delfino.login.tools.DatabaseConnection;
 import dev.jaczerob.delfino.login.tools.LoginPacketCreator;
 import dev.jaczerob.delfino.network.packets.InPacket;
@@ -38,14 +39,13 @@ import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.sql.*;
+import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -58,9 +58,14 @@ public class LoginClient extends ChannelInboundHandlerAdapter {
     public static final int LOGIN_SERVER_TRANSITION = 1;
     public static final int LOGIN_LOGGEDIN = 2;
 
+    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
     private final long sessionId;
     private final PacketProcessor packetProcessor;
 
+    private Account account;
+    private Character selectedCharacter;
+    private List<Character> characters;
     private HWID hwid;
     private String remoteAddress;
 
@@ -217,7 +222,7 @@ public class LoginClient extends ChannelInboundHandlerAdapter {
         int loginok = 5;
 
         try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT id, password, gender, banned, characterslots, tos FROM accounts WHERE name = ?")) {
+             PreparedStatement ps = con.prepareStatement("SELECT id, password, gender, banned, characterslots FROM accounts WHERE name = ?")) {
             ps.setString(1, login);
 
             try (ResultSet rs = ps.executeQuery()) {
@@ -230,24 +235,23 @@ public class LoginClient extends ChannelInboundHandlerAdapter {
                     }
 
                     boolean banned = (rs.getByte("banned") == 1);
-                    gmLevel = 0;
-                    gender = rs.getByte("gender");
-                    characterSlots = rs.getByte("characterslots");
+                    this.gmLevel = 0;
+                    this.gender = rs.getByte("gender");
+                    this.characterSlots = rs.getByte("characterslots");
                     String passhash = rs.getString("password");
-                    byte tos = rs.getByte("tos");
 
                     if (banned) {
                         return 3;
                     }
 
-                    if (getLoginState() > LOGIN_NOTLOGGEDIN) { // already loggedin
-                        loggedIn = false;
-                        loginok = 7;
-                    } else if (passhash.charAt(0) == '$' && passhash.charAt(1) == '2' && BCrypt.checkpw(pwd, passhash)) {
-                        loginok = tos == 0 ? 23 : 0;
+                    if (this.getLoginState() > LOGIN_NOTLOGGEDIN) {
+                        this.loggedIn = false;
+                        return 7;
+                    } else if (this.passwordEncoder.matches(pwd, passhash)) {
+                        return 0;
                     } else {
-                        loggedIn = false;
-                        loginok = 4;
+                        this.loggedIn = false;
+                        return 4;
                     }
                 } else {
                     accId = -3;

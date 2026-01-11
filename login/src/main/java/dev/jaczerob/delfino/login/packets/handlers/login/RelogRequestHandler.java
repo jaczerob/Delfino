@@ -36,8 +36,8 @@ public final class RelogRequestHandler extends AbstractPacketHandler {
     }
 
     @Override
-    public boolean validateState(LoginClient c) {
-        return !c.isLoggedIn();
+    public boolean validateState(final LoginClient client) {
+        return !client.isLoggedIn();
     }
 
     @Override

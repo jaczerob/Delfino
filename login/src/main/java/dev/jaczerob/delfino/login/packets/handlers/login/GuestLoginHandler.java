@@ -21,24 +21,31 @@
  */
 package dev.jaczerob.delfino.login.packets.handlers.login;
 
+import dev.jaczerob.delfino.grpc.proto.account.AccountServiceGrpc;
+import dev.jaczerob.delfino.grpc.proto.character.CharacterServiceGrpc;
 import dev.jaczerob.delfino.login.client.LoginClient;
-import dev.jaczerob.delfino.login.packets.AbstractPacketHandler;
 import dev.jaczerob.delfino.login.tools.LoginPacketCreator;
 import dev.jaczerob.delfino.network.opcodes.RecvOpcode;
 import dev.jaczerob.delfino.network.packets.InPacket;
 import org.springframework.stereotype.Component;
 
 @Component
-public final class GuestLoginHandler extends AbstractPacketHandler {
+public final class GuestLoginHandler extends LoginPasswordHandler {
+    public GuestLoginHandler(
+            final AccountServiceGrpc.AccountServiceBlockingV2Stub accountService,
+            final CharacterServiceGrpc.CharacterServiceBlockingV2Stub characterService
+    ) {
+        super(accountService, characterService);
+    }
+
     @Override
     public RecvOpcode getOpcode() {
         return RecvOpcode.GUEST_LOGIN;
     }
 
     @Override
-    public void handlePacket(final InPacket p, final LoginClient c) {
-        c.sendPacket(LoginPacketCreator.getInstance().sendGuestTOS());
-        //System.out.println(slea.toString());
-        new LoginPasswordHandler().handlePacket(p, c);
+    public void handlePacket(final InPacket packet, final LoginClient client) {
+        client.sendPacket(LoginPacketCreator.getInstance().sendGuestTOS());
+        super.handlePacket(packet, client);
     }
 }

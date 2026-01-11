@@ -50,20 +50,32 @@ public final class CharSelectedHandler extends AbstractPacketHandler {
     }
 
     @Override
-    public void handlePacket(final InPacket p, final LoginClient c) {
-        int charId = p.readInt();
+    public void handlePacket(final InPacket packet, final LoginClient client) {
+        final var charId = packet.readInt();
+        final var character = client.getCharacters().stream()
+                .filter(c -> c.getId() == charId)
+                .findFirst()
+                .orElse(null);
 
-        p.readString();
-        p.readString();
+        if (character == null) {
+            log.warn("Client {} selected invalid character id {}", client.getAccount().getId(), charId);
+            client.sendPacket(LoginPacketCreator.getInstance().getAfterLoginError(10));
+            return;
+        }
+
+        client.setSelectedCharacter(character);
+
+        packet.readString();
+        packet.readString();
 
         final var socket = this.server.getInetSocket();
         if (socket == null) {
-            c.sendPacket(LoginPacketCreator.getInstance().getAfterLoginError(10));
+            client.sendPacket(LoginPacketCreator.getInstance().getAfterLoginError(10));
             return;
         }
 
         try {
-            c.sendPacket(LoginPacketCreator.getInstance().getServerIP(InetAddress.getByName(socket[0]), Integer.parseInt(socket[1]), charId));
+            client.sendPacket(LoginPacketCreator.getInstance().getServerIP(InetAddress.getByName(socket[0]), Integer.parseInt(socket[1]), charId));
         } catch (final UnknownHostException exc) {
             log.error("Failed to resolve server address", exc);
         }

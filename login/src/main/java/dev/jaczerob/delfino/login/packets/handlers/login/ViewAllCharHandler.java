@@ -24,17 +24,12 @@ package dev.jaczerob.delfino.login.packets.handlers.login;
 import dev.jaczerob.delfino.grpc.proto.character.Character;
 import dev.jaczerob.delfino.login.client.LoginClient;
 import dev.jaczerob.delfino.login.packets.AbstractPacketHandler;
-import dev.jaczerob.delfino.login.server.LoginServer;
 import dev.jaczerob.delfino.login.tools.LoginPacketCreator;
 import dev.jaczerob.delfino.network.opcodes.RecvOpcode;
 import dev.jaczerob.delfino.network.packets.InPacket;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.*;
 
 @Component
 public final class ViewAllCharHandler extends AbstractPacketHandler {
@@ -46,20 +41,19 @@ public final class ViewAllCharHandler extends AbstractPacketHandler {
     }
 
     @Override
-    public void handlePacket(final InPacket p, final LoginClient c) {
-        final var characters = LoginServer.getInstance().loadCharacters(c.getAccId());
+    public void handlePacket(final InPacket packet, final LoginClient client) {
         final var worldCharacters = new TreeMap<Integer, List<Character>>();
-        worldCharacters.put(0, characters);
+        worldCharacters.put(0, client.getCharacters());
 
         final var worldCharactersFormatted = limitTotalChrs(worldCharacters, CHARACTER_LIMIT);
         padChrsIfNeeded(worldCharactersFormatted);
 
         final var totalWorlds = worldCharactersFormatted.size();
         final var totalChrs = countTotalChrs(worldCharactersFormatted);
-        c.sendPacket(LoginPacketCreator.getInstance().showAllCharacter(totalWorlds, totalChrs));
+        client.sendPacket(LoginPacketCreator.getInstance().showAllCharacter(totalWorlds, totalChrs));
 
         worldCharactersFormatted.forEach((worldId, chrs) ->
-                c.sendPacket(LoginPacketCreator.getInstance().showAllCharacterInfo(worldId, chrs, false))
+                client.sendPacket(LoginPacketCreator.getInstance().showAllCharacterInfo(worldId, chrs, false))
         );
     }
 

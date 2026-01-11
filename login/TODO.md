@@ -10,10 +10,8 @@
 - [ ] Re-implement world capacity checks
 - [ ] Re-implement character deletion
 - [ ] Re-implement checking if account is already logged in
-- [ ] Use Spring Security for authentication
 - [ ] Fix channel capacity showing full
 - [ ] Fix naked characters showing up in character list
-- [ ] Use Spring Netty
 
 ### In Progress
 
