@@ -2,6 +2,8 @@
 
 ### Todo
 
+- [ ] Re-implement PIN/PIC
+- [ ] Re-implement login attempts
 - [ ] Re-implement HWID bans
 - [ ] Re-implement IP bans
 - [ ] Re-implement MAC bans
@@ -11,6 +13,7 @@
 - [ ] Use Spring Security for authentication
 - [ ] Fix channel capacity showing full
 - [ ] Fix naked characters showing up in character list
+- [ ] Use Spring Netty
 
 ### In Progress
 

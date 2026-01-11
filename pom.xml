@@ -15,6 +15,7 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>network</module>
         <module>grpc-proto</module>
         <module>mdrs</module>
         <module>maplestory</module>
@@ -46,6 +47,11 @@
             <dependency>
                 <groupId>dev.jaczerob.delfino.grpc</groupId>
                 <artifactId>grpc-proto</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.jaczerob.delfino.network</groupId>
+                <artifactId>network</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

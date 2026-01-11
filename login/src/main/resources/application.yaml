@@ -14,9 +14,12 @@ delfino:
     channel-load: 100
     localhost: 127.0.0.1
 
+server:
+  port: 8484
+
 logging:
   level:
-    root: DEBUG
-    org.springframework: INFO
+    root: INFO
+    dev.jaczerob: DEBUG
     com.zaxxer: ERROR
     io.grpc: ERROR
