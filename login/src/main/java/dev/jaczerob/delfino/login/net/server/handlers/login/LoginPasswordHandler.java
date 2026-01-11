@@ -22,30 +22,13 @@
 package dev.jaczerob.delfino.login.net.server.handlers.login;
 
 import dev.jaczerob.delfino.login.client.Client;
-import dev.jaczerob.delfino.login.client.DefaultDates;
-import dev.jaczerob.delfino.login.config.YamlConfig;
 import dev.jaczerob.delfino.login.net.AbstractPacketHandler;
 import dev.jaczerob.delfino.login.net.opcodes.RecvOpcode;
 import dev.jaczerob.delfino.login.net.packet.InPacket;
-import dev.jaczerob.delfino.login.net.server.Server;
 import dev.jaczerob.delfino.login.net.server.coordinator.session.Hwid;
-import dev.jaczerob.delfino.login.tools.BCrypt;
-import dev.jaczerob.delfino.login.tools.DatabaseConnection;
 import dev.jaczerob.delfino.login.tools.HexTool;
 import dev.jaczerob.delfino.login.tools.PacketCreator;
 import org.springframework.stereotype.Component;
-
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.sql.Connection;
-import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Timestamp;
 
 @Component
 public final class LoginPasswordHandler extends AbstractPacketHandler {
@@ -57,12 +40,6 @@ public final class LoginPasswordHandler extends AbstractPacketHandler {
     @Override
     public boolean validateState(Client c) {
         return !c.isLoggedIn();
-    }
-
-    private static String hashpwSHA512(String pwd) throws NoSuchAlgorithmException, UnsupportedEncodingException {
-        MessageDigest digester = MessageDigest.getInstance("SHA-512");
-        digester.update(pwd.getBytes(StandardCharsets.UTF_8), 0, pwd.length());
-        return HexTool.toHexString(digester.digest()).replace(" ", "").toLowerCase();
     }
 
     @Override
@@ -82,62 +59,12 @@ public final class LoginPasswordHandler extends AbstractPacketHandler {
         Hwid hwid = new Hwid(HexTool.toCompactHexString(hwidNibbles));
         int loginok = c.login(login, pwd, hwid);
 
-
-        if (YamlConfig.config.server.AUTOMATIC_REGISTER && loginok == 5) {
-            try (Connection con = DatabaseConnection.getStaticConnection();
-                 PreparedStatement ps = con.prepareStatement("INSERT INTO accounts (name, password, birthday, tempban) VALUES (?, ?, ?, ?);", Statement.RETURN_GENERATED_KEYS)) { //Jayd: Added birthday, tempban
-                ps.setString(1, login);
-                ps.setString(2, YamlConfig.config.server.BCRYPT_MIGRATION ? BCrypt.hashpw(pwd, BCrypt.gensalt(12)) : hashpwSHA512(pwd));
-                ps.setDate(3, Date.valueOf(DefaultDates.getBirthday()));
-                ps.setTimestamp(4, Timestamp.valueOf(DefaultDates.getTempban()));
-                ps.executeUpdate();
-
-                try (ResultSet rs = ps.getGeneratedKeys()) {
-                    rs.next();
-                    c.setAccID(rs.getInt(1));
-                }
-            } catch (SQLException | NoSuchAlgorithmException | UnsupportedEncodingException e) {
-                c.setAccID(-1);
-                e.printStackTrace();
-            } finally {
-                loginok = c.login(login, pwd, hwid);
-            }
-        }
-
-        if (YamlConfig.config.server.BCRYPT_MIGRATION && (loginok <= -10)) { // -10 means migration to bcrypt, -23 means TOS wasn't accepted
-            try (Connection con = DatabaseConnection.getStaticConnection();
-                 PreparedStatement ps = con.prepareStatement("UPDATE accounts SET password = ? WHERE name = ?;")) {
-                ps.setString(1, BCrypt.hashpw(pwd, BCrypt.gensalt(12)));
-                ps.setString(2, login);
-                ps.executeUpdate();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            } finally {
-                loginok = (loginok == -10) ? 0 : 23;
-            }
-        }
-
-        if (c.hasBannedIP() || c.hasBannedMac()) {
-            c.sendPacket(PacketCreator.getLoginFailed(3));
-            return;
-        }
-//        TODO: Review temp ban system
-//        Calendar tempban = c.getTempBanCalendarFromDB();
-//        if (tempban != null) {
-//            if (tempban.getTimeInMillis() > Calendar.getInstance().getTimeInMillis()) {
-//                c.sendPacket(PacketCreator.getTempBan(tempban.getTimeInMillis(), c.getGReason()));
-//                return;
-//            }
-//        }
-        if (loginok == 3) {
-            c.sendPacket(PacketCreator.getPermBan(c.getGReason()));//crashes but idc :D
-            return;
-        } else if (loginok != 0) {
+        if (loginok != 0) {
             c.sendPacket(PacketCreator.getLoginFailed(loginok));
             return;
         }
+
         if (c.finishLogin() == 0) {
-            c.checkChar(c.getAccID());
             login(c);
         } else {
             c.sendPacket(PacketCreator.getLoginFailed(7));
@@ -145,7 +72,6 @@ public final class LoginPasswordHandler extends AbstractPacketHandler {
     }
 
     private static void login(Client c) {
-        c.sendPacket(PacketCreator.getAuthSuccess(c));//why the fk did I do c.getAccountName()?
-        Server.getInstance().registerLoginState(c);
+        c.sendPacket(PacketCreator.getAuthSuccess(c));
     }
 }

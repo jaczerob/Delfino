@@ -36,7 +36,7 @@ public final class GuestLoginHandler extends AbstractPacketHandler {
     }
 
     @Override
-    public final void handlePacket(final InPacket p, final Client c) {
+    public void handlePacket(final InPacket p, final Client c) {
         c.sendPacket(PacketCreator.sendGuestTOS());
         //System.out.println(slea.toString());
         new LoginPasswordHandler().handlePacket(p, c);

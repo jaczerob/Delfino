@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: Delfino
+  datasource:
+    url: jdbc:postgresql://localhost:5432/delfino
+    username: root
+    password: delfino
+    driver-class-name: org.postgresql.Driver
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+
+delfino:
+  server:
+    channel-load: 100
+    localhost: 127.0.0.1
+
+logging:
+  level:
+    root: DEBUG
+    org.springframework: INFO
+    com.zaxxer: ERROR
+    io.grpc: ERROR

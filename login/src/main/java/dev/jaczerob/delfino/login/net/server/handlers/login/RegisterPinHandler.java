@@ -37,7 +37,7 @@ public final class RegisterPinHandler extends AbstractPacketHandler {
     }
 
     @Override
-    public final void handlePacket(final InPacket p, final Client c) {
+    public void handlePacket(final InPacket p, final Client c) {
         byte c2 = p.readByte();
         if (c2 == 0) {
             SessionCoordinator.getInstance().closeSession(c, null);

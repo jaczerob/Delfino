@@ -36,7 +36,7 @@ public final class CheckCharNameHandler extends AbstractPacketHandler {
     }
 
     @Override
-    public final void handlePacket(final InPacket p, final Client c) {
+    public void handlePacket(final InPacket p, final Client c) {
         String name = p.readString();
         // TODO: implement character name check
 //        c.sendPacket(PacketCreator.charNameResponse(name, !Character.canCreateChar(name)));

@@ -22,7 +22,6 @@ package dev.jaczerob.delfino.login.tools;
 
 import dev.jaczerob.delfino.grpc.proto.character.Character;
 import dev.jaczerob.delfino.login.client.Client;
-import dev.jaczerob.delfino.login.config.YamlConfig;
 import dev.jaczerob.delfino.login.net.encryption.InitializationVector;
 import dev.jaczerob.delfino.login.net.opcodes.SendOpcode;
 import dev.jaczerob.delfino.login.net.packet.ByteBufOutPacket;
@@ -198,8 +197,8 @@ public class PacketCreator {
         p.writeInt(c.getAccID());
         p.writeByte(c.getGender());
 
-        p.writeBool(YamlConfig.config.server.USE_ENFORCE_ADMIN_ACCOUNT && c.getGMLevel() > 1);    // thanks Steve(kaito1410) for pointing the GM account boolean here
-        p.writeByte(YamlConfig.config.server.USE_ENFORCE_ADMIN_ACCOUNT && c.getGMLevel() > 1 ? 0x80 : 0);  // Admin Byte. 0x80,0x40,0x20.. Rubbish.
+        p.writeBool(false);    // thanks Steve(kaito1410) for pointing the GM account boolean here
+        p.writeByte(0);  // Admin Byte. 0x80,0x40,0x20.. Rubbish.
         p.writeByte(0); // Country Code.
 
         p.writeString(c.getAccountName());
@@ -312,9 +311,8 @@ public class PacketCreator {
         }
 
 
-//        p.writeByte(YamlConfig.config.server.ENABLE_PIC ? (c.getPic() == null || c.getPic().equals("") ? 0 : 1) : 2);
         p.writeByte(1);
-        p.writeInt(YamlConfig.config.server.COLLECTIVE_CHARSLOT ? chars.size() + c.getAvailableCharacterSlots() : c.getCharacterSlots());
+        p.writeInt(c.getCharacterSlots());
         System.out.println(Arrays.toString(p.getBytes()));
         return p;
     }

@@ -1,11 +1,11 @@
 package dev.jaczerob.delfino.login.net.packet;
 
 import dev.jaczerob.delfino.login.constants.string.CharsetConstants;
+import dev.jaczerob.delfino.login.net.opcodes.SendOpcode;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import net.jcip.annotations.NotThreadSafe;
-import dev.jaczerob.delfino.login.net.opcodes.SendOpcode;
 
 import java.awt.*;
 
@@ -17,14 +17,8 @@ public class ByteBufOutPacket implements OutPacket {
         this.byteBuf = Unpooled.buffer();
     }
 
-    public ByteBufOutPacket(SendOpcode op) {
+    public ByteBufOutPacket(final SendOpcode op) {
         ByteBuf byteBuf = Unpooled.buffer();
-        byteBuf.writeShortLE((short) op.getValue());
-        this.byteBuf = byteBuf;
-    }
-
-    public ByteBufOutPacket(SendOpcode op, int initialCapacity) {
-        ByteBuf byteBuf = Unpooled.buffer(initialCapacity);
         byteBuf.writeShortLE((short) op.getValue());
         this.byteBuf = byteBuf;
     }

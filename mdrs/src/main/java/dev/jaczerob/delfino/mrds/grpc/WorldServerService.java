@@ -2,7 +2,9 @@ package dev.jaczerob.delfino.mrds.grpc;
 
 import com.google.protobuf.Empty;
 import dev.jaczerob.delfino.grpc.proto.Channel;
+import dev.jaczerob.delfino.grpc.proto.Rates;
 import dev.jaczerob.delfino.grpc.proto.World;
+import dev.jaczerob.delfino.grpc.proto.WorldMessages;
 import dev.jaczerob.delfino.grpc.proto.WorldServiceGrpc;
 import dev.jaczerob.delfino.grpc.proto.WorldsResponse;
 import dev.jaczerob.delfino.mrds.config.DelfinoConfigurationProperties;
@@ -37,13 +39,30 @@ public class WorldServerService extends WorldServiceGrpc.WorldServiceImplBase {
                 .map(this::fromServerChannel)
                 .toList();
 
+        final var worldMessages = WorldMessages.newBuilder()
+                .setEvent(propertyWorld.getMessages().getEvent())
+                .setServer(propertyWorld.getMessages().getServer())
+                .setRecommended(propertyWorld.getMessages().getRecommended())
+                .build();
+
+        final var rates = Rates.newBuilder()
+                .setExp(propertyWorld.getRates().getExp())
+                .setMeso(propertyWorld.getRates().getMeso())
+                .setDrop(propertyWorld.getRates().getDrop())
+                .setBossDrop(propertyWorld.getRates().getBossDrop())
+                .setQuest(propertyWorld.getRates().getQuest())
+                .setTravel(propertyWorld.getRates().getTravel())
+                .setFishing(propertyWorld.getRates().getFishing())
+                .build();
+
         return World.newBuilder()
                 .setId(propertyWorld.getId())
                 .setName(propertyWorld.getName())
                 .setFlag(propertyWorld.getFlag())
-                .setEventMessage(propertyWorld.getMessages().getEvent())
                 .addAllChannels(channels)
                 .setAmountPlayers(1)
+                .setMessages(worldMessages)
+                .setRates(rates)
                 .build();
     }
 

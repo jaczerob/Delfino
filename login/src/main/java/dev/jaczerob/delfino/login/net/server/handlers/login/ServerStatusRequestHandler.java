@@ -1,31 +1,10 @@
-/*
- This file is part of the OdinMS Maple Story Server
- Copyright (C) 2008 Patrick Huy <patrick.huy@frz.cc>
- Matthias Butz <matze@odinms.de>
- Jan Christian Meyer <vimes@odinms.de>
-
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU Affero General Public License as
- published by the Free Software Foundation version 3 as published by
- the Free Software Foundation. You may not use, modify or distribute
- this program under any other version of the GNU Affero General Public
- License.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU Affero General Public License for more details.
-
- You should have received a copy of the GNU Affero General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package dev.jaczerob.delfino.login.net.server.handlers.login;
 
 import com.google.protobuf.Empty;
 import dev.jaczerob.delfino.grpc.proto.World;
 import dev.jaczerob.delfino.grpc.proto.WorldServiceGrpc;
 import dev.jaczerob.delfino.login.client.Client;
-import dev.jaczerob.delfino.login.config.YamlConfig;
+import dev.jaczerob.delfino.login.config.DelfinoConfigurationProperties;
 import dev.jaczerob.delfino.login.net.AbstractPacketHandler;
 import dev.jaczerob.delfino.login.net.opcodes.RecvOpcode;
 import dev.jaczerob.delfino.login.net.packet.InPacket;
@@ -43,9 +22,14 @@ public final class ServerStatusRequestHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(ServerStatusRequestHandler.class);
 
     private final WorldServiceGrpc.WorldServiceBlockingV2Stub worldServiceStub;
+    private final DelfinoConfigurationProperties config;
 
-    public ServerStatusRequestHandler(final WorldServiceGrpc.WorldServiceBlockingV2Stub worldServiceStub) {
+    public ServerStatusRequestHandler(
+            final WorldServiceGrpc.WorldServiceBlockingV2Stub worldServiceStub,
+            final DelfinoConfigurationProperties config
+    ) {
         this.worldServiceStub = worldServiceStub;
+        this.config = config;
     }
 
     @Override
@@ -80,7 +64,7 @@ public final class ServerStatusRequestHandler extends AbstractPacketHandler {
             return ServerStatus.FULL;
         }
 
-        final var worldCap = world.getChannelsCount() * YamlConfig.config.server.CHANNEL_LOAD;
+        final var worldCap = world.getChannelsCount() * this.config.getServer().getChannelLoad();
         final var num = world.getAmountPlayers();
         if (num >= worldCap) {
             return ServerStatus.FULL;

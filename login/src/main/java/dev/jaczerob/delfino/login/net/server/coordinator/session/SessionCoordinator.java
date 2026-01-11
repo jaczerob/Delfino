@@ -20,80 +20,24 @@
 package dev.jaczerob.delfino.login.net.server.coordinator.session;
 
 import dev.jaczerob.delfino.login.client.Client;
-import dev.jaczerob.delfino.login.config.YamlConfig;
-import dev.jaczerob.delfino.login.net.server.coordinator.login.LoginStorage;
-import dev.jaczerob.delfino.login.tools.DatabaseConnection;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.time.Instant;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Ronan
  */
 public class SessionCoordinator {
-    private static final Logger log = LoggerFactory.getLogger(SessionCoordinator.class);
     private static final SessionCoordinator instance = new SessionCoordinator();
 
     public static SessionCoordinator getInstance() {
         return instance;
     }
 
-    public enum AntiMulticlientResult {
-        SUCCESS,
-        REMOTE_LOGGEDIN,
-        REMOTE_REACHED_LIMIT,
-        REMOTE_PROCESSING,
-        REMOTE_NO_MATCH,
-        MANY_ACCOUNT_ATTEMPTS,
-        COORDINATOR_ERROR
-    }
+    private final Map<Integer, Client> onlineClients = new HashMap<>();
 
-    private final SessionInitialization sessionInit = new SessionInitialization();
-    private final LoginStorage loginStorage = new LoginStorage();
-    private final Map<Integer, Client> onlineClients = new HashMap<>(); // Key: account id
-    private final Set<Hwid> onlineRemoteHwids = new HashSet<>(); // Hwid/nibblehwid
-    private final Map<String, Client> loginRemoteHosts = new ConcurrentHashMap<>(); // Key: Ip (+ nibblehwid)
-    private final HostHwidCache hostHwidCache = new HostHwidCache();
-
-    private SessionCoordinator() {
-    }
-
-    private static boolean attemptAccountAccess(int accountId, Hwid hwid, boolean routineCheck) {
-        try (Connection con = DatabaseConnection.getStaticConnection()) {
-            List<HwidRelevance> hwidRelevances = SessionDAO.getHwidRelevance(con, accountId);
-            for (HwidRelevance hwidRelevance : hwidRelevances) {
-                if (hwidRelevance.hwid().endsWith(hwid.hwid())) {
-                    if (!routineCheck) {
-                        // better update HWID relevance as soon as the login is authenticated
-                        Instant expiry = HwidAssociationExpiry.getHwidAccountExpiry(hwidRelevance.relevance());
-                        SessionDAO.updateAccountAccess(con, hwid, accountId, expiry, hwidRelevance.getIncrementedRelevance());
-                    }
-
-                    return true;
-                }
-            }
-
-            if (hwidRelevances.size() < YamlConfig.config.server.MAX_ALLOWED_ACCOUNT_HWID) {
-                return true;
-            }
-        } catch (SQLException e) {
-            log.warn("Failed to update account access. Account id: {}, nibbleHwid: {}", accountId, hwid, e);
-        }
-
-        return false;
-    }
-
-    public static String getSessionRemoteHost(Client client) {
-        Hwid hwid = client.getHwid();
+    public static String getSessionRemoteHost(final Client client) {
+        final var hwid = client.getHwid();
 
         if (hwid != null) {
             return client.getRemoteAddress() + "-" + hwid.hwid();
@@ -102,12 +46,14 @@ public class SessionCoordinator {
         }
     }
 
-    public void updateOnlineClient(Client client) {
-        if (client != null) {
-            int accountId = client.getAccID();
-            disconnectClientIfOnline(accountId);
-            onlineClients.put(accountId, client);
+    public void updateOnlineClient(final Client client) {
+        if (client == null) {
+            return;
         }
+
+        final var accountId = client.getAccID();
+        disconnectClientIfOnline(accountId);
+        this.onlineClients.put(accountId, client);
     }
 
     private void disconnectClientIfOnline(int accountId) {
@@ -117,189 +63,28 @@ public class SessionCoordinator {
         }
     }
 
-    public boolean canStartLoginSession(Client client) {
-        if (!YamlConfig.config.server.DETERRED_MULTICLIENT) {
-            return true;
+    public void closeLoginSession(final Client client) {
+        if (client == null) {
+            return;
         }
 
-        String remoteHost = getSessionRemoteHost(client);
-        final InitializationResult initResult = sessionInit.initialize(remoteHost);
-        switch (initResult.getAntiMulticlientResult()) {
-            case REMOTE_PROCESSING -> {
-                return false;
-            }
-            case COORDINATOR_ERROR -> {
-                return true;
-            }
-        }
-
-        try {
-            final HostHwid knownHwid = hostHwidCache.getEntry(remoteHost);
-            if (knownHwid != null && onlineRemoteHwids.contains(knownHwid.hwid())) {
-                return false;
-            } else if (loginRemoteHosts.containsKey(remoteHost)) {
-                return false;
-            }
-
-            loginRemoteHosts.put(remoteHost, client);
-            return true;
-        } finally {
-            sessionInit.finalize(remoteHost);
-        }
-    }
-
-    public void closeLoginSession(Client client) {
-        clearLoginRemoteHost(client);
-
-        Hwid nibbleHwid = client.getHwid();
+        final var nibbleHwid = client.getHwid();
         client.setHwid(null);
         if (nibbleHwid != null) {
-            onlineRemoteHwids.remove(nibbleHwid);
-
-            if (client != null) {
-                Client loggedClient = onlineClients.get(client.getAccID());
-
-                // do not remove an online game session here, only login session
-                if (loggedClient != null && loggedClient.getSessionId() == client.getSessionId()) {
-                    onlineClients.remove(client.getAccID());
-                }
+            Client loggedClient = onlineClients.get(client.getAccID());
+            if (loggedClient != null && loggedClient.getSessionId() == client.getSessionId()) {
+                onlineClients.remove(client.getAccID());
             }
         }
-    }
-
-    private void clearLoginRemoteHost(Client client) {
-        String remoteHost = getSessionRemoteHost(client);
-        loginRemoteHosts.remove(client.getRemoteAddress());
-        loginRemoteHosts.remove(remoteHost);
-    }
-
-    public AntiMulticlientResult attemptLoginSession(Client client, Hwid hwid, int accountId, boolean routineCheck) {
-        if (!YamlConfig.config.server.DETERRED_MULTICLIENT) {
-            client.setHwid(hwid);
-            return AntiMulticlientResult.SUCCESS;
-        }
-
-        String remoteHost = getSessionRemoteHost(client);
-        InitializationResult initResult = sessionInit.initialize(remoteHost);
-        if (initResult != InitializationResult.SUCCESS) {
-            return initResult.getAntiMulticlientResult();
-        }
-
-        try {
-            if (!loginStorage.registerLogin(accountId)) {
-                return AntiMulticlientResult.MANY_ACCOUNT_ATTEMPTS;
-            } else if (routineCheck && !attemptAccountAccess(accountId, hwid, routineCheck)) {
-                return AntiMulticlientResult.REMOTE_REACHED_LIMIT;
-            } else if (onlineRemoteHwids.contains(hwid)) {
-                return AntiMulticlientResult.REMOTE_LOGGEDIN;
-            } else if (!attemptAccountAccess(accountId, hwid, routineCheck)) {
-                return AntiMulticlientResult.REMOTE_REACHED_LIMIT;
-            }
-
-            client.setHwid(hwid);
-            onlineRemoteHwids.add(hwid);
-
-            return AntiMulticlientResult.SUCCESS;
-        } finally {
-            sessionInit.finalize(remoteHost);
-        }
-    }
-
-    public AntiMulticlientResult attemptGameSession(Client client, int accountId, Hwid hwid) {
-        final String remoteHost = getSessionRemoteHost(client);
-        if (!YamlConfig.config.server.DETERRED_MULTICLIENT) {
-            hostHwidCache.addEntry(remoteHost, hwid);
-            hostHwidCache.addEntry(client.getRemoteAddress(), hwid); // no HWID information on the loggedin newcomer session...
-            return AntiMulticlientResult.SUCCESS;
-        }
-
-        final InitializationResult initResult = sessionInit.initialize(remoteHost);
-        if (initResult != InitializationResult.SUCCESS) {
-            return initResult.getAntiMulticlientResult();
-        }
-
-        try {
-            Hwid clientHwid = client.getHwid(); // thanks Paxum for noticing account stuck after PIC failure
-            if (clientHwid == null) {
-                return AntiMulticlientResult.REMOTE_NO_MATCH;
-            }
-
-            onlineRemoteHwids.remove(clientHwid);
-
-            if (!hwid.equals(clientHwid)) {
-                return AntiMulticlientResult.REMOTE_NO_MATCH;
-            } else if (onlineRemoteHwids.contains(hwid)) {
-                return AntiMulticlientResult.REMOTE_LOGGEDIN;
-            }
-
-            // assumption: after a SUCCESSFUL login attempt, the incoming client WILL receive a new IoSession from the game server
-
-            // updated session CLIENT_HWID attribute will be set when the player log in the game
-            onlineRemoteHwids.add(hwid);
-            hostHwidCache.addEntry(remoteHost, hwid);
-            hostHwidCache.addEntry(client.getRemoteAddress(), hwid);
-            associateHwidAccountIfAbsent(hwid, accountId);
-
-            return AntiMulticlientResult.SUCCESS;
-        } finally {
-            sessionInit.finalize(remoteHost);
-        }
-    }
-
-    private static void associateHwidAccountIfAbsent(Hwid hwid, int accountId) {
-        try (Connection con = DatabaseConnection.getStaticConnection()) {
-            List<Hwid> hwids = SessionDAO.getHwidsForAccount(con, accountId);
-
-            boolean containsRemoteHwid = hwids.stream().anyMatch(accountHwid -> accountHwid.equals(hwid));
-            if (containsRemoteHwid) {
-                return;
-            }
-
-            if (hwids.size() < YamlConfig.config.server.MAX_ALLOWED_ACCOUNT_HWID) {
-                Instant expiry = HwidAssociationExpiry.getHwidAccountExpiry(0);
-                SessionDAO.registerAccountAccess(con, accountId, hwid, expiry);
-            }
-        } catch (SQLException ex) {
-            log.warn("Failed to associate hwid {} with account id {}", hwid, accountId, ex);
-        }
-    }
-
-    private static Client fetchInTransitionSessionClient(Client client) {
-
-        // TODO: Re-implement handling in-transition sessions
-//        Hwid hwid = SessionCoordinator.getInstance().getGameSessionHwid(client);
-//        if (hwid == null) {   // maybe this session was currently in-transition?
-//            return null;
-//        }
-//
-//        Client fakeClient = Client.createMock();
-//        fakeClient.setHwid(hwid);
-//        Integer chrId = Server.getInstance().freeCharacteridInTransition(client);
-//        if (chrId != null) {
-//            try {
-//                fakeClient.setAccID(Character.loadCharFromDB(chrId, client, false).getAccountID());
-//            } catch (SQLException sqle) {
-//                sqle.printStackTrace();
-//            }
-//        }
-//
-//        return fakeClient;
-//    }
-        return null;
     }
 
     public void closeSession(Client client, Boolean immediately) {
         if (client == null) {
-            // TODO: Re-implement handling in-transition sessions
-            //            client = fetchInTransitionSessionClient(client);
             return;
         }
 
         final Hwid hwid = client.getHwid();
-        client.setHwid(null); // making sure to clean up calls to this function on login phase
-        if (hwid != null) {
-            onlineRemoteHwids.remove(hwid);
-        }
+        client.setHwid(null);
 
         final boolean isGameSession = hwid != null;
         if (isGameSession) {
@@ -307,7 +92,6 @@ public class SessionCoordinator {
         } else {
             Client loggedClient = onlineClients.get(client.getAccID());
 
-            // do not remove an online game session here, only login session
             if (loggedClient != null && loggedClient.getSessionId() == client.getSessionId()) {
                 onlineClients.remove(client.getAccID());
             }
@@ -316,18 +100,5 @@ public class SessionCoordinator {
         if (immediately != null && immediately) {
             client.closeSession();
         }
-    }
-
-    public Hwid getGameSessionHwid(Client client) {
-        String remoteHost = getSessionRemoteHost(client);
-        return hostHwidCache.getEntryHwid(remoteHost);
-    }
-
-    public void clearExpiredHwidHistory() {
-        hostHwidCache.clearExpired();
-    }
-
-    public void runUpdateLoginHistory() {
-        loginStorage.clearExpiredAttempts();
     }
 }

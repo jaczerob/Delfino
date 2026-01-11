@@ -21,8 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package dev.jaczerob.delfino.login.client;
 
-import dev.jaczerob.delfino.grpc.proto.World;
-import dev.jaczerob.delfino.login.config.YamlConfig;
 import dev.jaczerob.delfino.login.net.PacketHandler;
 import dev.jaczerob.delfino.login.net.PacketProcessor;
 import dev.jaczerob.delfino.login.net.netty.InvalidPacketHeaderException;
@@ -30,14 +28,11 @@ import dev.jaczerob.delfino.login.net.packet.InPacket;
 import dev.jaczerob.delfino.login.net.packet.Packet;
 import dev.jaczerob.delfino.login.net.packet.logging.MonitoredChrLogger;
 import dev.jaczerob.delfino.login.net.server.Server;
-import dev.jaczerob.delfino.login.net.server.coordinator.login.LoginBypassCoordinator;
 import dev.jaczerob.delfino.login.net.server.coordinator.session.Hwid;
 import dev.jaczerob.delfino.login.net.server.coordinator.session.SessionCoordinator;
-import dev.jaczerob.delfino.login.net.server.coordinator.session.SessionCoordinator.AntiMulticlientResult;
 import dev.jaczerob.delfino.login.server.ThreadManager;
 import dev.jaczerob.delfino.login.tools.BCrypt;
 import dev.jaczerob.delfino.login.tools.DatabaseConnection;
-import dev.jaczerob.delfino.login.tools.HexTool;
 import dev.jaczerob.delfino.login.tools.PacketCreator;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -45,25 +40,14 @@ import io.netty.handler.timeout.IdleStateEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.script.ScriptEngine;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -92,8 +76,6 @@ public class Client extends ChannelInboundHandlerAdapter {
     private String accountName = null;
     private int world;
     private int gmlevel;
-    private Set<String> macs = new HashSet<>();
-    private Map<String, ScriptEngine> engines = new HashMap<>();
     private byte characterSlots = 3;
     private byte loginattempt = 0;
     private String pin = "";
@@ -102,12 +84,8 @@ public class Client extends ChannelInboundHandlerAdapter {
     private int picattempt = 0;
     private byte gender = -1;
     private boolean disconnecting = false;
-    private final Semaphore actionsSemaphore = new Semaphore(7);
-    private final Lock lock = new ReentrantLock(true);
     private final Lock encoderLock = new ReentrantLock(true);
     private final Lock announcerLock = new ReentrantLock(true);
-    private int visibleWorlds;
-    private long lastNpcClick;
 
     public enum Type {
         LOGIN,
@@ -123,13 +101,14 @@ public class Client extends ChannelInboundHandlerAdapter {
         this.channel = channel;
     }
 
-    public static Client createLoginClient(long sessionId, String remoteAddress, PacketProcessor packetProcessor,
-                                           int world, int channel) {
+    public static Client createLoginClient(
+            final long sessionId,
+            final String remoteAddress,
+            final PacketProcessor packetProcessor,
+            final int world,
+            final int channel
+    ) {
         return new Client(Type.LOGIN, sessionId, remoteAddress, packetProcessor, world, channel);
-    }
-
-    public static Client createMock() {
-        return new Client(null, -1, null, null, -123, -123);
     }
 
     @Override
@@ -246,91 +225,8 @@ public class Client extends ChannelInboundHandlerAdapter {
         return remoteAddress;
     }
 
-    public Character getPlayer() {
-        return player;
-    }
-
-    public void sendCharList(int server) {
-        this.sendPacket(PacketCreator.getCharList(this, 0));
-    }
-
     public boolean isLoggedIn() {
         return loggedIn;
-    }
-
-    public boolean hasBannedIP() {
-        boolean ret = false;
-        try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT COUNT(*) FROM ipbans WHERE ? LIKE CONCAT(ip, '%')")) {
-            ps.setString(1, remoteAddress);
-            try (ResultSet rs = ps.executeQuery()) {
-                rs.next();
-                if (rs.getInt(1) > 0) {
-                    ret = true;
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return ret;
-    }
-
-    public boolean hasBannedHWID() {
-        if (hwid == null) {
-            return false;
-        }
-
-        boolean ret = false;
-        try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT COUNT(*) FROM hwidbans WHERE hwid LIKE ?")) {
-            ps.setString(1, hwid.hwid());
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs != null && rs.next()) {
-                    if (rs.getInt(1) > 0) {
-                        ret = true;
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return ret;
-    }
-
-    public boolean hasBannedMac() {
-        if (macs.isEmpty()) {
-            return false;
-        }
-        boolean ret = false;
-        int i;
-        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM macbans WHERE mac IN (");
-        for (i = 0; i < macs.size(); i++) {
-            sql.append("?");
-            if (i != macs.size() - 1) {
-                sql.append(", ");
-            }
-        }
-        sql.append(")");
-
-        try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement(sql.toString())) {
-            i = 0;
-            for (String mac : macs) {
-                ps.setString(++i, mac);
-            }
-            try (ResultSet rs = ps.executeQuery()) {
-                rs.next();
-                if (rs.getInt(1) > 0) {
-                    ret = true;
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return ret;
     }
 
     public int finishLogin() {
@@ -365,20 +261,7 @@ public class Client extends ChannelInboundHandlerAdapter {
     }
 
     public boolean checkPin(String other) {
-        if (!YamlConfig.config.server.ENABLE_PIN) {
-            return true;
-        }
-
-        pinattempt++;
-        if (pinattempt > 5) {
-            SessionCoordinator.getInstance().closeSession(this, false);
-        }
-        if (pin.equals(other)) {
-            pinattempt = 0;
-            LoginBypassCoordinator.getInstance().registerLoginBypassEntry(hwid, accId, false);
-            return true;
-        }
-        return false;
+        return true;
     }
 
     public void setPic(String pic) {
@@ -395,23 +278,6 @@ public class Client extends ChannelInboundHandlerAdapter {
 
     public String getPic() {
         return pic;
-    }
-
-    public boolean checkPic(String other) {
-        if (!YamlConfig.config.server.ENABLE_PIC) {
-            return true;
-        }
-
-        picattempt++;
-        if (picattempt > 5) {
-            SessionCoordinator.getInstance().closeSession(this, false);
-        }
-        if (pic.equals(other)) {    // thanks ryantpayton (HeavenClient) for noticing null pics being checked here
-            picattempt = 0;
-            LoginBypassCoordinator.getInstance().registerLoginBypassEntry(hwid, accId, true);
-            return true;
-        }
-        return false;
     }
 
     public int login(String login, String pwd, Hwid hwid) {
@@ -454,10 +320,7 @@ public class Client extends ChannelInboundHandlerAdapter {
                         loggedIn = false;
                         loginok = 7;
                     } else if (passhash.charAt(0) == '$' && passhash.charAt(1) == '2' && BCrypt.checkpw(pwd, passhash)) {
-                        loginok = (tos == 0) ? 23 : 0;
-                    } else if (pwd.equals(passhash) || checkHash(passhash, "SHA-1", pwd) || checkHash(passhash, "SHA-512", pwd)) {
-                        // thanks GabrielSin for detecting some no-bcrypt inconsistencies here
-                        loginok = (tos == 0) ? (!YamlConfig.config.server.BCRYPT_MIGRATION ? 23 : -23) : (!YamlConfig.config.server.BCRYPT_MIGRATION ? 0 : -10); // migrate to bcrypt
+                        loginok = tos == 0 ? 23 : 0;
                     } else {
                         loggedIn = false;
                         loginok = 4;
@@ -470,70 +333,7 @@ public class Client extends ChannelInboundHandlerAdapter {
             e.printStackTrace();
         }
 
-        if (loginok == 0 || loginok == 4) {
-            AntiMulticlientResult res = SessionCoordinator.getInstance().attemptLoginSession(this, hwid, accId, loginok == 4);
-
-            switch (res) {
-                case SUCCESS:
-                    if (loginok == 0) {
-                        loginattempt = 0;
-                    }
-
-                    return loginok;
-
-                case REMOTE_LOGGEDIN:
-                    return 17;
-
-                case REMOTE_REACHED_LIMIT:
-                    return 13;
-
-                case REMOTE_PROCESSING:
-                    return 10;
-
-                case MANY_ACCOUNT_ATTEMPTS:
-                    return 16;
-
-                default:
-                    return 8;
-            }
-        } else {
-            return loginok;
-        }
-    }
-
-    public void updateHwid(Hwid hwid) {
-        this.hwid = hwid;
-
-        try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("UPDATE accounts SET hwid = ? WHERE id = ?")) {
-            ps.setString(1, hwid.hwid());
-            ps.setInt(2, accId);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void updateMacs(String macData) {
-        macs.addAll(Arrays.asList(macData.split(", ")));
-        StringBuilder newMacData = new StringBuilder();
-        Iterator<String> iter = macs.iterator();
-        while (iter.hasNext()) {
-            String cur = iter.next();
-            newMacData.append(cur);
-            if (iter.hasNext()) {
-                newMacData.append(", ");
-            }
-        }
-
-        try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("UPDATE accounts SET macs = ? WHERE id = ?")) {
-            ps.setString(1, newMacData.toString());
-            ps.setInt(2, accId);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        return loginok;
     }
 
     public void setAccID(int id) {
@@ -650,39 +450,18 @@ public class Client extends ChannelInboundHandlerAdapter {
             if (!Server.getInstance().hasCharacteridInTransition(this)) {
                 updateLoginState(Client.LOGIN_NOTLOGGEDIN);
             }
-
-            engines = null;
         }
     }
 
     private void clear() {
-        Server.getInstance().unregisterLoginState(this);
-
         this.accountName = null;
-        this.macs = null;
         this.hwid = null;
         this.birthday = null;
-        this.engines = null;
         this.player = null;
-    }
-
-    public void setCharacterOnSessionTransitionState(int cid) {
-        this.updateLoginState(Client.LOGIN_SERVER_TRANSITION);
-        this.inTransition = true;
-        Server.getInstance().setCharacteridInTransition(this, cid);
     }
 
     public int getChannel() {
         return channel;
-    }
-
-    public World getWorldServer() {
-        return Server.getInstance().getWorld(world);
-    }
-
-    public boolean deleteCharacter(int cid, int senderAccId) {
-        // TODO: Implement again
-        return false;
     }
 
     public String getAccountName() {
@@ -746,81 +525,12 @@ public class Client extends ChannelInboundHandlerAdapter {
         return disconnect;
     }
 
-    public void checkChar(int accid) {
-        // TODO: Implement again
-//        if (!YamlConfig.config.server.USE_CHARACTER_ACCOUNT_CHECK) {
-//            return;
-//        }
-//
-//        for (World w : Server.getInstance().getWorlds()) {
-//            for (Character chr : w.getPlayerStorage().getAllCharacters()) {
-//                if (accid == chr.getAccountID()) {
-//                    log.warn("Chr {} has been removed from world {}. Possible Dupe attempt.", chr.getName(), GameConstants.WORLD_NAMES[w.getId()]);
-//                    chr.getClient().forceDisconnect();
-//                    w.getPlayerStorage().removePlayer(chr.getId());
-//                }
-//            }
-//        }
-    }
-
-    public void lockClient() {
-        lock.lock();
-    }
-
-    public void unlockClient() {
-        lock.unlock();
-    }
-
-    public boolean tryacquireClient() {
-        if (actionsSemaphore.tryAcquire()) {
-            lockClient();
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    public void releaseClient() {
-        unlockClient();
-        actionsSemaphore.release();
-    }
-
-    private static boolean checkHash(String hash, String type, String password) {
-        try {
-            MessageDigest digester = MessageDigest.getInstance(type);
-            digester.update(password.getBytes(StandardCharsets.UTF_8), 0, password.length());
-            return HexTool.toHexString(digester.digest()).replace(" ", "").toLowerCase().equals(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Encoding the string failed", e);
-        }
-    }
-
     public short getAvailableCharacterSlots() {
-        return (short) Math.max(0, characterSlots - Server.getInstance().getAccountCharacterCount(accId));
-    }
-
-    public short getAvailableCharacterWorldSlots() {
-        return (short) Math.max(0, characterSlots - Server.getInstance().getAccountWorldCharacterCount(accId, world));
+        return (short) Math.max(0, this.characterSlots);
     }
 
     public short getCharacterSlots() {
-        return characterSlots;
-    }
-
-    public final byte getGReason() {
-        try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT `greason` FROM `accounts` WHERE id = ?")) {
-            ps.setInt(1, accId);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getByte("greason");
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return 0;
+        return this.characterSlots;
     }
 
     public byte getGender() {
@@ -851,22 +561,5 @@ public class Client extends ChannelInboundHandlerAdapter {
 
     public long getSessionId() {
         return this.sessionId;
-    }
-
-    public boolean canRequestCharlist() {
-        return lastNpcClick + 877 < Server.getInstance().getCurrentTime();
-    }
-
-    public void setClickedNPC() {
-        lastNpcClick = Server.getInstance().getCurrentTime();
-    }
-
-    public int getVisibleWorlds() {
-        return visibleWorlds;
-    }
-
-    public void requestedServerlist(int worlds) {
-        visibleWorlds = worlds;
-        setClickedNPC();
     }
 }

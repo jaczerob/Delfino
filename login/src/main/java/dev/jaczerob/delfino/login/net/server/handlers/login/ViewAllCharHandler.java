@@ -23,7 +23,6 @@ package dev.jaczerob.delfino.login.net.server.handlers.login;
 
 import dev.jaczerob.delfino.grpc.proto.character.Character;
 import dev.jaczerob.delfino.login.client.Client;
-import dev.jaczerob.delfino.login.config.YamlConfig;
 import dev.jaczerob.delfino.login.net.AbstractPacketHandler;
 import dev.jaczerob.delfino.login.net.opcodes.RecvOpcode;
 import dev.jaczerob.delfino.login.net.packet.InPacket;
@@ -47,12 +46,7 @@ public final class ViewAllCharHandler extends AbstractPacketHandler {
     }
 
     @Override
-    public final void handlePacket(final InPacket p, final Client c) {
-        if (!c.canRequestCharlist()) {
-            c.sendPacket(PacketCreator.showAllCharacter(0, 0));
-            return;
-        }
-
+    public void handlePacket(final InPacket p, final Client c) {
         final var characters = Server.getInstance().loadCharacters(c.getAccID());
         final var worldCharacters = new TreeMap<Integer, List<Character>>();
         worldCharacters.put(0, characters);
@@ -64,9 +58,8 @@ public final class ViewAllCharHandler extends AbstractPacketHandler {
         final var totalChrs = countTotalChrs(worldCharactersFormatted);
         c.sendPacket(PacketCreator.showAllCharacter(totalWorlds, totalChrs));
 
-        final boolean usePic = YamlConfig.config.server.ENABLE_PIC;
         worldCharactersFormatted.forEach((worldId, chrs) ->
-                c.sendPacket(PacketCreator.showAllCharacterInfo(worldId, chrs, usePic))
+                c.sendPacket(PacketCreator.showAllCharacterInfo(worldId, chrs, false))
         );
     }
 

@@ -59,6 +59,6 @@ public final class CharlistRequestHandler extends AbstractPacketHandler {
 
         c.setWorld(worldIndex);
         c.setChannel(channelIndex);
-        c.sendCharList(worldIndex);
+        c.sendPacket(PacketCreator.getCharList(c, 0));
     }
 }

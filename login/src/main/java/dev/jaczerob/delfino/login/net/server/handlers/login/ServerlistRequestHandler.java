@@ -56,10 +56,8 @@ public final class ServerlistRequestHandler extends AbstractPacketHandler {
             worlds = List.of();
         }
 
-        c.requestedServerlist(worlds.size());
-
         for (final var world : worlds) {
-            c.sendPacket(PacketCreator.getServerList(world.getId(), world.getName(), world.getFlag(), world.getEventMessage(), world.getChannelsList()));
+            c.sendPacket(PacketCreator.getServerList(world.getId(), world.getName(), world.getFlag(), world.getMessages().getEvent(), world.getChannelsList()));
         }
 
         c.sendPacket(PacketCreator.getEndOfServerList());

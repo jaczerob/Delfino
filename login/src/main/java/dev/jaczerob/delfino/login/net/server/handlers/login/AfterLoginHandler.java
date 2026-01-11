@@ -37,7 +37,7 @@ public final class AfterLoginHandler extends AbstractPacketHandler {
     }
 
     @Override
-    public final void handlePacket(final InPacket p, final Client c) {
+    public void handlePacket(final InPacket p, final Client c) {
         byte c2 = p.readByte();
         byte c3 = 5;
         if (p.available() > 0) {

@@ -41,7 +41,7 @@ public final class RelogRequestHandler extends AbstractPacketHandler {
     }
 
     @Override
-    public final void handlePacket(final InPacket p, final Client c) {
+    public void handlePacket(final InPacket p, final Client c) {
         c.sendPacket(PacketCreator.getRelogResponse());
     }
 }
