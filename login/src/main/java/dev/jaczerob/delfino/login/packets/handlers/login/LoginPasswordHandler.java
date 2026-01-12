@@ -4,10 +4,12 @@ import dev.jaczerob.delfino.grpc.proto.account.Account;
 import dev.jaczerob.delfino.grpc.proto.account.AccountRequest;
 import dev.jaczerob.delfino.grpc.proto.account.AccountServiceGrpc;
 import dev.jaczerob.delfino.login.client.LoginClient;
+import dev.jaczerob.delfino.login.coordinators.SessionCoordinator;
 import dev.jaczerob.delfino.login.packets.AbstractPacketHandler;
 import dev.jaczerob.delfino.login.tools.LoginPacketCreator;
 import dev.jaczerob.delfino.network.opcodes.RecvOpcode;
 import dev.jaczerob.delfino.network.packets.InPacket;
+import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -21,7 +23,12 @@ public class LoginPasswordHandler extends AbstractPacketHandler {
 
     private final AccountServiceGrpc.AccountServiceBlockingV2Stub accountService;
 
-    public LoginPasswordHandler(final AccountServiceGrpc.AccountServiceBlockingV2Stub accountService) {
+    public LoginPasswordHandler(
+            final SessionCoordinator sessionCoordinator,
+            final LoginPacketCreator loginPacketCreator,
+            final AccountServiceGrpc.AccountServiceBlockingV2Stub accountService
+    ) {
+        super(sessionCoordinator, loginPacketCreator);
         this.accountService = accountService;
     }
 
@@ -32,15 +39,15 @@ public class LoginPasswordHandler extends AbstractPacketHandler {
 
     @Override
     public boolean validateState(final LoginClient client) {
-        return !client.isLoggedIn();
+        return this.sessionCoordinator.getLoggedInUserStatus(client) != dev.jaczerob.delfino.login.client.LoginStatus.LOGGED_IN;
     }
 
     @Override
-    public void handlePacket(final InPacket packet, final LoginClient client) {
+    public void handlePacket(final InPacket packet, final LoginClient client, final ChannelHandlerContext context) {
         final var remoteHost = client.getRemoteAddress();
         if (remoteHost.contentEquals("null")) {
             this.log.warn("Client has null remote address, rejecting login attempt");
-            client.sendPacket(LoginPacketCreator.getInstance().getLoginFailed(14));
+            context.writeAndFlush(this.loginPacketCreator.getLoginFailed(14));
             return;
         }
 
@@ -50,25 +57,20 @@ public class LoginPasswordHandler extends AbstractPacketHandler {
             account = this.accountService.getAccount(AccountRequest.newBuilder().setUsername(payload.username()).build()).getAccount();
         } catch (final Exception exc) {
             log.error("Error retrieving account for username {}", payload.username(), exc);
-            client.sendPacket(LoginPacketCreator.getInstance().getLoginFailed(5));
+            context.writeAndFlush(this.loginPacketCreator.getLoginFailed(5));
             return;
         }
 
         final var loginStatus = this.login(account, payload.password());
 
         if (loginStatus != LoginStatus.SUCCESS) {
-            client.sendPacket(LoginPacketCreator.getInstance().getLoginFailed(loginStatus.code()));
+            context.writeAndFlush(this.loginPacketCreator.getLoginFailed(loginStatus.code()));
             return;
         }
-        
+
         client.setAccount(account);
-
-        if (client.finishLogin() != 0) {
-            client.sendPacket(LoginPacketCreator.getInstance().getLoginFailed(LoginStatus.FAILED_TO_LOGIN.code()));
-            return;
-        }
-
-        client.sendPacket(LoginPacketCreator.getInstance().getAuthSuccess(client));
+        this.sessionCoordinator.login(client);
+        context.writeAndFlush(this.loginPacketCreator.getAuthSuccess(client));
     }
 
     private LoginStatus login(final Account account, final String password) {

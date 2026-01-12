@@ -22,24 +22,29 @@
 package dev.jaczerob.delfino.login.packets.handlers.login;
 
 import dev.jaczerob.delfino.login.client.LoginClient;
+import dev.jaczerob.delfino.login.coordinators.SessionCoordinator;
 import dev.jaczerob.delfino.login.packets.AbstractPacketHandler;
 import dev.jaczerob.delfino.login.tools.LoginPacketCreator;
 import dev.jaczerob.delfino.network.opcodes.RecvOpcode;
 import dev.jaczerob.delfino.network.packets.InPacket;
+import io.netty.channel.ChannelHandlerContext;
 import org.springframework.stereotype.Component;
 
 @Component
 public final class CheckCharNameHandler extends AbstractPacketHandler {
+    public CheckCharNameHandler(SessionCoordinator sessionCoordinator, LoginPacketCreator loginPacketCreator) {
+        super(sessionCoordinator, loginPacketCreator);
+    }
+
     @Override
     public RecvOpcode getOpcode() {
         return RecvOpcode.CHECK_CHAR_NAME;
     }
 
     @Override
-    public void handlePacket(final InPacket p, final LoginClient c) {
-        String name = p.readString();
+    public void handlePacket(final InPacket packet, final LoginClient client, final ChannelHandlerContext context) {
+        final var name = packet.readString();
         // TODO: implement character name check
-//        c.sendPacket(PacketCreator.charNameResponse(name, !Character.canCreateChar(name)));
-        c.sendPacket(LoginPacketCreator.getInstance().charNameResponse(name, false));
+        context.writeAndFlush(this.loginPacketCreator.charNameResponse(name, false));
     }
 }

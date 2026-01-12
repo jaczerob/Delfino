@@ -2,21 +2,23 @@ package dev.jaczerob.delfino.login.packets.handlers.login;
 
 import dev.jaczerob.delfino.grpc.proto.character.Character;
 import dev.jaczerob.delfino.login.client.LoginClient;
+import dev.jaczerob.delfino.login.coordinators.SessionCoordinator;
 import dev.jaczerob.delfino.login.packets.AbstractPacketHandler;
 import dev.jaczerob.delfino.login.tools.LoginPacketCreator;
 import dev.jaczerob.delfino.network.opcodes.RecvOpcode;
 import dev.jaczerob.delfino.network.packets.InPacket;
+import io.netty.channel.ChannelHandlerContext;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.*;
 
 @Component
 public final class ViewAllCharHandler extends AbstractPacketHandler {
     private static final int CHARACTER_LIMIT = 60;
+
+    public ViewAllCharHandler(SessionCoordinator sessionCoordinator, LoginPacketCreator loginPacketCreator) {
+        super(sessionCoordinator, loginPacketCreator);
+    }
 
     @Override
     public RecvOpcode getOpcode() {
@@ -24,7 +26,7 @@ public final class ViewAllCharHandler extends AbstractPacketHandler {
     }
 
     @Override
-    public void handlePacket(final InPacket packet, final LoginClient client) {
+    public void handlePacket(final InPacket packet, final LoginClient client, final ChannelHandlerContext context) {
         final var worldCharacters = new TreeMap<Integer, List<Character>>();
         worldCharacters.put(0, client.getAccount().getCharactersList());
 
@@ -33,10 +35,10 @@ public final class ViewAllCharHandler extends AbstractPacketHandler {
 
         final var totalWorlds = worldCharactersFormatted.size();
         final var totalChrs = countTotalChrs(worldCharactersFormatted);
-        client.sendPacket(LoginPacketCreator.getInstance().showAllCharacter(totalWorlds, totalChrs));
+        context.writeAndFlush(this.loginPacketCreator.showAllCharacter(totalWorlds, totalChrs));
 
         worldCharactersFormatted.forEach((worldId, chrs) ->
-                client.sendPacket(LoginPacketCreator.getInstance().showAllCharacterInfo(worldId, chrs, false))
+                context.writeAndFlush(this.loginPacketCreator.showAllCharacterInfo(worldId, chrs, false))
         );
     }
 

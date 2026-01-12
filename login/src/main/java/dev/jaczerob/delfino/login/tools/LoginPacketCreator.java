@@ -41,17 +41,11 @@ public class LoginPacketCreator extends PacketCreator {
     private final static long ZERO_TIME = 94354848000000000L;//00 40 E0 FD 3B 37 4F 01
     private final static long PERMANENT = 150841440000000000L; // 00 C0 9B 90 7D E5 17 02
 
-    private static LoginPacketCreator INSTANCE;
 
     protected LoginPacketCreator(
             final DelfinoConfigurationProperties delfinoConfigurationProperties
     ) {
         super(delfinoConfigurationProperties.getServer().getVersion());
-        INSTANCE = this;
-    }
-
-    public static LoginPacketCreator getInstance() {
-        return INSTANCE;
     }
 
     public long getTime(long utcTimestamp) {
@@ -68,7 +62,7 @@ public class LoginPacketCreator extends PacketCreator {
         return utcTimestamp * 10000 + FT_UT_OFFSET;
     }
 
-    private static void addCharStats(OutPacket p, Character chr) {
+    private void addCharStats(OutPacket p, Character chr) {
         p.writeInt(chr.getId());
         p.writeFixedString(StringUtil.getRightPaddedStr(chr.getName(), '\0', 13));
         p.writeByte(chr.getGender());
@@ -100,7 +94,7 @@ public class LoginPacketCreator extends PacketCreator {
         p.writeInt(0);
     }
 
-    protected static void addCharLook(final OutPacket p, Character chr, boolean mega) {
+    private void addCharLook(final OutPacket p, Character chr, boolean mega) {
         p.writeByte(chr.getGender());
         p.writeByte(chr.getSkinColor()); // skin color
         p.writeInt(chr.getFace()); // face
@@ -109,7 +103,7 @@ public class LoginPacketCreator extends PacketCreator {
         addCharEquips(p, chr);
     }
 
-    private static void addCharEquips(final OutPacket p, final Character chr) {
+    private void addCharEquips(final OutPacket p, final Character chr) {
         for (final var equip : chr.getEquipmentList()) {
             p.writeByte(Math.abs(equip.getPosition()));
             p.writeInt(equip.getId());
@@ -130,7 +124,7 @@ public class LoginPacketCreator extends PacketCreator {
         }
     }
 
-    private static void addCharEntry(OutPacket p, Character chr, boolean viewall) {
+    private void addCharEntry(OutPacket p, Character chr, boolean viewall) {
         addCharStats(p, chr);
         addCharLook(p, chr, false);
         if (!viewall) {
@@ -205,7 +199,7 @@ public class LoginPacketCreator extends PacketCreator {
         return p;
     }
 
-    private static Packet pinOperation(byte mode) {
+    private Packet pinOperation(byte mode) {
         OutPacket p = OutPacket.create(SendOpcode.CHECK_PINCODE);
         p.writeByte(mode);
         return p;

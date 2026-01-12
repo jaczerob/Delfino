@@ -1,11 +1,13 @@
 package dev.jaczerob.delfino.login.packets.handlers.login;
 
 import dev.jaczerob.delfino.login.client.LoginClient;
+import dev.jaczerob.delfino.login.coordinators.SessionCoordinator;
 import dev.jaczerob.delfino.login.packets.AbstractPacketHandler;
 import dev.jaczerob.delfino.login.server.LoginServer;
 import dev.jaczerob.delfino.login.tools.LoginPacketCreator;
 import dev.jaczerob.delfino.network.opcodes.RecvOpcode;
 import dev.jaczerob.delfino.network.packets.InPacket;
+import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -19,7 +21,12 @@ public class CharSelectedWithPicHandler extends AbstractPacketHandler {
 
     private final LoginServer server;
 
-    public CharSelectedWithPicHandler(final LoginServer server) {
+    public CharSelectedWithPicHandler(
+            final LoginServer server,
+            final SessionCoordinator sessionCoordinator,
+            final LoginPacketCreator loginPacketCreator
+    ) {
+        super(sessionCoordinator, loginPacketCreator);
         this.server = server;
     }
 
@@ -29,20 +36,25 @@ public class CharSelectedWithPicHandler extends AbstractPacketHandler {
     }
 
     @Override
-    public void handlePacket(final InPacket p, final LoginClient c) {
-        p.readString();
-        final var charId = p.readInt();
-        p.readString();
-        p.readString();
+    public void handlePacket(final InPacket packet, final LoginClient client, final ChannelHandlerContext context) {
+        packet.readString();
+        final var charId = packet.readInt();
+        packet.readString();
+        packet.readString();
+
+        client.getAccount().getCharactersList().stream()
+                .filter(chr -> chr.getId() == charId)
+                .findFirst()
+                .ifPresent(client::setSelectedCharacter);
 
         final var socket = this.server.getInetSocket();
         if (socket == null) {
-            c.sendPacket(LoginPacketCreator.getInstance().getAfterLoginError(10));
+            context.writeAndFlush(this.loginPacketCreator.getAfterLoginError(10));
             return;
         }
 
         try {
-            c.sendPacket(LoginPacketCreator.getInstance().getServerIP(InetAddress.getByName(socket[0]), Integer.parseInt(socket[1]), charId));
+            context.writeAndFlush(this.loginPacketCreator.getServerIP(InetAddress.getByName(socket[0]), Integer.parseInt(socket[1]), charId));
         } catch (final UnknownHostException exc) {
             log.error("Failed to resolve server address", exc);
         }

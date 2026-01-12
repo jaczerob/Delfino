@@ -23,15 +23,17 @@ package dev.jaczerob.delfino.login.packets.handlers.login;
 
 import dev.jaczerob.delfino.grpc.proto.account.AccountServiceGrpc;
 import dev.jaczerob.delfino.login.client.LoginClient;
+import dev.jaczerob.delfino.login.coordinators.SessionCoordinator;
 import dev.jaczerob.delfino.login.tools.LoginPacketCreator;
 import dev.jaczerob.delfino.network.opcodes.RecvOpcode;
 import dev.jaczerob.delfino.network.packets.InPacket;
+import io.netty.channel.ChannelHandlerContext;
 import org.springframework.stereotype.Component;
 
 @Component
 public final class GuestLoginHandler extends LoginPasswordHandler {
-    public GuestLoginHandler(final AccountServiceGrpc.AccountServiceBlockingV2Stub accountService) {
-        super(accountService);
+    public GuestLoginHandler(SessionCoordinator sessionCoordinator, LoginPacketCreator loginPacketCreator, AccountServiceGrpc.AccountServiceBlockingV2Stub accountService) {
+        super(sessionCoordinator, loginPacketCreator, accountService);
     }
 
     @Override
@@ -40,8 +42,8 @@ public final class GuestLoginHandler extends LoginPasswordHandler {
     }
 
     @Override
-    public void handlePacket(final InPacket packet, final LoginClient client) {
-        client.sendPacket(LoginPacketCreator.getInstance().sendGuestTOS());
-        super.handlePacket(packet, client);
+    public void handlePacket(final InPacket packet, final LoginClient client, final ChannelHandlerContext context) {
+        context.writeAndFlush(this.loginPacketCreator.sendGuestTOS());
+        super.handlePacket(packet, client, context);
     }
 }

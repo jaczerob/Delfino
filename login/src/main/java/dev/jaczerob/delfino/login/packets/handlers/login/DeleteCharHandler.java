@@ -22,24 +22,30 @@
 package dev.jaczerob.delfino.login.packets.handlers.login;
 
 import dev.jaczerob.delfino.login.client.LoginClient;
+import dev.jaczerob.delfino.login.coordinators.SessionCoordinator;
 import dev.jaczerob.delfino.login.packets.AbstractPacketHandler;
 import dev.jaczerob.delfino.login.tools.LoginPacketCreator;
 import dev.jaczerob.delfino.network.opcodes.RecvOpcode;
 import dev.jaczerob.delfino.network.packets.InPacket;
+import io.netty.channel.ChannelHandlerContext;
 import org.springframework.stereotype.Component;
 
 @Component
 public final class DeleteCharHandler extends AbstractPacketHandler {
+    public DeleteCharHandler(SessionCoordinator sessionCoordinator, LoginPacketCreator loginPacketCreator) {
+        super(sessionCoordinator, loginPacketCreator);
+    }
+
     @Override
     public RecvOpcode getOpcode() {
         return RecvOpcode.DELETE_CHAR;
     }
 
     @Override
-    public void handlePacket(final InPacket p, final LoginClient c) {
-        p.readString();
-        final var cid = p.readInt();
+    public void handlePacket(final InPacket packet, final LoginClient client, final ChannelHandlerContext context) {
+        packet.readString();
+        final var cid = packet.readInt();
         // TODO: implement character deletion
-        c.sendPacket(LoginPacketCreator.getInstance().deleteCharResponse(cid, 0));
+        context.writeAndFlush(this.loginPacketCreator.deleteCharResponse(cid, 0));
     }
 }

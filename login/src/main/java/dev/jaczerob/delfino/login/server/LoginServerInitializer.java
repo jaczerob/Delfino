@@ -12,19 +12,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 @Component
 public class LoginServerInitializer extends ServerChannelInitializer {
     private static final Logger log = LoggerFactory.getLogger(LoginServerInitializer.class);
 
-    private final AtomicLong sessionId = new AtomicLong(7777);
+    private final LoginPacketCreator loginPacketCreator;
+    private final PacketProcessor packetProcessor;
 
     public LoginServerInitializer(
             final OutPacketLogger sendPacketLogger,
             final InPacketLogger receivePacketLogger,
             final DelfinoConfigurationProperties delfinoConfigurationProperties,
-            final LoginPacketCreator loginPacketCreator
+            final LoginPacketCreator loginPacketCreator,
+            final PacketProcessor packetProcessor
     ) {
         super(
                 sendPacketLogger,
@@ -34,6 +34,9 @@ public class LoginServerInitializer extends ServerChannelInitializer {
                 loginPacketCreator,
                 delfinoConfigurationProperties.getServer().getVersion()
         );
+
+        this.loginPacketCreator = loginPacketCreator;
+        this.packetProcessor = packetProcessor;
     }
 
     @Override
@@ -41,11 +44,8 @@ public class LoginServerInitializer extends ServerChannelInitializer {
         final var clientIp = socketChannel.remoteAddress().getHostString();
         log.debug("Client connected to login server from {} ", clientIp);
 
-        final var packetProcessor = PacketProcessor.getLoginServerProcessor();
-        final var clientSessionId = this.sessionId.getAndIncrement();
-        final var remoteAddress = getRemoteAddress(socketChannel);
-        final var client = LoginClient.createLoginClient(clientSessionId, remoteAddress, packetProcessor);
-
+        final var remoteAddress = this.getRemoteAddress(socketChannel);
+        final var client = new LoginClient(remoteAddress, this.packetProcessor, this.loginPacketCreator);
         this.initPipeline(socketChannel, client);
     }
 }

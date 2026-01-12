@@ -20,8 +20,6 @@ services:
     ports:
       - "8484:8484"
       - "7575-7577:7575-7577"
-    volumes:
-      - ./config.yaml:/opt/server/config.yaml
     environment:
       DB_HOST: "delfino-db"
 
@@ -38,6 +36,13 @@ services:
       - "5432:5432"
     volumes:
       - delfino-db-volume:/data/postgres
+
+  delfino-cache:
+    image: valkey/valkey:latest
+    container_name: delfino-cache
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
 
 volumes:
   delfino-db-volume:
