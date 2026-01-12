@@ -23,7 +23,6 @@ package dev.jaczerob.delfino.login.tools;
 import dev.jaczerob.delfino.grpc.proto.character.Character;
 import dev.jaczerob.delfino.login.client.LoginClient;
 import dev.jaczerob.delfino.login.config.DelfinoConfigurationProperties;
-import dev.jaczerob.delfino.login.server.LoginServer;
 import dev.jaczerob.delfino.network.opcodes.SendOpcode;
 import dev.jaczerob.delfino.network.packets.ByteBufOutPacket;
 import dev.jaczerob.delfino.network.packets.OutPacket;
@@ -32,7 +31,6 @@ import dev.jaczerob.delfino.network.tools.PacketCreator;
 import org.springframework.stereotype.Component;
 
 import java.net.InetAddress;
-import java.util.Arrays;
 import java.util.List;
 import java.util.TimeZone;
 
@@ -181,24 +179,22 @@ public class LoginPacketCreator extends PacketCreator {
         return p;
     }
 
-    public Packet getAuthSuccess(LoginClient c) {
-        LoginServer.getInstance().loadAccountCharacters(c);
-
+    public Packet getAuthSuccess(final LoginClient client) {
         final OutPacket p = OutPacket.create(SendOpcode.LOGIN_STATUS);
         p.writeInt(0);
         p.writeShort(0);
-        p.writeInt(c.getAccId());
-        p.writeByte(c.getGender());
+        p.writeInt(client.getAccount().getId());
+        p.writeByte(0); // gender
 
         p.writeBool(false);    // thanks Steve(kaito1410) for pointing the GM account boolean here
         p.writeByte(0);  // Admin Byte. 0x80,0x40,0x20.. Rubbish.
         p.writeByte(0); // Country Code.
 
-        p.writeString(c.getAccountName());
+        p.writeString(client.getAccount().getName());
         p.writeByte(0);
 
         p.writeByte(0); // IsQuietBan
-        p.writeLong(0);//IsQuietBanTimeStamp
+        p.writeLong(0); //IsQuietBanTimeStamp
         p.writeLong(0); //CreationTimeStamp
 
         p.writeInt(1); // 1: Remove the "Select the world you want to play in"
@@ -292,11 +288,10 @@ public class LoginPacketCreator extends PacketCreator {
     }
 
     public Packet getCharList(LoginClient c, int status) {
-        // TODO: Load characters from RPC
         final var p = OutPacket.create(SendOpcode.CHARLIST);
         p.writeByte(status);
 
-        final var chars = LoginServer.getInstance().loadCharacters(c.getAccId());
+        final var chars = c.getAccount().getCharactersList();
         p.writeByte((byte) chars.size());
 
         for (final var chr : chars) {
@@ -305,8 +300,7 @@ public class LoginPacketCreator extends PacketCreator {
 
 
         p.writeByte(1);
-        p.writeInt(c.getCharacterSlots());
-        System.out.println(Arrays.toString(p.getBytes()));
+        p.writeInt(3 - c.getAccount().getCharactersCount());
         return p;
     }
 
@@ -347,7 +341,7 @@ public class LoginPacketCreator extends PacketCreator {
     public Packet sendRecommended(List<Pair<Integer, String>> worlds) {
         final OutPacket p = OutPacket.create(SendOpcode.RECOMMENDED_WORLD_MESSAGE);
         p.writeByte(worlds.size());//size
-        for (Pair<Integer, String> world : worlds) {
+        for (final var world : worlds) {
             p.writeInt(world.getLeft());
             p.writeString(world.getRight());
         }
@@ -355,7 +349,7 @@ public class LoginPacketCreator extends PacketCreator {
     }
 
     public Packet showAllCharacterInfo(int worldid, List<Character> chars, boolean usePic) {
-        final OutPacket p = OutPacket.create(SendOpcode.VIEW_ALL_CHAR);
+        final var p = OutPacket.create(SendOpcode.VIEW_ALL_CHAR);
         p.writeByte(0);
         p.writeByte(worldid);
         p.writeByte(chars.size());

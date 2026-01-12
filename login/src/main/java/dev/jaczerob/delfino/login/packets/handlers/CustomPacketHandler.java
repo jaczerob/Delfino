@@ -16,7 +16,7 @@ public class CustomPacketHandler extends AbstractPacketHandler {
 
     @Override
     public void handlePacket(final InPacket p, final LoginClient c) {
-        if (p.available() > 0 && c.getGmLevel() == 4) {
+        if (p.available() > 0 && c.getAccount().getGm() == 4) {
             c.sendPacket(LoginPacketCreator.getInstance().customPacket(p.readBytes(p.available())));
         }
     }

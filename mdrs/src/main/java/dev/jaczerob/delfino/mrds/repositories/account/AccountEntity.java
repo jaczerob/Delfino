@@ -12,7 +12,7 @@ import lombok.Setter;
 public class AccountEntity {
     @Id
     private int id;
-    private String username;
+    private String name;
     private String password;
     private String pic;
     private String pin;

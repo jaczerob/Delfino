@@ -1,5 +1,7 @@
 import "google/protobuf/empty.proto";
 
+import "character.proto";
+
 option java_multiple_files = true;
 option java_package = "dev.jaczerob.delfino.grpc.proto.account";
 option java_outer_classname = "AccountProto";
@@ -11,6 +13,7 @@ message Account {
   required string pic = 4;
   required string pin = 5;
   required int32 gm = 6;
+  repeated Character characters = 7;
 }
 
 message AccountRequest {

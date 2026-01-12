@@ -15,53 +15,56 @@ public class SessionCoordinator {
     private final Map<Integer, LoginClient> onlineClients = new HashMap<>();
 
     public void updateOnlineClient(final LoginClient loginClient) {
-        if (loginClient == null) {
+        if (loginClient == null || loginClient.getAccount() == null) {
             return;
         }
 
-        final var accountId = loginClient.getAccId();
+        final var accountId = loginClient.getAccount().getId();
         disconnectClientIfOnline(accountId);
         this.onlineClients.put(accountId, loginClient);
     }
 
     private void disconnectClientIfOnline(int accountId) {
-        LoginClient inGameLoginClient = onlineClients.get(accountId);
-        if (inGameLoginClient != null) {     // thanks MedicOP for finding out a loss of loggedin account uniqueness when using the CMS "Unstuck" feature
+        LoginClient inGameLoginClient = this.onlineClients.get(accountId);
+        if (inGameLoginClient != null) {
             inGameLoginClient.forceDisconnect();
         }
     }
 
     public void closeLoginSession(final LoginClient loginClient) {
-        if (loginClient == null) {
+        if (loginClient == null || loginClient.getAccount() == null) {
             return;
         }
 
+        final var accountId = loginClient.getAccount().getId();
         final var nibbleHwid = loginClient.getHwid();
+
         loginClient.setHwid(null);
         if (nibbleHwid != null) {
-            LoginClient loggedLoginClient = onlineClients.get(loginClient.getAccId());
+            final var loggedLoginClient = onlineClients.get(accountId);
             if (loggedLoginClient != null && loggedLoginClient.getSessionId() == loginClient.getSessionId()) {
-                onlineClients.remove(loginClient.getAccId());
+                onlineClients.remove(accountId);
             }
         }
     }
 
     public void closeSession(LoginClient loginClient, Boolean immediately) {
-        if (loginClient == null) {
+        if (loginClient == null || loginClient.getAccount() == null) {
             return;
         }
 
-        final HWID hwid = loginClient.getHwid();
+        final var accountId = loginClient.getAccount().getId();
+        final var hwid = loginClient.getHwid();
         loginClient.setHwid(null);
 
         final boolean isGameSession = hwid != null;
         if (isGameSession) {
-            onlineClients.remove(loginClient.getAccId());
+            onlineClients.remove(accountId);
         } else {
-            LoginClient loggedLoginClient = onlineClients.get(loginClient.getAccId());
+            LoginClient loggedLoginClient = onlineClients.get(accountId);
 
             if (loggedLoginClient != null && loggedLoginClient.getSessionId() == loginClient.getSessionId()) {
-                onlineClients.remove(loginClient.getAccId());
+                onlineClients.remove(accountId);
             }
         }
 

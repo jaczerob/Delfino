@@ -28,13 +28,7 @@ public final class ViewAllCharRegisterPicHandler extends AbstractPacketHandler {
 
     @Override
     public void handlePacket(final InPacket packet, final LoginClient client) {
-        packet.readByte();
-        int charId = packet.readInt();
-        packet.readInt();
-
-        packet.readString();
-        packet.readString();
-        packet.readString();
+        final var payload = ViewAllCharRegisterPicPayload.from(packet);
 
         final var socket = this.server.getInetSocket();
         if (socket == null) {
@@ -43,9 +37,23 @@ public final class ViewAllCharRegisterPicHandler extends AbstractPacketHandler {
         }
 
         try {
-            client.sendPacket(LoginPacketCreator.getInstance().getServerIP(InetAddress.getByName(socket[0]), Integer.parseInt(socket[1]), charId));
+            client.sendPacket(LoginPacketCreator.getInstance().getServerIP(InetAddress.getByName(socket[0]), Integer.parseInt(socket[1]), payload.charId()));
         } catch (final UnknownHostException exc) {
             log.error("Failed to resolve server address", exc);
+        }
+    }
+
+    private record ViewAllCharRegisterPicPayload(int charId) {
+        public static ViewAllCharRegisterPicPayload from(final InPacket packet) {
+            packet.readByte();
+            final var charId = packet.readInt();
+            packet.readInt();
+
+            packet.readString();
+            packet.readString();
+            packet.readString();
+
+            return new ViewAllCharRegisterPicPayload(charId);
         }
     }
 }

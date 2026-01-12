@@ -23,7 +23,6 @@ package dev.jaczerob.delfino.login.packets.handlers.login;
 
 import dev.jaczerob.delfino.login.client.LoginClient;
 import dev.jaczerob.delfino.login.packets.AbstractPacketHandler;
-import dev.jaczerob.delfino.login.packets.coordinators.session.SessionCoordinator;
 import dev.jaczerob.delfino.login.tools.LoginPacketCreator;
 import dev.jaczerob.delfino.network.opcodes.RecvOpcode;
 import dev.jaczerob.delfino.network.packets.InPacket;
@@ -37,35 +36,8 @@ public final class AfterLoginHandler extends AbstractPacketHandler {
     }
 
     @Override
-    public void handlePacket(final InPacket p, final LoginClient c) {
-        byte c2 = p.readByte();
-        byte c3 = 5;
-        if (p.available() > 0) {
-            c3 = p.readByte();
-        }
-        if (c2 == 1 && c3 == 1) {
-            if (c.getPin() == null || c.getPin().equals("")) {
-                c.sendPacket(LoginPacketCreator.getInstance().registerPin());
-            } else {
-                c.sendPacket(LoginPacketCreator.getInstance().requestPin());
-            }
-        } else if (c2 == 1 && c3 == 0) {
-            String pin = p.readString();
-            if (c.checkPin(pin)) {
-                c.sendPacket(LoginPacketCreator.getInstance().pinAccepted());
-            } else {
-                c.sendPacket(LoginPacketCreator.getInstance().requestPinAfterFailure());
-            }
-        } else if (c2 == 2 && c3 == 0) {
-            String pin = p.readString();
-            if (c.checkPin(pin)) {
-                c.sendPacket(LoginPacketCreator.getInstance().registerPin());
-            } else {
-                c.sendPacket(LoginPacketCreator.getInstance().requestPinAfterFailure());
-            }
-        } else if (c2 == 0 && c3 == 5) {
-            SessionCoordinator.getInstance().closeSession(c, null);
-            c.updateLoginState(LoginClient.LOGIN_NOTLOGGEDIN);
-        }
+    public void handlePacket(final InPacket packet, final LoginClient client) {
+        // TODO: Validate PIN
+        client.sendPacket(LoginPacketCreator.getInstance().pinAccepted());
     }
 }

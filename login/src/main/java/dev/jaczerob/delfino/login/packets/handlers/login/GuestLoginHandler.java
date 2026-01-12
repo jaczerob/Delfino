@@ -22,7 +22,6 @@
 package dev.jaczerob.delfino.login.packets.handlers.login;
 
 import dev.jaczerob.delfino.grpc.proto.account.AccountServiceGrpc;
-import dev.jaczerob.delfino.grpc.proto.character.CharacterServiceGrpc;
 import dev.jaczerob.delfino.login.client.LoginClient;
 import dev.jaczerob.delfino.login.tools.LoginPacketCreator;
 import dev.jaczerob.delfino.network.opcodes.RecvOpcode;
@@ -31,11 +30,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 public final class GuestLoginHandler extends LoginPasswordHandler {
-    public GuestLoginHandler(
-            final AccountServiceGrpc.AccountServiceBlockingV2Stub accountService,
-            final CharacterServiceGrpc.CharacterServiceBlockingV2Stub characterService
-    ) {
-        super(accountService, characterService);
+    public GuestLoginHandler(final AccountServiceGrpc.AccountServiceBlockingV2Stub accountService) {
+        super(accountService);
     }
 
     @Override

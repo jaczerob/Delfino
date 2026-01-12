@@ -14,6 +14,10 @@
 
     <dependencies>
         <dependency>
+            <groupId>dev.jaczerob.delfino.common</groupId>
+            <artifactId>common</artifactId>
+        </dependency>
+        <dependency>
             <groupId>dev.jaczerob.delfino.grpc</groupId>
             <artifactId>grpc-proto</artifactId>
         </dependency>

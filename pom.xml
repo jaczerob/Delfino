@@ -15,6 +15,7 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>common</module>
         <module>network</module>
         <module>grpc-proto</module>
         <module>mdrs</module>
@@ -44,6 +45,11 @@
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>dev.jaczerob.delfino.common</groupId>
+                <artifactId>common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <dependency>
                 <groupId>dev.jaczerob.delfino.grpc</groupId>
                 <artifactId>grpc-proto</artifactId>

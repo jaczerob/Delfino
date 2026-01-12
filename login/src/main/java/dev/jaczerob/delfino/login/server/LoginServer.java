@@ -3,10 +3,6 @@ package dev.jaczerob.delfino.login.server;
 import com.google.protobuf.Empty;
 import dev.jaczerob.delfino.grpc.proto.World;
 import dev.jaczerob.delfino.grpc.proto.WorldServiceGrpc;
-import dev.jaczerob.delfino.grpc.proto.character.Character;
-import dev.jaczerob.delfino.grpc.proto.character.CharacterServiceGrpc;
-import dev.jaczerob.delfino.grpc.proto.character.CharactersRequest;
-import dev.jaczerob.delfino.login.client.LoginClient;
 import dev.jaczerob.delfino.login.tools.DatabaseConnection;
 import dev.jaczerob.delfino.network.server.AbstractServer;
 import io.grpc.StatusException;
@@ -21,7 +17,6 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.TimeZone;
 
@@ -35,19 +30,16 @@ public class LoginServer extends AbstractServer {
     private final List<World> worlds = new ArrayList<>();
     private final DatabaseConnection databaseConnection;
     private final WorldServiceGrpc.WorldServiceBlockingV2Stub worldServiceStub;
-    private final CharacterServiceGrpc.CharacterServiceBlockingV2Stub characterServiceStub;
 
     public LoginServer(
             final @Value("${server.port}") int port,
             final LoginServerInitializer loginServerInitializer,
             final DatabaseConnection databaseConnection,
-            final WorldServiceGrpc.WorldServiceBlockingV2Stub worldServiceStub,
-            final CharacterServiceGrpc.CharacterServiceBlockingV2Stub characterServiceStub
+            final WorldServiceGrpc.WorldServiceBlockingV2Stub worldServiceStub
     ) {
         super(port, loginServerInitializer);
         this.databaseConnection = databaseConnection;
         this.worldServiceStub = worldServiceStub;
-        this.characterServiceStub = characterServiceStub;
     }
 
     @PostConstruct
@@ -103,28 +95,6 @@ public class LoginServer extends AbstractServer {
         try (PreparedStatement ps = con.prepareStatement("UPDATE accounts SET loggedin = 0")) {
             ps.executeUpdate();
         }
-    }
-
-    public List<Character> loadCharacters(int accId) {
-        final var charactersRequest = CharactersRequest.newBuilder()
-                .setAccountId(accId)
-                .build();
-
-        try {
-            return this.characterServiceStub.getCharacters(charactersRequest).getCharactersList();
-        } catch (final StatusException exc) {
-            log.error("Failed to load characters for account id {} from character service", accId, exc);
-            return Collections.emptyList();
-        }
-    }
-
-    public void loadAccountCharacters(final LoginClient loginClient) {
-        final var gmLevel = this.loadCharacters(loginClient.getAccId()).stream()
-                .mapToInt(Character::getGmLevel)
-                .max()
-                .orElse(0);
-
-        loginClient.setGmLevel(gmLevel);
     }
 
     public static LoginServer getInstance() {

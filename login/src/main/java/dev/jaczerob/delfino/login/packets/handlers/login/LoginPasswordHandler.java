@@ -1,57 +1,28 @@
-/*
- This file is part of the OdinMS Maple Story Server
- Copyright (C) 2008 Patrick Huy <patrick.huy@frz.cc>
- Matthias Butz <matze@odinms.de>
- Jan Christian Meyer <vimes@odinms.de>
-
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU Affero General Public License as
- published by the Free Software Foundation version 3 as published by
- the Free Software Foundation. You may not use, modify or distribute
- this program under any other version of the GNU Affero General Public
- License.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU Affero General Public License for more details.
-
- You should have received a copy of the GNU Affero General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package dev.jaczerob.delfino.login.packets.handlers.login;
 
 import dev.jaczerob.delfino.grpc.proto.account.Account;
 import dev.jaczerob.delfino.grpc.proto.account.AccountRequest;
 import dev.jaczerob.delfino.grpc.proto.account.AccountServiceGrpc;
-import dev.jaczerob.delfino.grpc.proto.character.Character;
-import dev.jaczerob.delfino.grpc.proto.character.CharacterServiceGrpc;
-import dev.jaczerob.delfino.grpc.proto.character.CharactersRequest;
 import dev.jaczerob.delfino.login.client.LoginClient;
 import dev.jaczerob.delfino.login.packets.AbstractPacketHandler;
-import dev.jaczerob.delfino.login.packets.coordinators.session.HWID;
-import dev.jaczerob.delfino.login.tools.HexTool;
 import dev.jaczerob.delfino.login.tools.LoginPacketCreator;
 import dev.jaczerob.delfino.network.opcodes.RecvOpcode;
 import dev.jaczerob.delfino.network.packets.InPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 @Component
 public class LoginPasswordHandler extends AbstractPacketHandler {
     private final Logger log = LoggerFactory.getLogger(LoginPasswordHandler.class);
-    private final AccountServiceGrpc.AccountServiceBlockingV2Stub accountService;
-    private final CharacterServiceGrpc.CharacterServiceBlockingV2Stub characterService;
+    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    public LoginPasswordHandler(
-            final AccountServiceGrpc.AccountServiceBlockingV2Stub accountService,
-            final CharacterServiceGrpc.CharacterServiceBlockingV2Stub characterService
-    ) {
+    private final AccountServiceGrpc.AccountServiceBlockingV2Stub accountService;
+
+    public LoginPasswordHandler(final AccountServiceGrpc.AccountServiceBlockingV2Stub accountService) {
         this.accountService = accountService;
-        this.characterService = characterService;
     }
 
     @Override
@@ -68,41 +39,66 @@ public class LoginPasswordHandler extends AbstractPacketHandler {
     public void handlePacket(final InPacket packet, final LoginClient client) {
         final var remoteHost = client.getRemoteAddress();
         if (remoteHost.contentEquals("null")) {
+            this.log.warn("Client has null remote address, rejecting login attempt");
             client.sendPacket(LoginPacketCreator.getInstance().getLoginFailed(14));
             return;
         }
 
-        final var username = packet.readString();
+        final var payload = LoginPasswordPayload.fromPacket(packet);
         final Account account;
-        final List<Character> characters;
         try {
-            account = this.accountService.getAccount(AccountRequest.newBuilder().setUsername(username).build()).getAccount();
-            characters = this.characterService.getCharacters(CharactersRequest.newBuilder().setAccountId(account.getId()).build()).getCharactersList();
+            account = this.accountService.getAccount(AccountRequest.newBuilder().setUsername(payload.username()).build()).getAccount();
         } catch (final Exception exc) {
-            log.error("Error retrieving account for username {}", username, exc);
+            log.error("Error retrieving account for username {}", payload.username(), exc);
             client.sendPacket(LoginPacketCreator.getInstance().getLoginFailed(5));
             return;
         }
 
-        final var pwd = packet.readString();
+        final var loginStatus = this.login(account, payload.password());
+
+        if (loginStatus != LoginStatus.SUCCESS) {
+            client.sendPacket(LoginPacketCreator.getInstance().getLoginFailed(loginStatus.code()));
+            return;
+        }
+        
         client.setAccount(account);
-        client.setCharacters(characters);
-        client.setAccountName(username);
 
-        packet.skip(6);
-        final var hwidNibbles = packet.readBytes(4);
-        final var hwid = new HWID(HexTool.toCompactHexString(hwidNibbles));
-        final var loginok = client.login(username, pwd, hwid);
-
-        if (loginok != 0) {
-            client.sendPacket(LoginPacketCreator.getInstance().getLoginFailed(loginok));
+        if (client.finishLogin() != 0) {
+            client.sendPacket(LoginPacketCreator.getInstance().getLoginFailed(LoginStatus.FAILED_TO_LOGIN.code()));
             return;
         }
 
-        if (client.finishLogin() == 0) {
-            client.sendPacket(LoginPacketCreator.getInstance().getAuthSuccess(client));
-        } else {
-            client.sendPacket(LoginPacketCreator.getInstance().getLoginFailed(7));
+        client.sendPacket(LoginPacketCreator.getInstance().getAuthSuccess(client));
+    }
+
+    private LoginStatus login(final Account account, final String password) {
+        return this.passwordEncoder.matches(password, account.getPassword()) ? LoginStatus.SUCCESS : LoginStatus.INVALID_CREDENTIALS;
+    }
+
+    private enum LoginStatus {
+        SUCCESS(0),
+        INVALID_CREDENTIALS(4),
+        FAILED_TO_LOGIN(7);
+
+        private final int code;
+
+        LoginStatus(final int code) {
+            this.code = code;
+        }
+
+        public int code() {
+            return code;
+        }
+    }
+
+    private record LoginPasswordPayload(
+            String username,
+            String password
+    ) {
+        static LoginPasswordPayload fromPacket(final InPacket packet) {
+            final var username = packet.readString();
+            final var password = packet.readString();
+            return new LoginPasswordPayload(username, password);
         }
     }
 }

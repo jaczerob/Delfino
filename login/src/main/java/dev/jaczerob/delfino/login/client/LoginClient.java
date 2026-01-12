@@ -1,24 +1,3 @@
-/*
-This file is part of the OdinMS Maple Story Server
-Copyright (C) 2008 Patrick Huy <patrick.huy@frz.cc>
-Matthias Butz <matze@odinms.de>
-Jan Christian Meyer <vimes@odinms.de>
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as
-published by the Free Software Foundation version 3 as published by
-the Free Software Foundation. You may not use, modify or distribute
-this program under any other version of the GNU Affero General Public
-License.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package dev.jaczerob.delfino.login.client;
 
 import dev.jaczerob.delfino.grpc.proto.account.Account;
@@ -39,13 +18,14 @@ import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.sql.*;
-import java.util.List;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -58,30 +38,21 @@ public class LoginClient extends ChannelInboundHandlerAdapter {
     public static final int LOGIN_SERVER_TRANSITION = 1;
     public static final int LOGIN_LOGGEDIN = 2;
 
-    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-
     private final long sessionId;
     private final PacketProcessor packetProcessor;
 
     private Account account;
     private Character selectedCharacter;
-    private List<Character> characters;
+
     private HWID hwid;
     private String remoteAddress;
 
     private io.netty.channel.Channel ioChannel;
-    private int accId = -4;
     private boolean loggedIn = false;
     private boolean serverTransition = false;
-    private String accountName = null;
-    private int gmLevel;
-    private byte characterSlots = 3;
-    private byte gender = -1;
     private boolean disconnecting = false;
     private final Lock encoderLock = new ReentrantLock(true);
     private final Lock announcerLock = new ReentrantLock(true);
-    private String pin = "";
-    private String pic = "";
 
     public LoginClient(long sessionId, String remoteAddress, PacketProcessor packetProcessor) {
         this.sessionId = sessionId;
@@ -98,8 +69,8 @@ public class LoginClient extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelActive(ChannelHandlerContext ctx) {
-        final var channel = ctx.channel();
+    public void channelActive(final ChannelHandlerContext context) {
+        final var channel = context.channel();
         if (!LoginServer.getInstance().isOnline()) {
             channel.close();
             return;
@@ -111,7 +82,13 @@ public class LoginClient extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+    public void channelInactive(final ChannelHandlerContext context) {
+        log.info("Client inactive: {}", this.remoteAddress);
+        closeMapleSession();
+    }
+
+    @Override
+    public void channelRead(final ChannelHandlerContext context, final Object msg) throws Exception {
         log.debug("Channel read called for client {}", this.remoteAddress);
 
         if (!(msg instanceof InPacket packet)) {
@@ -119,7 +96,7 @@ public class LoginClient extends ChannelInboundHandlerAdapter {
             return;
         }
 
-        short opcode = packet.readShort();
+        final var opcode = packet.readShort();
         log.info("Packet received from {}: Opcode 0x{}", this.remoteAddress, opcode);
         final var handler = this.packetProcessor.getHandler(opcode);
 
@@ -137,15 +114,15 @@ public class LoginClient extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void userEventTriggered(ChannelHandlerContext ctx, Object event) {
+    public void userEventTriggered(ChannelHandlerContext context, Object event) {
         log.info("User event triggered for client {}: {}", this.remoteAddress, event);
-        if (event instanceof IdleStateEvent idleEvent) {
-            checkIfIdle();
+        if (event instanceof IdleStateEvent) {
+            ping();
         }
     }
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+    public void exceptionCaught(ChannelHandlerContext context, Throwable cause) throws Exception {
         log.warn("Exception caught by client {}", this.remoteAddress, cause);
 
         if (cause instanceof InvalidPacketHeaderException) {
@@ -153,12 +130,6 @@ public class LoginClient extends ChannelInboundHandlerAdapter {
         } else if (cause instanceof IOException) {
             closeMapleSession();
         }
-    }
-
-    @Override
-    public void channelInactive(ChannelHandlerContext ctx) {
-        log.info("Client inactive: {}", this.remoteAddress);
-        closeMapleSession();
     }
 
     private static String getRemoteAddress(io.netty.channel.Channel channel) {
@@ -203,65 +174,8 @@ public class LoginClient extends ChannelInboundHandlerAdapter {
         return 0;
     }
 
-    public void setPin(final String pin) {
-        try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("UPDATE accounts SET pin = ? WHERE id = ?")) {
-            ps.setString(1, pin);
-            ps.setInt(2, accId);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
     public boolean checkPin(final String other) {
         return true;
-    }
-
-    public int login(String login, String pwd, HWID hwid) {
-        int loginok = 5;
-
-        try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT id, password, gender, banned, characterslots FROM accounts WHERE name = ?")) {
-            ps.setString(1, login);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                accId = -2;
-                if (rs.next()) {
-                    accId = rs.getInt("id");
-                    if (accId <= 0) {
-                        log.warn("Tried to log in with accId {}", accId);
-                        return 15;
-                    }
-
-                    boolean banned = (rs.getByte("banned") == 1);
-                    this.gmLevel = 0;
-                    this.gender = rs.getByte("gender");
-                    this.characterSlots = rs.getByte("characterslots");
-                    String passhash = rs.getString("password");
-
-                    if (banned) {
-                        return 3;
-                    }
-
-                    if (this.getLoginState() > LOGIN_NOTLOGGEDIN) {
-                        this.loggedIn = false;
-                        return 7;
-                    } else if (this.passwordEncoder.matches(pwd, passhash)) {
-                        return 0;
-                    } else {
-                        this.loggedIn = false;
-                        return 4;
-                    }
-                } else {
-                    accId = -3;
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return loginok;
     }
 
     public void updateLoginState(int newState) {
@@ -271,23 +185,21 @@ public class LoginClient extends ChannelInboundHandlerAdapter {
 
         try (Connection con = DatabaseConnection.getStaticConnection();
              PreparedStatement ps = con.prepareStatement("UPDATE accounts SET loggedin = ?, lastlogin = ? WHERE id = ?")) {
-            // using sql currenttime here could potentially break the login, thanks Arnah for pointing this out
 
             ps.setInt(1, newState);
             ps.setTimestamp(2, new Timestamp(LoginServer.getInstance().getCurrentTime()));
-            ps.setInt(3, this.getAccId());
+            ps.setInt(3, this.getAccount().getId());
             ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
 
         if (newState == LOGIN_NOTLOGGEDIN) {
-            loggedIn = false;
-            serverTransition = false;
-            setAccId(0);
+            this.loggedIn = false;
+            this.serverTransition = false;
         } else {
-            serverTransition = (newState == LOGIN_SERVER_TRANSITION);
-            loggedIn = !serverTransition;
+            this.serverTransition = (newState == LOGIN_SERVER_TRANSITION);
+            this.loggedIn = !this.serverTransition;
         }
     }
 
@@ -295,20 +207,18 @@ public class LoginClient extends ChannelInboundHandlerAdapter {
         try (Connection con = DatabaseConnection.getStaticConnection()) {
             int state;
             try (PreparedStatement ps = con.prepareStatement("SELECT loggedin, lastlogin FROM accounts WHERE id = ?")) {
-                ps.setInt(1, getAccId());
+                ps.setInt(1, this.account.getId());
 
                 try (ResultSet rs = ps.executeQuery()) {
                     if (!rs.next()) {
-                        throw new RuntimeException("getLoginState - Client AccID: " + getAccId());
+                        throw new RuntimeException("getLoginState - Client AccID: " + this.getAccount().getId());
                     }
 
                     state = rs.getInt("loggedin");
                     if (state == LOGIN_SERVER_TRANSITION) {
                         if (rs.getTimestamp("lastlogin").getTime() + 30000 < LoginServer.getInstance().getCurrentTime()) {
-                            int accountId = accId;
                             state = LOGIN_NOTLOGGEDIN;
-                            updateLoginState(LoginClient.LOGIN_NOTLOGGEDIN);   // ACCID = 0, issue found thanks to Tochi & K u ssss o & Thora & Omo Oppa
-                            this.setAccId(accountId);
+                            updateLoginState(LoginClient.LOGIN_NOTLOGGEDIN);
                         }
                     }
                 }
@@ -317,7 +227,7 @@ public class LoginClient extends ChannelInboundHandlerAdapter {
                 loggedIn = true;
             } else if (state == LOGIN_SERVER_TRANSITION) {
                 try (PreparedStatement ps2 = con.prepareStatement("UPDATE accounts SET loggedin = 0 WHERE id = ?")) {
-                    ps2.setInt(1, getAccId());
+                    ps2.setInt(1, this.getAccount().getId());
                     ps2.executeUpdate();
                 }
             } else {
@@ -355,57 +265,15 @@ public class LoginClient extends ChannelInboundHandlerAdapter {
         this.updateLoginState(LoginClient.LOGIN_NOTLOGGEDIN);
     }
 
-    public void checkIfIdle() {
+    public void ping() {
         sendPacket(LoginPacketCreator.getInstance().getPing());
     }
 
     public boolean acceptToS() {
-        if (accountName == null) {
-            return true;
-        }
-
-        boolean disconnect = false;
-        try (Connection con = DatabaseConnection.getStaticConnection()) {
-            try (PreparedStatement ps = con.prepareStatement("SELECT `tos` FROM accounts WHERE id = ?")) {
-                ps.setInt(1, accId);
-
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        if (rs.getByte("tos") == 1) {
-                            disconnect = true;
-                        }
-                    }
-                }
-            }
-
-            try (PreparedStatement ps = con.prepareStatement("UPDATE accounts SET tos = 1 WHERE id = ?")) {
-                ps.setInt(1, accId);
-                ps.executeUpdate();
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return disconnect;
+        return true;
     }
 
-    public short getCharacterSlots() {
-        return this.characterSlots;
-    }
-
-    public void setGender(byte m) {
-        this.gender = m;
-
-        try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("UPDATE accounts SET gender = ? WHERE id = ?")) {
-            ps.setByte(1, gender);
-            ps.setInt(2, accId);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void sendPacket(Packet packet) {
+    public void sendPacket(final Packet packet) {
         announcerLock.lock();
         try {
             ioChannel.writeAndFlush(packet);

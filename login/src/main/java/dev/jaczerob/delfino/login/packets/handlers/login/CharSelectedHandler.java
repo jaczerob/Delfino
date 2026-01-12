@@ -52,7 +52,7 @@ public final class CharSelectedHandler extends AbstractPacketHandler {
     @Override
     public void handlePacket(final InPacket packet, final LoginClient client) {
         final var charId = packet.readInt();
-        final var character = client.getCharacters().stream()
+        final var character = client.getAccount().getCharactersList().stream()
                 .filter(c -> c.getId() == charId)
                 .findFirst()
                 .orElse(null);

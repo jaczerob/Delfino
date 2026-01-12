@@ -2,7 +2,6 @@ package dev.jaczerob.delfino.login.packets.handlers.login;
 
 import dev.jaczerob.delfino.login.client.LoginClient;
 import dev.jaczerob.delfino.login.packets.AbstractPacketHandler;
-import dev.jaczerob.delfino.login.packets.coordinators.session.SessionCoordinator;
 import dev.jaczerob.delfino.login.server.LoginServer;
 import dev.jaczerob.delfino.login.tools.LoginPacketCreator;
 import dev.jaczerob.delfino.network.opcodes.RecvOpcode;
@@ -31,29 +30,23 @@ public final class RegisterPicHandler extends AbstractPacketHandler {
 
     @Override
     public void handlePacket(final InPacket p, final LoginClient c) {
+        // TODO: Re-implement registering PIC
         p.readByte();
         final var charId = p.readInt();
 
         p.readString();
         p.readString();
 
-        final var pic = p.readString();
-        if (c.getPic() == null || c.getPic().isEmpty()) {
-            c.setPic(pic);
+        final var socket = this.server.getInetSocket();
+        if (socket == null) {
+            c.sendPacket(LoginPacketCreator.getInstance().getAfterLoginError(10));
+            return;
+        }
 
-            final var socket = this.server.getInetSocket();
-            if (socket == null) {
-                c.sendPacket(LoginPacketCreator.getInstance().getAfterLoginError(10));
-                return;
-            }
-
-            try {
-                c.sendPacket(LoginPacketCreator.getInstance().getServerIP(InetAddress.getByName(socket[0]), Integer.parseInt(socket[1]), charId));
-            } catch (final UnknownHostException exc) {
-                log.error("Failed to resolve login server address", exc);
-            }
-        } else {
-            SessionCoordinator.getInstance().closeSession(c, true);
+        try {
+            c.sendPacket(LoginPacketCreator.getInstance().getServerIP(InetAddress.getByName(socket[0]), Integer.parseInt(socket[1]), charId));
+        } catch (final UnknownHostException exc) {
+            log.error("Failed to resolve login server address", exc);
         }
     }
 }

@@ -16,18 +16,13 @@ public class SetGenderHandler extends AbstractPacketHandler {
     }
 
     @Override
-    public void handlePacket(final InPacket p, final LoginClient c) {
-        if (c.getGender() != 10) {
-            return;
-        }
-
-        final var confirmed = p.readByte();
+    public void handlePacket(final InPacket packet, final LoginClient client) {
+        final var confirmed = packet.readByte();
         if (confirmed == 0x01) {
-            c.setGender(p.readByte());
-            c.sendPacket(LoginPacketCreator.getInstance().getAuthSuccess(c));
+            client.sendPacket(LoginPacketCreator.getInstance().getAuthSuccess(client));
         } else {
-            SessionCoordinator.getInstance().closeSession(c, null);
-            c.updateLoginState(LoginClient.LOGIN_NOTLOGGEDIN);
+            SessionCoordinator.getInstance().closeSession(client, null);
+            client.updateLoginState(LoginClient.LOGIN_NOTLOGGEDIN);
         }
     }
 }

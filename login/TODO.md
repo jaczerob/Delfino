@@ -10,6 +10,8 @@
 - [ ] Re-implement world capacity checks
 - [ ] Re-implement character deletion
 - [ ] Re-implement checking if account is already logged in
+- [ ] Re-implement character creation
+- [ ] Re-implement session management
 - [ ] Fix channel capacity showing full
 - [ ] Fix naked characters showing up in character list
 
