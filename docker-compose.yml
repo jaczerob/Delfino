@@ -29,6 +29,12 @@ services:
       - ./maplestory/config.yaml:/opt/server/config.yaml
       - ./maplestory/scripts:/opt/server/scripts
       - ./maplestory/wz:/opt/server/wz
+    environment:
+      - DB_HOST=delfino-db
+      - DB_PORT=5432
+      - DB_DATABASE=delfino
+      - DB_USERNAME=root
+      - DB_PASSWORD=delfino
 
   login:
     build:
