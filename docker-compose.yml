@@ -1,27 +1,56 @@
 services:
-  maplestory:
-    build: Dockerfile-maplestory
+  mdrs:
+    build:
+      context: .
+      dockerfile: ./mdrs/Dockerfile
     depends_on:
       - delfino-db
     ports:
-      - "8484:8484"
+      - "9090:9090"
+      - "9990:9990"
+    environment:
+      - SERVER_PORT=9990
+      - DB_HOST=delfino-db
+      - DB_PORT=5432
+      - DB_DATABASE=delfino
+      - DB_USERNAME=root
+      - DB_PASSWORD=delfino
+
+  maplestory:
+    build:
+      context: .
+      dockerfile: ./maplestory/Dockerfile
+    depends_on:
+      - delfino-db
+      - mdrs
+    ports:
       - "7575-7577:7575-7577"
     volumes:
-      - ./config.yaml:/opt/server/config.yaml
-      - ./scripts:/opt/server/scripts
-      - ./wz:/opt/server/wz
-    environment:
-      DB_HOST: "delfino-db"
+      - ./maplestory/config.yaml:/opt/server/config.yaml
+      - ./maplestory/scripts:/opt/server/scripts
+      - ./maplestory/wz:/opt/server/wz
 
   login:
-    build: Dockerfile-login
+    build:
+      context: .
+      dockerfile: ./login/Dockerfile
     depends_on:
       - delfino-db
+      - delfino-cache
+      - mdrs
     ports:
       - "8484:8484"
-      - "7575-7577:7575-7577"
     environment:
-      DB_HOST: "delfino-db"
+      - SERVER_PORT=8484
+      - DB_HOST=delfino-db
+      - DB_PORT=5432
+      - DB_DATABASE=delfino
+      - DB_USERNAME=root
+      - DB_PASSWORD=delfino
+      - MDRS_HOST=mdrs
+      - MDRS_PORT=9090
+      - REDIS_HOST=delfino-cache
+      - REDIS_PORT=6379
 
   delfino-db:
     image: postgres:latest

@@ -48,15 +48,11 @@ public final class PacketProcessor {
         this.packetHandlers.forEach(this::registerHandler);
     }
 
-    public static PacketProcessor getLoginServerProcessor() {
-        return getProcessor();
-    }
-
     public PacketHandler<LoginClient> getHandler(final short packetId) {
         return this.packetHandlerMap.get((int) packetId);
     }
 
-    public static PacketProcessor getProcessor() {
+    public static PacketProcessor getInstance() {
         return INSTANCE;
     }
 

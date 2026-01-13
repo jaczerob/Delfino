@@ -17,14 +17,12 @@ public class LoginServerInitializer extends ServerChannelInitializer {
     private static final Logger log = LoggerFactory.getLogger(LoginServerInitializer.class);
 
     private final LoginPacketCreator loginPacketCreator;
-    private final PacketProcessor packetProcessor;
 
     public LoginServerInitializer(
             final OutPacketLogger sendPacketLogger,
             final InPacketLogger receivePacketLogger,
             final DelfinoConfigurationProperties delfinoConfigurationProperties,
-            final LoginPacketCreator loginPacketCreator,
-            final PacketProcessor packetProcessor
+            final LoginPacketCreator loginPacketCreator
     ) {
         super(
                 sendPacketLogger,
@@ -36,7 +34,6 @@ public class LoginServerInitializer extends ServerChannelInitializer {
         );
 
         this.loginPacketCreator = loginPacketCreator;
-        this.packetProcessor = packetProcessor;
     }
 
     @Override
@@ -45,7 +42,7 @@ public class LoginServerInitializer extends ServerChannelInitializer {
         log.debug("Client connected to login server from {} ", clientIp);
 
         final var remoteAddress = this.getRemoteAddress(socketChannel);
-        final var client = new LoginClient(remoteAddress, this.packetProcessor, this.loginPacketCreator);
+        final var client = new LoginClient(remoteAddress, PacketProcessor.getInstance(), this.loginPacketCreator);
         this.initPipeline(socketChannel, client);
     }
 }

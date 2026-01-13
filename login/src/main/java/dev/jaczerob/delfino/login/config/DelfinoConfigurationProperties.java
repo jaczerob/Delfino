@@ -8,6 +8,13 @@ import lombok.Setter;
 public class DelfinoConfigurationProperties {
     private Server server = new Server();
     private Netty netty = new Netty();
+    private Mdrs mdrs = new Mdrs();
+
+    @Getter
+    @Setter
+    public static class Mdrs {
+        private String url = "";
+    }
 
     @Getter
     @Setter
