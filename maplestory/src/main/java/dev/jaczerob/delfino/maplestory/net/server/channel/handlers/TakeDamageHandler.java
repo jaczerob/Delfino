@@ -59,7 +59,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-public final class TakeDamageHandler extends AbstractPacketHandler {
+public class TakeDamageHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(TakeDamageHandler.class);
 
     @Override

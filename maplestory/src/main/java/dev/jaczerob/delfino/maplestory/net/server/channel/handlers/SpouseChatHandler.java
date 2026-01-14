@@ -28,7 +28,7 @@ import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
 import dev.jaczerob.delfino.maplestory.server.ChatLogger;
 import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
-public final class SpouseChatHandler extends AbstractPacketHandler {
+public class SpouseChatHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         p.readString();//recipient

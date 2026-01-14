@@ -189,19 +189,14 @@ import dev.jaczerob.delfino.maplestory.client.command.commands.gm6.EraseAllPNpcs
 import dev.jaczerob.delfino.maplestory.client.command.commands.gm6.GetAccCommand;
 import dev.jaczerob.delfino.maplestory.client.command.commands.gm6.MapPlayersCommand;
 import dev.jaczerob.delfino.maplestory.client.command.commands.gm6.SaveAllCommand;
-import dev.jaczerob.delfino.maplestory.client.command.commands.gm6.ServerAddChannelCommand;
-import dev.jaczerob.delfino.maplestory.client.command.commands.gm6.ServerAddWorldCommand;
-import dev.jaczerob.delfino.maplestory.client.command.commands.gm6.ServerRemoveChannelCommand;
-import dev.jaczerob.delfino.maplestory.client.command.commands.gm6.ServerRemoveWorldCommand;
 import dev.jaczerob.delfino.maplestory.client.command.commands.gm6.SetGmLevelCommand;
 import dev.jaczerob.delfino.maplestory.client.command.commands.gm6.ShutdownCommand;
 import dev.jaczerob.delfino.maplestory.client.command.commands.gm6.SpawnAllPNpcsCommand;
 import dev.jaczerob.delfino.maplestory.client.command.commands.gm6.SupplyRateCouponCommand;
-import dev.jaczerob.delfino.maplestory.client.command.commands.gm6.WarpWorldCommand;
 import dev.jaczerob.delfino.maplestory.constants.id.MapId;
+import dev.jaczerob.delfino.maplestory.tools.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import dev.jaczerob.delfino.maplestory.tools.Pair;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -542,7 +537,6 @@ public class CommandsExecutor {
         levelCommandsCursor = new Pair<>(new ArrayList<String>(), new ArrayList<String>());
 
         addCommand("setgmlevel", 6, SetGmLevelCommand.class);
-        addCommand("warpworld", 6, WarpWorldCommand.class);
         addCommand("saveall", 6, SaveAllCommand.class);
         addCommand("dcall", 6, DCAllCommand.class);
         addCommand("mapplayers", 6, MapPlayersCommand.class);
@@ -553,10 +547,6 @@ public class CommandsExecutor {
         addCommand("supplyratecoupon", 6, SupplyRateCouponCommand.class);
         addCommand("spawnallpnpcs", 6, SpawnAllPNpcsCommand.class);
         addCommand("eraseallpnpcs", 6, EraseAllPNpcsCommand.class);
-        addCommand("addchannel", 6, ServerAddChannelCommand.class);
-        addCommand("addworld", 6, ServerAddWorldCommand.class);
-        addCommand("removechannel", 6, ServerRemoveChannelCommand.class);
-        addCommand("removeworld", 6, ServerRemoveWorldCommand.class);
         addCommand("devtest", 6, DevtestCommand.class);
 
         commandsNameDesc.add(levelCommandsCursor);

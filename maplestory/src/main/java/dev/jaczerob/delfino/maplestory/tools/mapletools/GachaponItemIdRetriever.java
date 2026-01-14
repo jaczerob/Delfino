@@ -52,7 +52,7 @@ public class GachaponItemIdRetriever {
     }
 
     private static void loadHandbookUseNames() throws SQLException {
-        PreparedStatement ps = con.prepareStatement("SELECT * FROM `handbook` WHERE `id` >= 2040000 AND `id` < 2050000 ORDER BY `id` ASC;");
+        PreparedStatement ps = con.prepareStatement("SELECT * FROM handbook WHERE id >= 2040000 AND id < 2050000 ORDER BY id ASC;");
         ResultSet rs = ps.executeQuery();
 
         while (rs.next()) {
@@ -218,7 +218,7 @@ public class GachaponItemIdRetriever {
     private static void fetchLineOnMapleHandbook(String line, String rarity) throws SQLException {
         String str = "";
         if (!isUpgradeScroll(line)) {
-            PreparedStatement ps = con.prepareStatement("SELECT `id` FROM `handbook` WHERE `name` LIKE ? ORDER BY `id` ASC;");
+            PreparedStatement ps = con.prepareStatement("SELECT id FROM handbook WHERE name LIKE ? ORDER BY id ASC;");
             ps.setString(1, line);
 
             ResultSet rs = ps.executeQuery();

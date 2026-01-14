@@ -43,7 +43,7 @@ import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 import java.util.HashSet;
 import java.util.Set;
 
-public final class GuildOperationHandler extends AbstractPacketHandler {
+public class GuildOperationHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(GuildOperationHandler.class);
 
     private boolean isGuildNameAcceptable(String name) {

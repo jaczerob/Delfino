@@ -73,7 +73,7 @@ import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-public final class Channel {
+public class Channel {
     private static final Logger log = LoggerFactory.getLogger(Channel.class);
     private static final int BASE_PORT = 7575;
 

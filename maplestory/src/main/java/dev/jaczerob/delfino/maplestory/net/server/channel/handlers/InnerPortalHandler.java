@@ -28,7 +28,7 @@ import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
 /**
  * @author BubblesDev
  */
-public final class InnerPortalHandler extends AbstractPacketHandler {
+public class InnerPortalHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
     }

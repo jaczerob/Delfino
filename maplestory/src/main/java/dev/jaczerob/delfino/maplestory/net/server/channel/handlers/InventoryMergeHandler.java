@@ -34,7 +34,7 @@ import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
 import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
-public final class InventoryMergeHandler extends AbstractPacketHandler {
+public class InventoryMergeHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

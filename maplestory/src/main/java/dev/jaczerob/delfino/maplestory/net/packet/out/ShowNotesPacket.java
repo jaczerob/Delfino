@@ -9,7 +9,7 @@ import java.util.Objects;
 
 import static dev.jaczerob.delfino.maplestory.tools.PacketCreator.getTime;
 
-public final class ShowNotesPacket extends ByteBufOutPacket {
+public class ShowNotesPacket extends ByteBufOutPacket {
 
     public ShowNotesPacket(List<Note> notes) {
         super(SendOpcode.MEMO_RESULT);

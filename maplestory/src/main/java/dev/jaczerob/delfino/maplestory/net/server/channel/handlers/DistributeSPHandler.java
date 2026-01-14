@@ -26,7 +26,7 @@ import dev.jaczerob.delfino.maplestory.client.processor.stat.AssignSPProcessor;
 import dev.jaczerob.delfino.maplestory.net.AbstractPacketHandler;
 import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
 
-public final class DistributeSPHandler extends AbstractPacketHandler {
+public class DistributeSPHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         p.readInt();

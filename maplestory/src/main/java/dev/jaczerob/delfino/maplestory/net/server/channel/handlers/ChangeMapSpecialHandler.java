@@ -29,7 +29,7 @@ import dev.jaczerob.delfino.maplestory.server.Trade.TradeResult;
 import dev.jaczerob.delfino.maplestory.server.maps.Portal;
 import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
-public final class ChangeMapSpecialHandler extends AbstractPacketHandler {
+public class ChangeMapSpecialHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         p.readByte();

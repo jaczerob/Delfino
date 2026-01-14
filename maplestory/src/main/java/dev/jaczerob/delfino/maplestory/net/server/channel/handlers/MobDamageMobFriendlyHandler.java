@@ -35,7 +35,7 @@ import dev.jaczerob.delfino.maplestory.tools.Randomizer;
  * @author Xotic (XoticStory) & BubblesDev
  */
 
-public final class MobDamageMobFriendlyHandler extends AbstractPacketHandler {
+public class MobDamageMobFriendlyHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         int attacker = p.readInt();
@@ -53,29 +53,29 @@ public final class MobDamageMobFriendlyHandler extends AbstractPacketHandler {
 
         if (monster.getHp() - damage < 1) {     // friendly dies
             switch (monster.getId()) {
-            case MobId.WATCH_HOG:
-                map.broadcastMessage(PacketCreator.serverNotice(6, "The Watch Hog has been injured by the aliens. Better luck next time..."));
-                break;
-            case MobId.MOON_BUNNY: //moon bunny
-                map.broadcastMessage(PacketCreator.serverNotice(6, "The Moon Bunny went home because he was sick."));
-                break;
-            case MobId.TYLUS: //tylus
-                map.broadcastMessage(PacketCreator.serverNotice(6, "Tylus has fallen by the overwhelming forces of the ambush."));
-                break;
-            case MobId.JULIET: //juliet
-                map.broadcastMessage(PacketCreator.serverNotice(6, "Juliet has fainted in the middle of the combat."));
-                break;
-            case MobId.ROMEO: //romeo
-                map.broadcastMessage(PacketCreator.serverNotice(6, "Romeo has fainted in the middle of the combat."));
-                break;
-            case MobId.GIANT_SNOWMAN_LV1_EASY, MobId.GIANT_SNOWMAN_LV1_MEDIUM, MobId.GIANT_SNOWMAN_LV1_HARD:
-                map.broadcastMessage(PacketCreator.serverNotice(6, "The Snowman has melted on the heat of the battle."));
-                break;
-            case MobId.DELLI: //delli
-                map.broadcastMessage(PacketCreator.serverNotice(6, "Delli vanished after the ambush, sheets still laying on the ground..."));
-                break;
+                case MobId.WATCH_HOG:
+                    map.broadcastMessage(PacketCreator.serverNotice(6, "The Watch Hog has been injured by the aliens. Better luck next time..."));
+                    break;
+                case MobId.MOON_BUNNY: //moon bunny
+                    map.broadcastMessage(PacketCreator.serverNotice(6, "The Moon Bunny went home because he was sick."));
+                    break;
+                case MobId.TYLUS: //tylus
+                    map.broadcastMessage(PacketCreator.serverNotice(6, "Tylus has fallen by the overwhelming forces of the ambush."));
+                    break;
+                case MobId.JULIET: //juliet
+                    map.broadcastMessage(PacketCreator.serverNotice(6, "Juliet has fainted in the middle of the combat."));
+                    break;
+                case MobId.ROMEO: //romeo
+                    map.broadcastMessage(PacketCreator.serverNotice(6, "Romeo has fainted in the middle of the combat."));
+                    break;
+                case MobId.GIANT_SNOWMAN_LV1_EASY, MobId.GIANT_SNOWMAN_LV1_MEDIUM, MobId.GIANT_SNOWMAN_LV1_HARD:
+                    map.broadcastMessage(PacketCreator.serverNotice(6, "The Snowman has melted on the heat of the battle."));
+                    break;
+                case MobId.DELLI: //delli
+                    map.broadcastMessage(PacketCreator.serverNotice(6, "Delli vanished after the ambush, sheets still laying on the ground..."));
+                    break;
             }
-            
+
             map.killFriendlies(monster);
         } else {
             EventInstanceManager eim = map.getEventInstance();

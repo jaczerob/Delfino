@@ -28,6 +28,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
@@ -129,12 +130,12 @@ public enum ItemFactory {
         query.append("SELECT * FROM ");
         query.append("(SELECT id, accountid FROM characters) AS accountterm ");
         query.append("RIGHT JOIN ");
-        query.append("(SELECT * FROM (`inventoryitems` LEFT JOIN `inventoryequipment` USING(`inventoryitemid`))) AS equipterm");
+        query.append("(SELECT * FROM (inventoryitems LEFT JOIN inventoryequipment USING(inventoryitemid))) AS equipterm");
         query.append(" ON accountterm.id=equipterm.characterid ");
-        query.append("WHERE accountterm.`");
+        query.append("WHERE accountterm.");
         query.append(isAccount ? "accountid" : "characterid");
-        query.append("` = ?");
-        query.append(login ? " AND `inventorytype` = " + InventoryType.EQUIPPED.getType() : "");
+        query.append(" = ?");
+        query.append(login ? " AND inventorytype = " + InventoryType.EQUIPPED.getType() : "");
 
         try (Connection con = DatabaseConnection.getStaticConnection()) {
             try (PreparedStatement ps = con.prepareStatement(query.toString())) {
@@ -156,15 +157,19 @@ public enum ItemFactory {
         List<Pair<Item, InventoryType>> items = new ArrayList<>();
 
         try (Connection con = DatabaseConnection.getStaticConnection()) {
-            StringBuilder query = new StringBuilder();
-            query.append("SELECT * FROM `inventoryitems` LEFT JOIN `inventoryequipment` USING(`inventoryitemid`) WHERE `type` = ? AND `");
-            query.append(account ? "accountid" : "characterid").append("` = ?");
+            final var query = """
+                    SELECT * FROM inventoryitems
+                    LEFT JOIN inventoryequipment
+                    USING (inventoryitemid)
+                    WHERE type = ?
+                    AND %s = ?
+                    %s
+                    """.formatted(
+                    account ? "accountid" : "characterid",
+                    login ? "AND inventorytype = " + InventoryType.EQUIPPED.getType() : ""
+            );
 
-            if (login) {
-                query.append(" AND `inventorytype` = ").append(InventoryType.EQUIPPED.getType());
-            }
-
-            try (PreparedStatement ps = con.prepareStatement(query.toString())) {
+            try (PreparedStatement ps = con.prepareStatement(query)) {
                 ps.setInt(1, value);
                 ps.setInt(2, id);
 
@@ -198,24 +203,34 @@ public enum ItemFactory {
         Lock lock = locks[id % lockCount];
         lock.lock();
         try {
-            StringBuilder query = new StringBuilder();
-            query.append("DELETE `inventoryitems`, `inventoryequipment` FROM `inventoryitems` LEFT JOIN `inventoryequipment` USING(`inventoryitemid`) WHERE `type` = ? AND `");
-            query.append(account ? "accountid" : "characterid").append("` = ?");
+            final var deleteFrom = account ? "accountid" : "characterid";
+            final var query = """
+                    DELETE FROM inventoryequipment ie
+                    USING inventoryitems ii
+                    WHERE ie.inventoryitemid = ii.inventoryitemid
+                      AND ii.%s = ?
+                      AND ii.type = ?;
+                    """.formatted(deleteFrom);
 
-            try (PreparedStatement ps = con.prepareStatement(query.toString())) {
+            try (PreparedStatement ps = con.prepareStatement(query)) {
                 ps.setInt(1, value);
                 ps.setInt(2, id);
                 ps.executeUpdate();
             }
 
-            try (PreparedStatement psItem = con.prepareStatement("INSERT INTO `inventoryitems` VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
+            try (PreparedStatement psItem = con.prepareStatement("INSERT INTO inventoryitems VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
                 if (!items.isEmpty()) {
                     for (Pair<Item, InventoryType> pair : items) {
                         Item item = pair.getLeft();
                         InventoryType mit = pair.getRight();
                         psItem.setInt(1, value);
-                        psItem.setString(2, account ? null : String.valueOf(id));
-                        psItem.setString(3, account ? String.valueOf(id) : null);
+                        if (account) {
+                            psItem.setNull(2, Types.NULL);
+                            psItem.setInt(3, id);
+                        } else {
+                            psItem.setInt(2, id);
+                            psItem.setNull(3, Types.NULL);
+                        }
                         psItem.setInt(4, item.getItemId());
                         psItem.setInt(5, mit.getType());
                         psItem.setInt(6, item.getPosition());
@@ -228,7 +243,7 @@ public enum ItemFactory {
                         psItem.executeUpdate();
 
                         if (mit.equals(InventoryType.EQUIP) || mit.equals(InventoryType.EQUIPPED)) {
-                            try (PreparedStatement psEquip = con.prepareStatement("INSERT INTO `inventoryequipment` VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                            try (PreparedStatement psEquip = con.prepareStatement("INSERT INTO inventoryequipment VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
                                 try (ResultSet rs = psItem.getGeneratedKeys()) {
                                     if (!rs.next()) {
                                         throw new RuntimeException("Inserting item failed.");
@@ -276,11 +291,11 @@ public enum ItemFactory {
 
         try (Connection con = DatabaseConnection.getStaticConnection()) {
             StringBuilder query = new StringBuilder();
-            query.append("SELECT * FROM `inventoryitems` LEFT JOIN `inventoryequipment` USING(`inventoryitemid`) WHERE `type` = ? AND `");
-            query.append(account ? "accountid" : "characterid").append("` = ?");
+            query.append("SELECT * FROM inventoryitems LEFT JOIN inventoryequipment USING(inventoryitemid) WHERE type = ? AND ");
+            query.append(account ? "accountid" : "characterid").append(" = ?");
 
             if (login) {
-                query.append(" AND `inventorytype` = ").append(InventoryType.EQUIPPED.getType());
+                query.append(" AND inventorytype = ").append(InventoryType.EQUIPPED.getType());
             }
 
             try (PreparedStatement ps = con.prepareStatement(query.toString())) {
@@ -290,7 +305,7 @@ public enum ItemFactory {
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
                         short bundles = 0;
-                        try (PreparedStatement psBundle = con.prepareStatement("SELECT `bundles` FROM `inventorymerchant` WHERE `inventoryitemid` = ?")) {
+                        try (PreparedStatement psBundle = con.prepareStatement("SELECT bundles FROM inventorymerchant WHERE inventoryitemid = ?")) {
                             psBundle.setInt(1, rs.getInt("inventoryitemid"));
 
                             try (ResultSet rs2 = psBundle.executeQuery()) {
@@ -330,16 +345,21 @@ public enum ItemFactory {
         Lock lock = locks[id % lockCount];
         lock.lock();
         try {
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM `inventorymerchant` WHERE `characterid` = ?")) {
+            try (PreparedStatement ps = con.prepareStatement("DELETE FROM inventorymerchant WHERE characterid = ?")) {
                 ps.setInt(1, id);
                 ps.executeUpdate();
             }
 
-            StringBuilder query = new StringBuilder();
-            query.append("DELETE `inventoryitems`, `inventoryequipment` FROM `inventoryitems` LEFT JOIN `inventoryequipment` USING(`inventoryitemid`) WHERE `type` = ? AND `");
-            query.append(account ? "accountid" : "characterid").append("` = ?");
+            final var deleteFrom = account ? "accountid" : "characterid";
+            final var query = """
+                    DELETE FROM inventoryequipment ie
+                    USING inventoryitems ii
+                    WHERE ie.inventoryitemid = ii.inventoryitemid
+                      AND ii.%s = ?
+                      AND ii.type = ?;
+                    """.formatted(deleteFrom);
 
-            try (PreparedStatement ps = con.prepareStatement(query.toString())) {
+            try (PreparedStatement ps = con.prepareStatement(query)) {
                 ps.setInt(1, value);
                 ps.setInt(2, id);
                 ps.executeUpdate();
@@ -354,10 +374,15 @@ public enum ItemFactory {
 
                 final int genKey;
                 // Item
-                try (PreparedStatement ps = con.prepareStatement("INSERT INTO `inventoryitems` VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
+                try (PreparedStatement ps = con.prepareStatement("INSERT INTO inventoryitems VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
                     ps.setInt(1, value);
-                    ps.setString(2, account ? null : String.valueOf(id));
-                    ps.setString(3, account ? String.valueOf(id) : null);
+                    if (account) {
+                        ps.setNull(2, Types.NULL);
+                        ps.setInt(3, id);
+                    } else {
+                        ps.setInt(2, id);
+                        ps.setNull(3, Types.NULL);
+                    }
                     ps.setInt(4, item.getItemId());
                     ps.setInt(5, mit.getType());
                     ps.setInt(6, item.getPosition());
@@ -379,7 +404,7 @@ public enum ItemFactory {
                 }
 
                 // Merchant
-                try (PreparedStatement ps = con.prepareStatement("INSERT INTO `inventorymerchant` VALUES (DEFAULT, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
+                try (PreparedStatement ps = con.prepareStatement("INSERT INTO inventorymerchant VALUES (DEFAULT, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
                     ps.setInt(1, genKey);
                     ps.setInt(2, id);
                     ps.setInt(3, bundles);
@@ -388,7 +413,7 @@ public enum ItemFactory {
 
                 // Equipment
                 if (mit.equals(InventoryType.EQUIP) || mit.equals(InventoryType.EQUIPPED)) {
-                    try (PreparedStatement ps = con.prepareStatement("INSERT INTO `inventoryequipment` VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                    try (PreparedStatement ps = con.prepareStatement("INSERT INTO inventoryequipment VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
                         ps.setInt(1, genKey);
 
                         Equip equip = (Equip) item;

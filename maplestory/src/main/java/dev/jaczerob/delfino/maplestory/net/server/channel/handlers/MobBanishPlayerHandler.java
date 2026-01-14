@@ -26,7 +26,7 @@ import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
 import dev.jaczerob.delfino.maplestory.server.life.BanishInfo;
 import dev.jaczerob.delfino.maplestory.server.life.Monster;
 
-public final class MobBanishPlayerHandler extends AbstractPacketHandler {
+public class MobBanishPlayerHandler extends AbstractPacketHandler {
 
     @Override
     public void handlePacket(InPacket p, Client c) {

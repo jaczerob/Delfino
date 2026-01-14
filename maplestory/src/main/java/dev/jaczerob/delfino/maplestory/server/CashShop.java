@@ -97,7 +97,7 @@ public class CashShop {
         }
 
         try (Connection con = DatabaseConnection.getStaticConnection()) {
-            try (PreparedStatement ps = con.prepareStatement("SELECT `nxCredit`, `maplePoint`, `nxPrepaid` FROM `accounts` WHERE `id` = ?")) {
+            try (PreparedStatement ps = con.prepareStatement("SELECT nxCredit, maplePoint, nxPrepaid FROM accounts WHERE id = ?")) {
                 ps.setInt(1, accountId);
 
                 try (ResultSet rs = ps.executeQuery()) {
@@ -113,7 +113,7 @@ public class CashShop {
                 inventory.add(item.getLeft());
             }
 
-            try (PreparedStatement ps = con.prepareStatement("SELECT `sn` FROM `wishlists` WHERE `charid` = ?")) {
+            try (PreparedStatement ps = con.prepareStatement("SELECT sn FROM wishlists WHERE charid = ?")) {
                 ps.setInt(1, characterId);
 
                 try (ResultSet rs = ps.executeQuery()) {
@@ -413,7 +413,7 @@ public class CashShop {
 
     public void gift(int recipient, String from, String message, int sn, int ringid) {
         try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("INSERT INTO `gifts` VALUES (DEFAULT, ?, ?, ?, ?, ?)")) {
+             PreparedStatement ps = con.prepareStatement("INSERT INTO gifts VALUES (DEFAULT, ?, ?, ?, ?, ?)")) {
             ps.setInt(1, recipient);
             ps.setString(2, from);
             ps.setString(3, message);
@@ -430,7 +430,7 @@ public class CashShop {
 
         try (Connection con = DatabaseConnection.getStaticConnection()) {
 
-            try (PreparedStatement ps = con.prepareStatement("SELECT * FROM `gifts` WHERE `to` = ?")) {
+            try (PreparedStatement ps = con.prepareStatement("SELECT * FROM gifts WHERE to = ?")) {
                 ps.setInt(1, characterId);
 
                 try (ResultSet rs = ps.executeQuery()) {
@@ -460,7 +460,7 @@ public class CashShop {
                 }
             }
 
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM `gifts` WHERE `to` = ?")) {
+            try (PreparedStatement ps = con.prepareStatement("DELETE FROM gifts WHERE to = ?")) {
                 ps.setInt(1, characterId);
                 ps.executeUpdate();
             }
@@ -480,7 +480,7 @@ public class CashShop {
     }
 
     public void save(Connection con) throws SQLException {
-        try (PreparedStatement ps = con.prepareStatement("UPDATE `accounts` SET `nxCredit` = ?, `maplePoint` = ?, `nxPrepaid` = ? WHERE `id` = ?")) {
+        try (PreparedStatement ps = con.prepareStatement("UPDATE accounts SET nxCredit = ?, maplePoint = ?, nxPrepaid = ? WHERE id = ?")) {
             ps.setInt(1, nxCredit);
             ps.setInt(2, maplePoint);
             ps.setInt(3, nxPrepaid);
@@ -497,12 +497,12 @@ public class CashShop {
 
         factory.saveItems(itemsWithType, accountId, con);
 
-        try (PreparedStatement ps = con.prepareStatement("DELETE FROM `wishlists` WHERE `charid` = ?")) {
+        try (PreparedStatement ps = con.prepareStatement("DELETE FROM wishlists WHERE charid = ?")) {
             ps.setInt(1, characterId);
             ps.executeUpdate();
         }
 
-        try (PreparedStatement ps = con.prepareStatement("INSERT INTO `wishlists` VALUES (DEFAULT, ?, ?)")) {
+        try (PreparedStatement ps = con.prepareStatement("INSERT INTO wishlists VALUES (DEFAULT, ?, ?)")) {
             ps.setInt(1, characterId);
 
             for (int sn : wishList) {

@@ -45,7 +45,7 @@ import java.util.List;
  * @author Drago (Dragohe4rt)
  */
 
-public final class MonsterCarnivalHandler extends AbstractPacketHandler {
+public class MonsterCarnivalHandler extends AbstractPacketHandler {
 
     @Override
     public void handlePacket(InPacket p, Client c) {

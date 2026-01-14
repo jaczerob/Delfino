@@ -131,15 +131,15 @@ public class SkillMakerReagentIndexer {
         printWriter.println(" # Generated data is conformant with the Item.wz folder used to compile this.");
         printWriter.println();
 
-        printWriter.println("CREATE TABLE IF NOT EXISTS `makerreagentdata` (");
-        printWriter.println("  `itemid` int(11) NOT NULL,");
-        printWriter.println("  `stat` varchar(20) NOT NULL,");
-        printWriter.println("  `value` smallint(6) NOT NULL,");
-        printWriter.println("  PRIMARY KEY (`itemid`)");
+        printWriter.println("CREATE TABLE IF NOT EXISTS makerreagentdata (");
+        printWriter.println("  itemid int(11) NOT NULL,");
+        printWriter.println("  stat varchar(20) NOT NULL,");
+        printWriter.println("  value smallint(6) NOT NULL,");
+        printWriter.println("  PRIMARY KEY (itemid)");
         printWriter.println(");");
         printWriter.println();
 
-        StringBuilder sb = new StringBuilder("INSERT IGNORE INTO `makerreagentdata` (`itemid`, `stat`, `value`) VALUES\r\n");
+        StringBuilder sb = new StringBuilder("INSERT IGNORE INTO makerreagentdata (itemid, stat, value) VALUES\r\n");
 
         for (Pair<Integer, Pair<String, Integer>> it : reagentList) {
             sb.append("  (" + it.left + ", \"" + it.right.left + "\", " + it.right.right + "),\r\n");
@@ -151,12 +151,12 @@ public class SkillMakerReagentIndexer {
         printWriter.println(sb);
     }
 
-	private static void writeMakerReagentTableData() {
+    private static void writeMakerReagentTableData() {
         // This will reference one line at a time
         String line = null;
 
         try (PrintWriter pw = new PrintWriter(Files.newOutputStream(OUTPUT_FILE));
-                BufferedReader br = Files.newBufferedReader(INPUT_FILE);) {
+             BufferedReader br = Files.newBufferedReader(INPUT_FILE);) {
             bufferedReader = br;
 
             while ((line = bufferedReader.readLine()) != null) {

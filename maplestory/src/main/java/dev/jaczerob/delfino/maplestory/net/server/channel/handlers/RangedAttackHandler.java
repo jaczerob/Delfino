@@ -54,7 +54,7 @@ import dev.jaczerob.delfino.maplestory.tools.Randomizer;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 
-public final class RangedAttackHandler extends AbstractDealDamageHandler {
+public class RangedAttackHandler extends AbstractDealDamageHandler {
     private static final Logger log = LoggerFactory.getLogger(RangedAttackHandler.class);
 
     @Override

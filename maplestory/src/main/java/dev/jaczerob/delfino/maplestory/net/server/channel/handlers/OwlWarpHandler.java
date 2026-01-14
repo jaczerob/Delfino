@@ -30,7 +30,7 @@ import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 /*
  * @author Ronan
  */
-public final class OwlWarpHandler extends AbstractPacketHandler {
+public class OwlWarpHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

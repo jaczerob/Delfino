@@ -38,7 +38,7 @@ import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 /**
  * @author Matze
  */
-public final class UseItemHandler extends AbstractPacketHandler {
+public class UseItemHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         Character chr = c.getPlayer();

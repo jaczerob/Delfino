@@ -25,7 +25,7 @@ import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.net.AbstractPacketHandler;
 import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
 
-public final class AdminLogHandler extends AbstractPacketHandler {
+public class AdminLogHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

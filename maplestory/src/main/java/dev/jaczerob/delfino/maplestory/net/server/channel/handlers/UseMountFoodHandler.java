@@ -37,7 +37,7 @@ import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
  * @author PurpleMadness
  * @author Ronan
  */
-public final class UseMountFoodHandler extends AbstractPacketHandler {
+public class UseMountFoodHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         p.skip(4);

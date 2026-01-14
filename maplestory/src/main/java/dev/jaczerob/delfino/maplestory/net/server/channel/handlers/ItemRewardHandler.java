@@ -41,7 +41,7 @@ import java.util.List;
  * @author Jay Estrella
  * @author kevintjuh93
  */
-public final class ItemRewardHandler extends AbstractPacketHandler {
+public class ItemRewardHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         byte slot = (byte) p.readShort();

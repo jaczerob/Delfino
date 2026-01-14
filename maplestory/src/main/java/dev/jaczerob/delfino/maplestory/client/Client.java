@@ -23,7 +23,6 @@ package dev.jaczerob.delfino.maplestory.client;
 
 import dev.jaczerob.delfino.maplestory.client.inventory.InventoryType;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
-import dev.jaczerob.delfino.maplestory.constants.game.GameConstants;
 import dev.jaczerob.delfino.maplestory.constants.id.MapId;
 import dev.jaczerob.delfino.maplestory.net.PacketHandler;
 import dev.jaczerob.delfino.maplestory.net.PacketProcessor;
@@ -34,7 +33,6 @@ import dev.jaczerob.delfino.maplestory.net.packet.logging.LoggingUtil;
 import dev.jaczerob.delfino.maplestory.net.packet.logging.MonitoredChrLogger;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.net.server.channel.Channel;
-import dev.jaczerob.delfino.maplestory.net.server.coordinator.login.LoginBypassCoordinator;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.session.Hwid;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.session.SessionCoordinator;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.session.SessionCoordinator.AntiMulticlientResult;
@@ -53,7 +51,6 @@ import dev.jaczerob.delfino.maplestory.scripting.npc.NPCConversationManager;
 import dev.jaczerob.delfino.maplestory.scripting.npc.NPCScriptManager;
 import dev.jaczerob.delfino.maplestory.scripting.quest.QuestActionManager;
 import dev.jaczerob.delfino.maplestory.scripting.quest.QuestScriptManager;
-import dev.jaczerob.delfino.maplestory.server.MapleLeafLogger;
 import dev.jaczerob.delfino.maplestory.server.ThreadManager;
 import dev.jaczerob.delfino.maplestory.server.TimerManager;
 import dev.jaczerob.delfino.maplestory.server.life.Monster;
@@ -83,13 +80,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -130,22 +124,13 @@ public class Client extends ChannelInboundHandlerAdapter {
     private Map<String, ScriptEngine> engines = new HashMap<>();
     private byte characterSlots = 3;
     private byte loginattempt = 0;
-    private String pin = "";
-    private int pinattempt = 0;
-    private String pic = "";
-    private int picattempt = 0;
     private byte csattempt = 0;
     private byte gender = -1;
     private boolean disconnecting = false;
     private final Semaphore actionsSemaphore = new Semaphore(7);
     private final Lock lock = new ReentrantLock(true);
-    private final Lock encoderLock = new ReentrantLock(true);
     private final Lock announcerLock = new ReentrantLock(true);
-    // thanks Masterrulax & try2hack for pointing out a bottleneck issue with shared locks, shavit for noticing an opportunity for improvement
-    private Calendar tempBanCalendar;
     private int votePoints;
-    private int voteTime = -1;
-    private int visibleWorlds;
     private long lastNpcClick;
     private long lastPacket = System.currentTimeMillis();
     private int lang = 0;
@@ -296,10 +281,6 @@ public class Client extends ChannelInboundHandlerAdapter {
         return remoteAddress;
     }
 
-    public boolean isInTransition() {
-        return inTransition;
-    }
-
     public EventManager getEventManager(String event) {
         return getChannelServer().getEventSM().getEventManager(event);
     }
@@ -316,10 +297,6 @@ public class Client extends ChannelInboundHandlerAdapter {
         return new AbstractPlayerInteraction(this);
     }
 
-    public void sendCharList(int server) {
-        this.sendPacket(PacketCreator.getCharList(this, server, 0));
-    }
-
     public List<Character> loadCharacters(int serverId) {
         List<Character> chars = new ArrayList<>(15);
         try {
@@ -328,14 +305,6 @@ public class Client extends ChannelInboundHandlerAdapter {
             }
         } catch (Exception e) {
             e.printStackTrace();
-        }
-        return chars;
-    }
-
-    public List<String> loadCharacterNames(int worldId) {
-        List<String> chars = new ArrayList<>(15);
-        for (CharNameAndId cni : loadCharactersInternal(worldId)) {
-            chars.add(cni.name);
         }
         return chars;
     }
@@ -362,129 +331,6 @@ public class Client extends ChannelInboundHandlerAdapter {
         return loggedIn;
     }
 
-    public boolean hasBannedIP() {
-        boolean ret = false;
-        try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT COUNT(*) FROM ipbans WHERE ? LIKE CONCAT(ip, '%')")) {
-            ps.setString(1, remoteAddress);
-            try (ResultSet rs = ps.executeQuery()) {
-                rs.next();
-                if (rs.getInt(1) > 0) {
-                    ret = true;
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return ret;
-    }
-
-    public int getVoteTime() {
-        if (voteTime != -1) {
-            return voteTime;
-        }
-
-        try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT date FROM bit_votingrecords WHERE UPPER(account) = UPPER(?)")) {
-            ps.setString(1, accountName);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) {
-                    return -1;
-                }
-                voteTime = rs.getInt("date");
-            }
-        } catch (SQLException e) {
-            log.error("Error getting voting time");
-            return -1;
-        }
-        return voteTime;
-    }
-
-    public void resetVoteTime() {
-        voteTime = -1;
-    }
-
-    public boolean hasVotedAlready() {
-        Date currentDate = new Date();
-        int timeNow = (int) (currentDate.getTime() / 1000);
-        int difference = (timeNow - getVoteTime());
-        return difference < 86400 && difference > 0;
-    }
-
-    public boolean hasBannedHWID() {
-        if (hwid == null) {
-            return false;
-        }
-
-        boolean ret = false;
-        try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT COUNT(*) FROM hwidbans WHERE hwid LIKE ?")) {
-            ps.setString(1, hwid.hwid());
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs != null && rs.next()) {
-                    if (rs.getInt(1) > 0) {
-                        ret = true;
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return ret;
-    }
-
-    public boolean hasBannedMac() {
-        if (macs.isEmpty()) {
-            return false;
-        }
-        boolean ret = false;
-        int i;
-        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM macbans WHERE mac IN (");
-        for (i = 0; i < macs.size(); i++) {
-            sql.append("?");
-            if (i != macs.size() - 1) {
-                sql.append(", ");
-            }
-        }
-        sql.append(")");
-
-        try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement(sql.toString())) {
-            i = 0;
-            for (String mac : macs) {
-                ps.setString(++i, mac);
-            }
-            try (ResultSet rs = ps.executeQuery()) {
-                rs.next();
-                if (rs.getInt(1) > 0) {
-                    ret = true;
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return ret;
-    }
-
-    private void loadHWIDIfNescessary() throws SQLException {
-        if (hwid == null) {
-            try (Connection con = DatabaseConnection.getStaticConnection();
-                 PreparedStatement ps = con.prepareStatement("SELECT hwid FROM accounts WHERE id = ?")) {
-                ps.setInt(1, accId);
-
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        hwid = new Hwid(rs.getString("hwid"));
-                    }
-                }
-            }
-        }
-    }
-
-    // TODO: Recode to close statements...
     private void loadMacsIfNescessary() throws SQLException {
         if (macs.isEmpty()) {
             try (Connection con = DatabaseConnection.getStaticConnection();
@@ -500,20 +346,6 @@ public class Client extends ChannelInboundHandlerAdapter {
                     }
                 }
             }
-        }
-    }
-
-    public void banHWID() {
-        try {
-            loadHWIDIfNescessary();
-
-            try (Connection con = DatabaseConnection.getStaticConnection();
-                 PreparedStatement ps = con.prepareStatement("INSERT INTO hwidbans (hwid) VALUES (?)")) {
-                ps.setString(1, hwid.hwid());
-                ps.executeUpdate();
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
     }
 
@@ -552,87 +384,6 @@ public class Client extends ChannelInboundHandlerAdapter {
         }
     }
 
-    public int finishLogin() {
-        encoderLock.lock();
-        try {
-            if (getLoginState() > LOGIN_NOTLOGGEDIN) { // 0 = LOGIN_NOTLOGGEDIN, 1= LOGIN_SERVER_TRANSITION, 2 = LOGIN_LOGGEDIN
-                loggedIn = false;
-                return 7;
-            }
-            updateLoginState(Client.LOGIN_LOGGEDIN);
-        } finally {
-            encoderLock.unlock();
-        }
-
-        return 0;
-    }
-
-    public void setPin(String pin) {
-        this.pin = pin;
-        try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("UPDATE accounts SET pin = ? WHERE id = ?")) {
-            ps.setString(1, pin);
-            ps.setInt(2, accId);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public String getPin() {
-        return pin;
-    }
-
-    public boolean checkPin(String other) {
-        if (!(YamlConfig.config.server.ENABLE_PIN && !canBypassPin())) {
-            return true;
-        }
-
-        pinattempt++;
-        if (pinattempt > 5) {
-            SessionCoordinator.getInstance().closeSession(this, false);
-        }
-        if (pin.equals(other)) {
-            pinattempt = 0;
-            LoginBypassCoordinator.getInstance().registerLoginBypassEntry(hwid, accId, false);
-            return true;
-        }
-        return false;
-    }
-
-    public void setPic(String pic) {
-        this.pic = pic;
-        try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("UPDATE accounts SET pic = ? WHERE id = ?")) {
-            ps.setString(1, pic);
-            ps.setInt(2, accId);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public String getPic() {
-        return pic;
-    }
-
-    public boolean checkPic(String other) {
-        if (!(YamlConfig.config.server.ENABLE_PIC && !canBypassPic())) {
-            return true;
-        }
-
-        picattempt++;
-        if (picattempt > 5) {
-            SessionCoordinator.getInstance().closeSession(this, false);
-        }
-        if (pic.equals(other)) {    // thanks ryantpayton (HeavenClient) for noticing null pics being checked here
-            picattempt = 0;
-            LoginBypassCoordinator.getInstance().registerLoginBypassEntry(hwid, accId, true);
-            return true;
-        }
-        return false;
-    }
-
     public int login(String login, String pwd, Hwid hwid) {
         int loginok = 5;
 
@@ -644,7 +395,7 @@ public class Client extends ChannelInboundHandlerAdapter {
         }
 
         try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT id, password, gender, banned, pin, pic, characterslots, tos, language FROM accounts WHERE name = ?")) {
+             PreparedStatement ps = con.prepareStatement("SELECT id, password, gender, banned, characterslots, tos, language FROM accounts WHERE name = ?")) {
             ps.setString(1, login);
 
             try (ResultSet rs = ps.executeQuery()) {
@@ -658,8 +409,6 @@ public class Client extends ChannelInboundHandlerAdapter {
 
                     boolean banned = (rs.getByte("banned") == 1);
                     gmlevel = 0;
-                    pin = rs.getString("pin");
-                    pic = rs.getString("pic");
                     gender = rs.getByte("gender");
                     characterSlots = rs.getByte("characterslots");
                     lang = rs.getInt("language");
@@ -721,90 +470,10 @@ public class Client extends ChannelInboundHandlerAdapter {
         }
     }
 
-    public Calendar getTempBanCalendarFromDB() {
-        final Calendar lTempban = Calendar.getInstance();
-
-        try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT `tempban` FROM accounts WHERE id = ?")) {
-            ps.setInt(1, getAccID());
-
-            final Timestamp tempban;
-            try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) {
-                    return null;
-                }
-
-                tempban = rs.getTimestamp("tempban");
-                if (tempban.toLocalDateTime().equals(DefaultDates.getTempban())) {
-                    return null;
-                }
-            }
-
-            lTempban.setTimeInMillis(tempban.getTime());
-            tempBanCalendar = lTempban;
-            return lTempban;
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return null;//why oh why!?!
-    }
-
     public Calendar getTempBanCalendar() {
-        return tempBanCalendar;
+        return null;
     }
 
-    public boolean hasBeenBanned() {
-        return tempBanCalendar != null;
-    }
-
-    public static long dottedQuadToLong(String dottedQuad) throws RuntimeException {
-        String[] quads = dottedQuad.split("\\.");
-        if (quads.length != 4) {
-            throw new RuntimeException("Invalid IP Address format.");
-        }
-        long ipAddress = 0;
-        for (int i = 0; i < 4; i++) {
-            int quad = Integer.parseInt(quads[i]);
-            ipAddress += (long) (quad % 256) * (long) Math.pow(256, 4 - i);
-        }
-        return ipAddress;
-    }
-
-    public void updateHwid(Hwid hwid) {
-        this.hwid = hwid;
-
-        try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("UPDATE accounts SET hwid = ? WHERE id = ?")) {
-            ps.setString(1, hwid.hwid());
-            ps.setInt(2, accId);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void updateMacs(String macData) {
-        macs.addAll(Arrays.asList(macData.split(", ")));
-        StringBuilder newMacData = new StringBuilder();
-        Iterator<String> iter = macs.iterator();
-        while (iter.hasNext()) {
-            String cur = iter.next();
-            newMacData.append(cur);
-            if (iter.hasNext()) {
-                newMacData.append(", ");
-            }
-        }
-
-        try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("UPDATE accounts SET macs = ? WHERE id = ?")) {
-            ps.setString(1, newMacData.toString());
-            ps.setInt(2, accId);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
 
     public void setAccID(int id) {
         this.accId = id;
@@ -1077,8 +746,6 @@ public class Client extends ChannelInboundHandlerAdapter {
             this.player.empty(true); // clears schedules and stuff
         }
 
-        Server.getInstance().unregisterLoginState(this);
-
         this.accountName = null;
         this.macs = null;
         this.hwid = null;
@@ -1107,29 +774,6 @@ public class Client extends ChannelInboundHandlerAdapter {
 
     public Channel getChannelServer(byte channel) {
         return Server.getInstance().getChannel(world, channel);
-    }
-
-    public boolean deleteCharacter(int cid, int senderAccId) {
-        try {
-            final var chr = Character.loadCharFromDB(cid, this, false);
-
-            Integer partyid = chr.getWorldServer().getCharacterPartyid(cid);
-            if (partyid != null) {
-                this.setPlayer(chr);
-
-                Party party = chr.getWorldServer().getParty(partyid);
-                chr.setParty(party);
-                chr.getMPC();
-                chr.leaveParty();   // thanks Vcoc for pointing out deleted characters would still stay in a party
-
-                this.setPlayer(null);
-            }
-
-            return Character.deleteCharFromDB(chr, senderAccId);
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            return false;
-        }
     }
 
     public String getAccountName() {
@@ -1206,55 +850,10 @@ public class Client extends ChannelInboundHandlerAdapter {
         return QuestScriptManager.getInstance().getQM(this);
     }
 
-    public boolean acceptToS() {
-        if (accountName == null) {
-            return true;
-        }
-
-        boolean disconnect = false;
-        try (Connection con = DatabaseConnection.getStaticConnection()) {
-            try (PreparedStatement ps = con.prepareStatement("SELECT `tos` FROM accounts WHERE id = ?")) {
-                ps.setInt(1, accId);
-
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        if (rs.getByte("tos") == 1) {
-                            disconnect = true;
-                        }
-                    }
-                }
-            }
-
-            try (PreparedStatement ps = con.prepareStatement("UPDATE accounts SET tos = 1 WHERE id = ?")) {
-                ps.setInt(1, accId);
-                ps.executeUpdate();
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return disconnect;
-    }
-
-    public void checkChar(int accid) {  /// issue with multiple chars from same account login found by shavit, resinate
-        if (!YamlConfig.config.server.USE_CHARACTER_ACCOUNT_CHECK) {
-            return;
-        }
-
-        for (World w : Server.getInstance().getWorlds()) {
-            for (Character chr : w.getPlayerStorage().getAllCharacters()) {
-                if (accid == chr.getAccountID()) {
-                    log.warn("Chr {} has been removed from world {}. Possible Dupe attempt.", chr.getName(), GameConstants.WORLD_NAMES[w.getId()]);
-                    chr.getClient().forceDisconnect();
-                    w.getPlayerStorage().removePlayer(chr.getId());
-                }
-            }
-        }
-    }
-
     public int getVotePoints() {
         int points = 0;
         try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT `votepoints` FROM accounts WHERE id = ?")) {
+             PreparedStatement ps = con.prepareStatement("SELECT votepoints FROM accounts WHERE id = ?")) {
             ps.setInt(1, accId);
 
             try (ResultSet rs = ps.executeQuery()) {
@@ -1272,16 +871,6 @@ public class Client extends ChannelInboundHandlerAdapter {
     public void addVotePoints(int points) {
         votePoints += points;
         saveVotePoints();
-    }
-
-    public void useVotePoints(int points) {
-        if (points > votePoints) {
-            //Should not happen, should probably log this
-            return;
-        }
-        votePoints -= points;
-        saveVotePoints();
-        MapleLeafLogger.log(player, false, Integer.toString(points));
     }
 
     private void saveVotePoints() {
@@ -1314,20 +903,6 @@ public class Client extends ChannelInboundHandlerAdapter {
 
     public void releaseClient() {
         unlockClient();
-        actionsSemaphore.release();
-    }
-
-    public boolean tryacquireEncoder() {
-        if (actionsSemaphore.tryAcquire()) {
-            encoderLock.lock();
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    public void unlockEncoder() {
-        encoderLock.unlock();
         actionsSemaphore.release();
     }
 
@@ -1393,37 +968,8 @@ public class Client extends ChannelInboundHandlerAdapter {
         return false;
     }
 
-    public final byte getGReason() {
-        try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT `greason` FROM `accounts` WHERE id = ?")) {
-            ps.setInt(1, accId);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getByte("greason");
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return 0;
-    }
-
     public byte getGender() {
         return gender;
-    }
-
-    public void setGender(byte m) {
-        this.gender = m;
-
-        try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("UPDATE accounts SET gender = ? WHERE id = ?")) {
-            ps.setByte(1, gender);
-            ps.setInt(2, accId);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
     }
 
     private void announceDisableServerMessage() {
@@ -1529,10 +1075,6 @@ public class Client extends ChannelInboundHandlerAdapter {
         return this.sessionId;
     }
 
-    public boolean canRequestCharlist() {
-        return lastNpcClick + 877 < Server.getInstance().getCurrentTime();
-    }
-
     public boolean canClickNPC() {
         return lastNpcClick + 500 < Server.getInstance().getCurrentTime();
     }
@@ -1543,15 +1085,6 @@ public class Client extends ChannelInboundHandlerAdapter {
 
     public void removeClickedNPC() {
         lastNpcClick = 0;
-    }
-
-    public int getVisibleWorlds() {
-        return visibleWorlds;
-    }
-
-    public void requestedServerlist(int worlds) {
-        visibleWorlds = worlds;
-        setClickedNPC();
     }
 
     public void closePlayerScriptInteractions() {
@@ -1576,14 +1109,6 @@ public class Client extends ChannelInboundHandlerAdapter {
 
     public void enableCSActions() {
         sendPacket(PacketCreator.enableCSUse(player));
-    }
-
-    public boolean canBypassPin() {
-        return LoginBypassCoordinator.getInstance().canLoginBypass(hwid, accId, false);
-    }
-
-    public boolean canBypassPic() {
-        return LoginBypassCoordinator.getInstance().canLoginBypass(hwid, accId, true);
     }
 
     public int getLanguage() {

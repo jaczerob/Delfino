@@ -32,11 +32,11 @@ import dev.jaczerob.delfino.maplestory.net.server.coordinator.matchchecker.Match
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.world.InviteCoordinator;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.world.InviteCoordinator.InviteResult;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.world.InviteCoordinator.InviteType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import dev.jaczerob.delfino.maplestory.service.NoteService;
 import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
 import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -441,7 +441,7 @@ public class Guild {
                 }
             }
 
-            try (PreparedStatement ps = con.prepareStatement("INSERT INTO guilds (`leader`, `name`, `signature`) VALUES (?, ?, ?)")) {
+            try (PreparedStatement ps = con.prepareStatement("INSERT INTO guilds (leader, name, signature) VALUES (?, ?, ?)")) {
                 ps.setInt(1, leaderId);
                 ps.setString(2, name);
                 ps.setInt(3, (int) System.currentTimeMillis());
@@ -760,7 +760,7 @@ public class Guild {
 
     public static void displayGuildRanks(Client c, int npcid) {
         try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT `name`, `GP`, `logoBG`, `logoBGColor`, `logo`, `logoColor` FROM guilds ORDER BY `GP` DESC LIMIT 50", ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+             PreparedStatement ps = con.prepareStatement("SELECT name, GP, logoBG, logoBGColor, logo, logoColor FROM guilds ORDER BY GP DESC LIMIT 50", ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
              ResultSet rs = ps.executeQuery()) {
             c.sendPacket(GuildPackets.showGuildRanks(npcid, rs));
         } catch (SQLException e) {

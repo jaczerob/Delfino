@@ -26,7 +26,7 @@ import dev.jaczerob.delfino.maplestory.client.processor.action.SpawnPetProcessor
 import dev.jaczerob.delfino.maplestory.net.AbstractPacketHandler;
 import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
 
-public final class SpawnPetHandler extends AbstractPacketHandler {
+public class SpawnPetHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

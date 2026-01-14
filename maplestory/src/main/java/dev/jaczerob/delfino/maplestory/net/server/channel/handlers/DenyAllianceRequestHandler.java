@@ -28,7 +28,7 @@ import dev.jaczerob.delfino.maplestory.net.server.guild.Alliance;
 /**
  * @author Ronan
  */
-public final class DenyAllianceRequestHandler extends AbstractPacketHandler {
+public class DenyAllianceRequestHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

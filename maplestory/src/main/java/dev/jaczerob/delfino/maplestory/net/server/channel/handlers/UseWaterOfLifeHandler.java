@@ -26,7 +26,7 @@ import dev.jaczerob.delfino.maplestory.constants.id.NpcId;
 import dev.jaczerob.delfino.maplestory.net.AbstractPacketHandler;
 import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
 
-public final class UseWaterOfLifeHandler extends AbstractPacketHandler {
+public class UseWaterOfLifeHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

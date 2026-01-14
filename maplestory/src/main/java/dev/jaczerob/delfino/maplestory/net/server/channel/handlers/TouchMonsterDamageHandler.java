@@ -26,7 +26,7 @@ import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
 
-public final class TouchMonsterDamageHandler extends AbstractDealDamageHandler {
+public class TouchMonsterDamageHandler extends AbstractDealDamageHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         Character chr = c.getPlayer();

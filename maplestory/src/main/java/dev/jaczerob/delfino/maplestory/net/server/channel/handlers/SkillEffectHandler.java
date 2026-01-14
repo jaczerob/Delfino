@@ -45,7 +45,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
-public final class SkillEffectHandler extends AbstractPacketHandler {
+public class SkillEffectHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(SkillEffectHandler.class);
 
     @Override

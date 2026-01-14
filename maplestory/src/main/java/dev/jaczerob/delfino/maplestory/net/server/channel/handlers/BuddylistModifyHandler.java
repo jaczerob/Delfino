@@ -147,7 +147,7 @@ public class BuddylistModifyHandler extends AbstractPacketHandler {
                                 notifyRemoteChannel(c, channel, otherCid, BuddyOperation.ADDED);
                             } else if (buddyAddResult != BuddyAddResult.ALREADY_ON_LIST && channel == -1) {
                                 try (Connection con = DatabaseConnection.getStaticConnection();
-                                     PreparedStatement ps = con.prepareStatement("INSERT INTO buddies (characterid, `buddyid`, `pending`) VALUES (?, ?, 1)")) {
+                                     PreparedStatement ps = con.prepareStatement("INSERT INTO buddies (characterid, buddyid, pending) VALUES (?, ?, 1)")) {
                                     ps.setInt(1, charWithId.getId());
                                     ps.setInt(2, player.getId());
                                     ps.executeUpdate();

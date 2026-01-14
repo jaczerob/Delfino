@@ -33,7 +33,7 @@ import dev.jaczerob.delfino.maplestory.scripting.npc.NPCScriptManager;
 /**
  * @author Generic
  */
-public final class RemoteGachaponHandler extends AbstractPacketHandler {
+public class RemoteGachaponHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         int ticket = p.readInt();

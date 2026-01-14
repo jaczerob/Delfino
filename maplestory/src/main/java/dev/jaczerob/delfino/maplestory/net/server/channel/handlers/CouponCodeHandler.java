@@ -53,7 +53,7 @@ import java.util.Map.Entry;
  * @author Penguins (Acrylic)
  * @author Ronan (HeavenMS)
  */
-public final class CouponCodeHandler extends AbstractPacketHandler {
+public class CouponCodeHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(CouponCodeHandler.class);
 
     private static List<Pair<Integer, Pair<Integer, Integer>>> getNXCodeItems(Character chr, Connection con, int codeid) throws SQLException {

@@ -8,18 +8,26 @@ import dev.jaczerob.delfino.maplestory.net.packet.out.ShowNotesPacket;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+@Component
 public class NoteService {
     private static final Logger log = LoggerFactory.getLogger(NoteService.class);
+    private static NoteService INSTANCE;
 
     private final NoteDao noteDao;
 
     public NoteService(NoteDao noteDao) {
         this.noteDao = noteDao;
+        INSTANCE = this;
+    }
+
+    public static NoteService getInstance() {
+        return INSTANCE;
     }
 
     /**

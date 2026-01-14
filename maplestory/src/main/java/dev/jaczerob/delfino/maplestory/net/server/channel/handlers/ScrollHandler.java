@@ -42,7 +42,7 @@ import java.util.List;
  * @author Matze
  * @author Frz
  */
-public final class ScrollHandler extends AbstractPacketHandler {
+public class ScrollHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

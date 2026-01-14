@@ -31,7 +31,7 @@ import dev.jaczerob.delfino.maplestory.tools.exceptions.EmptyMovementException;
 import java.awt.*;
 import java.util.Collection;
 
-public final class MoveSummonHandler extends AbstractMovementPacketHandler {
+public class MoveSummonHandler extends AbstractMovementPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         int oid = p.readInt();

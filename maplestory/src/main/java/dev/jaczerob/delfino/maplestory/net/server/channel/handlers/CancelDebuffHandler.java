@@ -25,7 +25,7 @@ import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.net.AbstractPacketHandler;
 import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
 
-public final class CancelDebuffHandler extends AbstractPacketHandler {//TIP: BAD STUFF LOL!
+public class CancelDebuffHandler extends AbstractPacketHandler {//TIP: BAD STUFF LOL!
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

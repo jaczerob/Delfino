@@ -27,7 +27,7 @@ import dev.jaczerob.delfino.maplestory.constants.id.ItemId;
 import dev.jaczerob.delfino.maplestory.net.AbstractPacketHandler;
 import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
 
-public final class UseChairHandler extends AbstractPacketHandler {
+public class UseChairHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         int itemId = p.readInt();

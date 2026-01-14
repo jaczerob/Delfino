@@ -41,7 +41,7 @@ import java.sql.SQLException;
  * <p>
  * Header layout thanks to Eric
  */
-public final class NewYearCardHandler extends AbstractPacketHandler {
+public class NewYearCardHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

@@ -48,7 +48,7 @@ import java.util.List;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-public final class CloseRangeDamageHandler extends AbstractDealDamageHandler {
+public class CloseRangeDamageHandler extends AbstractDealDamageHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

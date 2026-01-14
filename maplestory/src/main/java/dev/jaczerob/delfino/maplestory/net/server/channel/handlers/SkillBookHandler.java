@@ -36,7 +36,7 @@ import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
 import java.util.Map;
 
-public final class SkillBookHandler extends AbstractPacketHandler {
+public class SkillBookHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         if (!c.getPlayer().isAlive()) {

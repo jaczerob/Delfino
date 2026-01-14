@@ -1,6 +1,7 @@
 package dev.jaczerob.delfino.maplestory.provider.wz;
 
-import java.nio.file.Files;
+import org.springframework.core.io.ClassPathResource;
+
 import java.nio.file.Path;
 
 public enum WZFiles {
@@ -35,12 +36,6 @@ public enum WZFiles {
     }
 
     private static String getWzDirectory() {
-        // Either provide a custom directory path through the "wz-path" property when launching the .jar, or don't provide one to use the default "wz" directory
-        String propertyPath = System.getProperty("wz-path");
-        if (propertyPath != null && Files.isDirectory(Path.of(propertyPath))) {
-            return propertyPath;
-        }
-
-        return "wz";
+        return new ClassPathResource("wz").getPath();
     }
 }

@@ -44,7 +44,7 @@ import java.awt.*;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-public final class SpecialMoveHandler extends AbstractPacketHandler {
+public class SpecialMoveHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

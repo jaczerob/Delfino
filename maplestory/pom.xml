@@ -14,6 +14,10 @@
 
     <dependencies>
         <dependency>
+            <groupId>dev.jaczerob.delfino.common</groupId>
+            <artifactId>common</artifactId>
+        </dependency>
+        <dependency>
             <groupId>dev.jaczerob.delfino.grpc</groupId>
             <artifactId>grpc-proto</artifactId>
         </dependency>
@@ -27,6 +31,10 @@
             <artifactId>jcip-annotations</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -62,6 +70,15 @@
         <dependency>
             <groupId>org.graalvm.js</groupId>
             <artifactId>js-scriptengine</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
         </dependency>
     </dependencies>
 

@@ -35,7 +35,7 @@ import dev.jaczerob.delfino.maplestory.tools.PacketCreator.WhisperFlag;
 /**
  * @author Chronos
  */
-public final class WhisperHandler extends AbstractPacketHandler {
+public class WhisperHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(WhisperHandler.class);
 
     // result types, not sure if there are proper names for these

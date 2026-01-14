@@ -28,7 +28,7 @@ import dev.jaczerob.delfino.maplestory.net.AbstractPacketHandler;
 import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
 import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
-public final class DueyHandler extends AbstractPacketHandler {
+public class DueyHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

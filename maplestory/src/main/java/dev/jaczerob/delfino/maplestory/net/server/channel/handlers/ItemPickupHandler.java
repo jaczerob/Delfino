@@ -35,7 +35,7 @@ import java.awt.*;
  * @author Matze
  * @author Ronan
  */
-public final class ItemPickupHandler extends AbstractPacketHandler {
+public class ItemPickupHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(ItemPickupHandler.class);
 
     @Override

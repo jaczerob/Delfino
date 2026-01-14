@@ -41,7 +41,7 @@ import java.awt.*;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-public final class ChangeMapHandler extends AbstractPacketHandler {
+public class ChangeMapHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(ChangeMapHandler.class);
 
     @Override

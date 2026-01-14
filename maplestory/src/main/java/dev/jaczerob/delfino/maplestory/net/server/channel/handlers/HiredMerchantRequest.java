@@ -40,7 +40,7 @@ import java.util.Arrays;
 /**
  * @author XoticStory
  */
-public final class HiredMerchantRequest extends AbstractPacketHandler {
+public class HiredMerchantRequest extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         Character chr = c.getPlayer();

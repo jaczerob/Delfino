@@ -58,7 +58,7 @@ import java.util.Arrays;
  * @author Matze
  * @author Ronan - concurrency safety and reviewed minigames
  */
-public final class PlayerInteractionHandler extends AbstractPacketHandler {
+public class PlayerInteractionHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(PlayerInteractionHandler.class);
 
     public enum Action {

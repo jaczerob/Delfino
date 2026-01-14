@@ -43,7 +43,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public final class EnterMTSHandler extends AbstractPacketHandler {
+public class EnterMTSHandler extends AbstractPacketHandler {
 
     @Override
     public void handlePacket(InPacket p, Client c) {

@@ -34,7 +34,7 @@ import java.util.PriorityQueue;
 /**
  * @author Ronan
  */
-public final class UseOwlOfMinervaHandler extends AbstractPacketHandler {
+public class UseOwlOfMinervaHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

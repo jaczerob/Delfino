@@ -32,7 +32,7 @@ import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
 import java.util.Optional;
 
-public final class NoteActionHandler extends AbstractPacketHandler {
+public class NoteActionHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(NoteActionHandler.class);
 
     private final NoteService noteService;

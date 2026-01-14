@@ -36,7 +36,7 @@ import java.util.Set;
  * @author TheRamon
  * @author Ronan
  */
-public final class PetLootHandler extends AbstractPacketHandler {
+public class PetLootHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         Character chr = c.getPlayer();

@@ -26,7 +26,7 @@ import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
 import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.exceptions.EmptyMovementException;
 
-public final class MovePlayerHandler extends AbstractMovementPacketHandler {
+public class MovePlayerHandler extends AbstractMovementPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         p.skip(9);

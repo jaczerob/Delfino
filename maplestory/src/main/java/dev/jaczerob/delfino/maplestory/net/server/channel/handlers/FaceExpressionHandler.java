@@ -28,7 +28,7 @@ import dev.jaczerob.delfino.maplestory.constants.inventory.ItemConstants;
 import dev.jaczerob.delfino.maplestory.net.AbstractPacketHandler;
 import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
 
-public final class FaceExpressionHandler extends AbstractPacketHandler {
+public class FaceExpressionHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         Character chr = c.getPlayer();

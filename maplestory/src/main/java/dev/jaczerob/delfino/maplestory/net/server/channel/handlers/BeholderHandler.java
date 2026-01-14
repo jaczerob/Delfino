@@ -32,7 +32,7 @@ import java.util.Collection;
 /**
  * @author BubblesDev
  */
-public final class BeholderHandler extends AbstractPacketHandler {//Summon Skills noobs
+public class BeholderHandler extends AbstractPacketHandler {//Summon Skills noobs
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

@@ -26,7 +26,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public final class Messenger {
+public class Messenger {
 
     private final int id;
     private final List<MessengerCharacter> members = new ArrayList<>(3);

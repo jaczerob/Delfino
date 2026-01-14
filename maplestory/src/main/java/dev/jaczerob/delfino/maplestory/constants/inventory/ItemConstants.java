@@ -34,7 +34,7 @@ import java.util.Set;
  * @author Jay Estrella
  * @author Ronan
  */
-public final class ItemConstants {
+public class ItemConstants {
     protected static Map<Integer, InventoryType> inventoryTypeCache = new HashMap<>();
 
     public final static short LOCK = 0x01;

@@ -35,7 +35,7 @@ import dev.jaczerob.delfino.maplestory.tools.Randomizer;
 /**
  * @author AngelSL
  */
-public final class UseSummonBagHandler extends AbstractPacketHandler {
+public class UseSummonBagHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

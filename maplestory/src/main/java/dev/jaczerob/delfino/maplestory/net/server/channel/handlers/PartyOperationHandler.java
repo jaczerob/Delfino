@@ -38,7 +38,7 @@ import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
 import java.util.List;
 
-public final class PartyOperationHandler extends AbstractPacketHandler {
+public class PartyOperationHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

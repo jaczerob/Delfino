@@ -30,7 +30,7 @@ import dev.jaczerob.delfino.maplestory.tools.packets.WeddingPackets;
 /**
  * @author Ronan
  */
-public final class WeddingTalkMoreHandler extends AbstractPacketHandler {
+public class WeddingTalkMoreHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

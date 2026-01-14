@@ -27,7 +27,7 @@ import dev.jaczerob.delfino.maplestory.net.opcodes.SendOpcode;
 import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
 import dev.jaczerob.delfino.maplestory.net.packet.OutPacket;
 
-public final class NPCAnimationHandler extends AbstractPacketHandler {
+public class NPCAnimationHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         if (c.getPlayer().isChangingMaps()) {   // possible cause of error 38 in some map transition scenarios, thanks Arnah

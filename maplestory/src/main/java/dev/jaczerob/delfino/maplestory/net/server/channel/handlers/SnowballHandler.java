@@ -31,7 +31,7 @@ import dev.jaczerob.delfino.maplestory.server.maps.MapleMap;
 /**
  * @author kevintjuh93
  */
-public final class SnowballHandler extends AbstractPacketHandler {
+public class SnowballHandler extends AbstractPacketHandler {
 
     public void handlePacket(InPacket p, Client c) {
         //D3 00 02 00 00 A5 01

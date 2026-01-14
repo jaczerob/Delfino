@@ -29,7 +29,7 @@ import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 /**
  * @author Jay Estrella
  */
-public final class UseHammerHandler extends AbstractPacketHandler {
+public class UseHammerHandler extends AbstractPacketHandler {
     public final void handlePacket(InPacket p, Client c) {
         c.sendPacket(PacketCreator.sendHammerMessage());
     }

@@ -54,7 +54,7 @@ import java.sql.SQLException;
  * @author Ronan - major overhaul on Ring handling mechanics
  * @author Drago (Dragohe4rt) - on Wishlist
  */
-public final class RingActionHandler extends AbstractPacketHandler {
+public class RingActionHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(RingActionHandler.class);
 
     private final NoteService noteService;

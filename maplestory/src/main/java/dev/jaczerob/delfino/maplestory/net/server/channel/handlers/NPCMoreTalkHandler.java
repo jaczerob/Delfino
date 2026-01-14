@@ -30,7 +30,7 @@ import dev.jaczerob.delfino.maplestory.scripting.quest.QuestScriptManager;
 /**
  * @author Matze
  */
-public final class NPCMoreTalkHandler extends AbstractPacketHandler {
+public class NPCMoreTalkHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         byte lastMsg = p.readByte(); // 00 (last msg type I think)

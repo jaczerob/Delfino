@@ -13,7 +13,7 @@ import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
  * @Website http://Vertisy.ca/
  * @since Aug 15, 2016
  */
-public final class RPSActionHandler extends AbstractPacketHandler {
+public class RPSActionHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

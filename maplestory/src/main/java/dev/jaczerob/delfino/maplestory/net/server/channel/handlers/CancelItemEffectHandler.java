@@ -26,7 +26,7 @@ import dev.jaczerob.delfino.maplestory.net.AbstractPacketHandler;
 import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
 import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
 
-public final class CancelItemEffectHandler extends AbstractPacketHandler {
+public class CancelItemEffectHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

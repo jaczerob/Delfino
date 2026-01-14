@@ -217,20 +217,20 @@ public class CouponInstaller {
 
     private static void installCouponsTable() {
         try {
-            PreparedStatement ps = con.prepareStatement("DROP TABLE IF EXISTS `nxcoupons`;");
+            PreparedStatement ps = con.prepareStatement("DROP TABLE IF EXISTS nxcoupons;");
             ps.execute();
             ps.close();
 
             ps = con.prepareStatement(
                     """
-                            CREATE TABLE IF NOT EXISTS `nxcoupons` (
-                              `id` int(11) NOT NULL AUTO_INCREMENT,
-                              `couponid` int(11) NOT NULL DEFAULT '0',
-                              `rate` int(11) NOT NULL DEFAULT '0',
-                              `activeday` int(11) NOT NULL DEFAULT '0',
-                              `starthour` int(11) NOT NULL DEFAULT '0',
-                              `endhour` int(11) NOT NULL DEFAULT '0',
-                              PRIMARY KEY (`id`)
+                            CREATE TABLE IF NOT EXISTS nxcoupons (
+                              id int(11) NOT NULL AUTO_INCREMENT,
+                              couponid int(11) NOT NULL DEFAULT '0',
+                              rate int(11) NOT NULL DEFAULT '0',
+                              activeday int(11) NOT NULL DEFAULT '0',
+                              starthour int(11) NOT NULL DEFAULT '0',
+                              endhour int(11) NOT NULL DEFAULT '0',
+                              PRIMARY KEY (id)
                             ) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1;"""
             );
 

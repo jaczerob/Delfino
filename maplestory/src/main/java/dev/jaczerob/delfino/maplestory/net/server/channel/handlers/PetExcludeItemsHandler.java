@@ -32,7 +32,7 @@ import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
  * @author BubblesDev
  * @author Ronan
  */
-public final class PetExcludeItemsHandler extends AbstractPacketHandler {
+public class PetExcludeItemsHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

@@ -45,7 +45,12 @@ import dev.jaczerob.delfino.maplestory.tools.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -197,7 +202,7 @@ public class DueyProcessor {
 
     private static int createPackage(int mesos, String message, String sender, int toCid, boolean quick) {
         try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("INSERT INTO `dueypackages` (ReceiverId, SenderName, Mesos, TimeStamp, Message, Type, Checked) VALUES (?, ?, ?, ?, ?, ?, 1)", Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement ps = con.prepareStatement("INSERT INTO dueypackages (ReceiverId, SenderName, Mesos, TimeStamp, Message, Type, Checked) VALUES (?, ?, ?, ?, ?, ?, 1)", Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, toCid);
             ps.setString(2, sender);
             ps.setInt(3, mesos);
@@ -482,7 +487,7 @@ public class DueyProcessor {
 
         try (Connection con = DatabaseConnection.getStaticConnection()) {
             List<Integer> toRemove = new LinkedList<>();
-            try (PreparedStatement ps = con.prepareStatement("SELECT `PackageId` FROM dueypackages WHERE `TimeStamp` < ?")) {
+            try (PreparedStatement ps = con.prepareStatement("SELECT PackageId FROM dueypackages WHERE TimeStamp < ?")) {
                 ps.setTimestamp(1, ts);
 
                 try (ResultSet rs = ps.executeQuery()) {
@@ -496,7 +501,7 @@ public class DueyProcessor {
                 removePackageFromDB(pid);
             }
 
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM dueypackages WHERE `TimeStamp` < ?")) {
+            try (PreparedStatement ps = con.prepareStatement("DELETE FROM dueypackages WHERE TimeStamp < ?")) {
                 ps.setTimestamp(1, ts);
                 ps.executeUpdate();
             }

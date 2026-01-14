@@ -28,7 +28,7 @@ import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
 import dev.jaczerob.delfino.maplestory.server.life.Monster;
 import dev.jaczerob.delfino.maplestory.server.maps.MapleMap;
 
-public final class AutoAggroHandler extends AbstractPacketHandler {
+public class AutoAggroHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

@@ -35,7 +35,7 @@ import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 /**
  * @author XoticStory, Ronan
  */
-public final class AllianceOperationHandler extends AbstractPacketHandler {
+public class AllianceOperationHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

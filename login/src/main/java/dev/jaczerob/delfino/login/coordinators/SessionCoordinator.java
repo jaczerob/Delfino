@@ -1,8 +1,8 @@
 package dev.jaczerob.delfino.login.coordinators;
 
-import dev.jaczerob.delfino.login.cache.login.LoggedInUserService;
+import dev.jaczerob.delfino.common.cache.login.LoggedInUserService;
+import dev.jaczerob.delfino.common.cache.login.LoginStatus;
 import dev.jaczerob.delfino.login.client.LoginClient;
-import dev.jaczerob.delfino.login.client.LoginStatus;
 import org.springframework.stereotype.Component;
 
 @Component

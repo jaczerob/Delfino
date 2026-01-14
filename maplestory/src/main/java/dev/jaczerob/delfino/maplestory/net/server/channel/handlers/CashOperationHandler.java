@@ -51,7 +51,7 @@ import java.util.Map;
 
 import static java.util.concurrent.TimeUnit.DAYS;
 
-public final class CashOperationHandler extends AbstractPacketHandler {
+public class CashOperationHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(CashOperationHandler.class);
 
     private final NoteService noteService;

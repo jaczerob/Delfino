@@ -39,7 +39,7 @@ import java.sql.Timestamp;
  * @author Ronan
  * @author Ubaware
  */
-public final class TransferWorldHandler extends AbstractPacketHandler {
+public class TransferWorldHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

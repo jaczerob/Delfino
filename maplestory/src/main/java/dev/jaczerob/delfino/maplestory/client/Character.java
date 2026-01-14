@@ -24,8 +24,16 @@ package dev.jaczerob.delfino.maplestory.client;
 
 import dev.jaczerob.delfino.maplestory.client.autoban.AutobanManager;
 import dev.jaczerob.delfino.maplestory.client.creator.CharacterFactoryRecipe;
-import dev.jaczerob.delfino.maplestory.client.inventory.*;
-import dev.jaczerob.delfino.maplestory.client.inventory.manipulator.CashIdGenerator;
+import dev.jaczerob.delfino.maplestory.client.inventory.Equip;
+import dev.jaczerob.delfino.maplestory.client.inventory.Inventory;
+import dev.jaczerob.delfino.maplestory.client.inventory.InventoryProof;
+import dev.jaczerob.delfino.maplestory.client.inventory.InventoryType;
+import dev.jaczerob.delfino.maplestory.client.inventory.Item;
+import dev.jaczerob.delfino.maplestory.client.inventory.ItemFactory;
+import dev.jaczerob.delfino.maplestory.client.inventory.ModifyInventory;
+import dev.jaczerob.delfino.maplestory.client.inventory.Pet;
+import dev.jaczerob.delfino.maplestory.client.inventory.PetDataFactory;
+import dev.jaczerob.delfino.maplestory.client.inventory.WeaponType;
 import dev.jaczerob.delfino.maplestory.client.inventory.manipulator.InventoryManipulator;
 import dev.jaczerob.delfino.maplestory.client.keybind.KeyBinding;
 import dev.jaczerob.delfino.maplestory.client.keybind.QuickslotBinding;
@@ -39,7 +47,35 @@ import dev.jaczerob.delfino.maplestory.constants.id.ItemId;
 import dev.jaczerob.delfino.maplestory.constants.id.MapId;
 import dev.jaczerob.delfino.maplestory.constants.id.MobId;
 import dev.jaczerob.delfino.maplestory.constants.inventory.ItemConstants;
-import dev.jaczerob.delfino.maplestory.constants.skills.*;
+import dev.jaczerob.delfino.maplestory.constants.skills.Aran;
+import dev.jaczerob.delfino.maplestory.constants.skills.Beginner;
+import dev.jaczerob.delfino.maplestory.constants.skills.Bishop;
+import dev.jaczerob.delfino.maplestory.constants.skills.BlazeWizard;
+import dev.jaczerob.delfino.maplestory.constants.skills.Bowmaster;
+import dev.jaczerob.delfino.maplestory.constants.skills.Brawler;
+import dev.jaczerob.delfino.maplestory.constants.skills.Buccaneer;
+import dev.jaczerob.delfino.maplestory.constants.skills.Corsair;
+import dev.jaczerob.delfino.maplestory.constants.skills.Crusader;
+import dev.jaczerob.delfino.maplestory.constants.skills.DarkKnight;
+import dev.jaczerob.delfino.maplestory.constants.skills.DawnWarrior;
+import dev.jaczerob.delfino.maplestory.constants.skills.Evan;
+import dev.jaczerob.delfino.maplestory.constants.skills.FPArchMage;
+import dev.jaczerob.delfino.maplestory.constants.skills.Hermit;
+import dev.jaczerob.delfino.maplestory.constants.skills.Hero;
+import dev.jaczerob.delfino.maplestory.constants.skills.ILArchMage;
+import dev.jaczerob.delfino.maplestory.constants.skills.Legend;
+import dev.jaczerob.delfino.maplestory.constants.skills.Magician;
+import dev.jaczerob.delfino.maplestory.constants.skills.Marauder;
+import dev.jaczerob.delfino.maplestory.constants.skills.Marksman;
+import dev.jaczerob.delfino.maplestory.constants.skills.NightLord;
+import dev.jaczerob.delfino.maplestory.constants.skills.Noblesse;
+import dev.jaczerob.delfino.maplestory.constants.skills.Paladin;
+import dev.jaczerob.delfino.maplestory.constants.skills.Priest;
+import dev.jaczerob.delfino.maplestory.constants.skills.Ranger;
+import dev.jaczerob.delfino.maplestory.constants.skills.Shadower;
+import dev.jaczerob.delfino.maplestory.constants.skills.Sniper;
+import dev.jaczerob.delfino.maplestory.constants.skills.ThunderBreaker;
+import dev.jaczerob.delfino.maplestory.constants.skills.Warrior;
 import dev.jaczerob.delfino.maplestory.net.packet.Packet;
 import dev.jaczerob.delfino.maplestory.net.server.PlayerBuffValueHolder;
 import dev.jaczerob.delfino.maplestory.net.server.PlayerCoolDownValueHolder;
@@ -51,38 +87,98 @@ import dev.jaczerob.delfino.maplestory.net.server.guild.GuildCharacter;
 import dev.jaczerob.delfino.maplestory.net.server.guild.GuildPackets;
 import dev.jaczerob.delfino.maplestory.net.server.services.task.world.CharacterSaveService;
 import dev.jaczerob.delfino.maplestory.net.server.services.type.WorldServices;
-import dev.jaczerob.delfino.maplestory.net.server.world.*;
+import dev.jaczerob.delfino.maplestory.net.server.world.Messenger;
+import dev.jaczerob.delfino.maplestory.net.server.world.MessengerCharacter;
+import dev.jaczerob.delfino.maplestory.net.server.world.Party;
+import dev.jaczerob.delfino.maplestory.net.server.world.PartyCharacter;
+import dev.jaczerob.delfino.maplestory.net.server.world.PartyOperation;
+import dev.jaczerob.delfino.maplestory.net.server.world.World;
 import dev.jaczerob.delfino.maplestory.scripting.AbstractPlayerInteraction;
 import dev.jaczerob.delfino.maplestory.scripting.event.EventInstanceManager;
 import dev.jaczerob.delfino.maplestory.scripting.item.ItemScriptManager;
-import dev.jaczerob.delfino.maplestory.server.*;
+import dev.jaczerob.delfino.maplestory.server.CashShop;
+import dev.jaczerob.delfino.maplestory.server.ExpLogger;
 import dev.jaczerob.delfino.maplestory.server.ExpLogger.ExpLogRecord;
+import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
 import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider.ScriptedItem;
+import dev.jaczerob.delfino.maplestory.server.Marriage;
+import dev.jaczerob.delfino.maplestory.server.Shop;
+import dev.jaczerob.delfino.maplestory.server.StatEffect;
+import dev.jaczerob.delfino.maplestory.server.Storage;
+import dev.jaczerob.delfino.maplestory.server.ThreadManager;
+import dev.jaczerob.delfino.maplestory.server.TimerManager;
+import dev.jaczerob.delfino.maplestory.server.Trade;
 import dev.jaczerob.delfino.maplestory.server.events.Events;
 import dev.jaczerob.delfino.maplestory.server.events.RescueGaga;
 import dev.jaczerob.delfino.maplestory.server.events.gm.Fitness;
 import dev.jaczerob.delfino.maplestory.server.events.gm.Ola;
-import dev.jaczerob.delfino.maplestory.server.life.*;
-import dev.jaczerob.delfino.maplestory.server.maps.*;
+import dev.jaczerob.delfino.maplestory.server.life.BanishInfo;
+import dev.jaczerob.delfino.maplestory.server.life.MobSkill;
+import dev.jaczerob.delfino.maplestory.server.life.MobSkillFactory;
+import dev.jaczerob.delfino.maplestory.server.life.MobSkillId;
+import dev.jaczerob.delfino.maplestory.server.life.MobSkillType;
+import dev.jaczerob.delfino.maplestory.server.life.Monster;
+import dev.jaczerob.delfino.maplestory.server.life.PlayerNPC;
+import dev.jaczerob.delfino.maplestory.server.maps.AbstractAnimatedMapObject;
+import dev.jaczerob.delfino.maplestory.server.maps.Door;
+import dev.jaczerob.delfino.maplestory.server.maps.DoorObject;
+import dev.jaczerob.delfino.maplestory.server.maps.Dragon;
+import dev.jaczerob.delfino.maplestory.server.maps.FieldLimit;
+import dev.jaczerob.delfino.maplestory.server.maps.HiredMerchant;
+import dev.jaczerob.delfino.maplestory.server.maps.MapEffect;
+import dev.jaczerob.delfino.maplestory.server.maps.MapItem;
+import dev.jaczerob.delfino.maplestory.server.maps.MapManager;
+import dev.jaczerob.delfino.maplestory.server.maps.MapObject;
+import dev.jaczerob.delfino.maplestory.server.maps.MapObjectType;
+import dev.jaczerob.delfino.maplestory.server.maps.MapleMap;
+import dev.jaczerob.delfino.maplestory.server.maps.MiniGame;
 import dev.jaczerob.delfino.maplestory.server.maps.MiniGame.MiniGameResult;
+import dev.jaczerob.delfino.maplestory.server.maps.PlayerShop;
+import dev.jaczerob.delfino.maplestory.server.maps.PlayerShopItem;
+import dev.jaczerob.delfino.maplestory.server.maps.Portal;
+import dev.jaczerob.delfino.maplestory.server.maps.SavedLocation;
+import dev.jaczerob.delfino.maplestory.server.maps.SavedLocationType;
+import dev.jaczerob.delfino.maplestory.server.maps.Summon;
 import dev.jaczerob.delfino.maplestory.server.minigame.RockPaperScissor;
 import dev.jaczerob.delfino.maplestory.server.partyquest.AriantColiseum;
 import dev.jaczerob.delfino.maplestory.server.partyquest.MonsterCarnival;
 import dev.jaczerob.delfino.maplestory.server.partyquest.MonsterCarnivalParty;
 import dev.jaczerob.delfino.maplestory.server.partyquest.PartyQuest;
 import dev.jaczerob.delfino.maplestory.server.quest.Quest;
-import dev.jaczerob.delfino.maplestory.tools.*;
+import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
+import dev.jaczerob.delfino.maplestory.tools.LongTool;
+import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.Pair;
+import dev.jaczerob.delfino.maplestory.tools.Randomizer;
 import dev.jaczerob.delfino.maplestory.tools.packets.WeddingPackets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.lang.ref.WeakReference;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -92,7 +188,9 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static java.util.concurrent.TimeUnit.*;
+import static java.util.concurrent.TimeUnit.DAYS;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class Character extends AbstractCharacterObject {
     private static final Logger log = LoggerFactory.getLogger(Character.class);
@@ -2102,195 +2200,6 @@ public class Character extends AbstractCharacterObject {
         nextPendingRequest(client);
     }
 
-    public static boolean deleteCharFromDB(Character player, int senderAccId) {
-        int cid = player.getId();
-        if (!Server.getInstance().haveCharacterEntry(senderAccId, cid)) {    // thanks zera (EpiphanyMS) for pointing a critical exploit with non-authed character deletion request
-            return false;
-        }
-
-        final int accId = senderAccId;
-        int world = 0;
-        try (Connection con = DatabaseConnection.getStaticConnection()) {
-            try (PreparedStatement ps = con.prepareStatement("SELECT world FROM characters WHERE id = ?")) {
-                ps.setInt(1, cid);
-
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        world = rs.getInt("world");
-                    }
-                }
-            }
-
-            try (PreparedStatement ps = con.prepareStatement("SELECT buddyid FROM buddies WHERE characterid = ?")) {
-                ps.setInt(1, cid);
-
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        int buddyid = rs.getInt("buddyid");
-                        Character buddy = Server.getInstance().getWorld(world).getPlayerStorage().getCharacterById(buddyid);
-
-                        if (buddy != null) {
-                            buddy.deleteBuddy(cid);
-                        }
-                    }
-                }
-            }
-
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM buddies WHERE characterid = ?")) {
-                ps.setInt(1, cid);
-                ps.executeUpdate();
-            }
-
-            try (PreparedStatement ps = con.prepareStatement("SELECT threadid FROM bbs_threads WHERE postercid = ?")) {
-                ps.setInt(1, cid);
-
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        int threadId = rs.getInt("threadid");
-
-                        try (PreparedStatement ps2 = con.prepareStatement("DELETE FROM bbs_replies WHERE threadid = ?")) {
-                            ps2.setInt(1, threadId);
-                            ps2.executeUpdate();
-                        }
-                    }
-                }
-            }
-
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM bbs_threads WHERE postercid = ?")) {
-                ps.setInt(1, cid);
-                ps.executeUpdate();
-            }
-
-            try (PreparedStatement ps = con.prepareStatement("SELECT id, guildid, guildrank, name, allianceRank FROM characters WHERE id = ? AND accountid = ?")) {
-                ps.setInt(1, cid);
-                ps.setInt(2, accId);
-
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next() && rs.getInt("guildid") > 0) {
-                        Server.getInstance().deleteGuildCharacter(new GuildCharacter(player, cid, 0, rs.getString("name"), (byte) -1, (byte) -1, 0, rs.getInt("guildrank"), rs.getInt("guildid"), false, rs.getInt("allianceRank")));
-                    }
-                }
-            }
-
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM wishlists WHERE charid = ?")) {
-                ps.setInt(1, cid);
-                ps.executeUpdate();
-            }
-
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM cooldowns WHERE charid = ?")) {
-                ps.setInt(1, cid);
-                ps.executeUpdate();
-            }
-
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM playerdiseases WHERE charid = ?")) {
-                ps.setInt(1, cid);
-                ps.executeUpdate();
-            }
-
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM area_info WHERE charid = ?")) {
-                ps.setInt(1, cid);
-                ps.executeUpdate();
-            }
-
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM monsterbook WHERE charid = ?")) {
-                ps.setInt(1, cid);
-                ps.executeUpdate();
-            }
-
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM characters WHERE id = ?")) {
-                ps.setInt(1, cid);
-                ps.executeUpdate();
-            }
-
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM family_character WHERE cid = ?")) {
-                ps.setInt(1, cid);
-                ps.executeUpdate();
-            }
-
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM famelog WHERE characterid_to = ?")) {
-                ps.setInt(1, cid);
-                ps.executeUpdate();
-            }
-
-            try (PreparedStatement ps = con.prepareStatement("SELECT inventoryitemid, petid FROM inventoryitems WHERE characterid = ?")) {
-                ps.setInt(1, cid);
-
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        int inventoryitemid = rs.getInt("inventoryitemid");
-
-                        try (PreparedStatement ps2 = con.prepareStatement("SELECT ringid FROM inventoryequipment WHERE inventoryitemid = ?")) {
-                            ps2.setInt(1, inventoryitemid);
-
-                            try (ResultSet rs2 = ps2.executeQuery()) {
-                                while (rs2.next()) {
-                                    final int ringid = rs2.getInt("ringid");
-
-                                    if (ringid > -1) {
-                                        try (PreparedStatement ps3 = con.prepareStatement("DELETE FROM rings WHERE id = ?")) {
-                                            ps3.setInt(1, ringid);
-                                            ps3.executeUpdate();
-                                        }
-
-                                        CashIdGenerator.freeCashId(ringid);
-                                    }
-                                }
-                            }
-                        }
-
-                        try (PreparedStatement ps2 = con.prepareStatement("DELETE FROM inventoryequipment WHERE inventoryitemid = ?")) {
-                            ps2.setInt(1, inventoryitemid);
-                            ps2.executeUpdate();
-                        }
-
-                        final int petid = rs.getInt("petid");
-                        if (!rs.wasNull()) {
-                            try (PreparedStatement ps2 = con.prepareStatement("DELETE FROM pets WHERE petid = ?")) {
-                                ps2.setInt(1, petid);
-                                ps2.executeUpdate();
-                            }
-                            CashIdGenerator.freeCashId(petid);
-                        }
-                    }
-                }
-            }
-
-            deleteQuestProgressWhereCharacterId(con, cid);
-            FredrickProcessor.removeFredrickLog(cid);   // thanks maple006 for pointing out the player's Fredrick items are not being deleted at character deletion
-
-            try (PreparedStatement ps = con.prepareStatement("SELECT id FROM mts_cart WHERE cid = ?")) {
-                ps.setInt(1, cid);
-
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        final int mtsid = rs.getInt("id");
-
-                        try (PreparedStatement ps2 = con.prepareStatement("DELETE FROM mts_items WHERE id = ?")) {
-                            ps2.setInt(1, mtsid);
-                            ps2.executeUpdate();
-                        }
-                    }
-                }
-            }
-
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM mts_cart WHERE cid = ?")) {
-                ps.setInt(1, cid);
-                ps.executeUpdate();
-            }
-
-            String[] toDel = {"famelog", "inventoryitems", "keymap", "queststatus", "savedlocations", "trocklocations", "skillmacros", "skills", "eventstats"};
-            for (String s : toDel) {
-                Character.deleteWhereCharacterId(con, "DELETE FROM `" + s + "` WHERE characterid = ?", cid);
-            }
-
-            Server.getInstance().deleteCharacterEntry(accId, cid);
-            return true;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
     private static void deleteQuestProgressWhereCharacterId(Connection con, int cid) throws SQLException {
         try (PreparedStatement ps = con.prepareStatement("DELETE FROM medalmaps WHERE characterid = ?")) {
             ps.setInt(1, cid);
@@ -3197,14 +3106,6 @@ public class Character extends AbstractCharacterObject {
         return allianceRank;
     }
 
-    public static String getAriantRoomLeaderName(int room) {
-        return ariantroomleader[room];
-    }
-
-    public static int getAriantSlotsRoom(int room) {
-        return ariantroomslot[room];
-    }
-
     public void updateAriantScore() {
         updateAriantScore(0);
     }
@@ -3232,7 +3133,7 @@ public class Character extends AbstractCharacterObject {
         Map<String, String> character = new LinkedHashMap<>();
 
         try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT `id`, `accountid`, `name` FROM `characters` WHERE `name` = ?")) {
+             PreparedStatement ps = con.prepareStatement("SELECT id, accountid, name FROM characters WHERE name = ?")) {
             ps.setString(1, name);
 
             try (ResultSet rs = ps.executeQuery()) {
@@ -3312,17 +3213,6 @@ public class Character extends AbstractCharacterObject {
         }
     }
 
-    public Set<Integer> getAvailableBuffs() {
-        effLock.lock();
-        chrLock.lock();
-        try {
-            return new LinkedHashSet<>(buffEffects.keySet());
-        } finally {
-            chrLock.unlock();
-            effLock.unlock();
-        }
-    }
-
     private List<BuffStatValueHolder> getAllStatups() {
         effLock.lock();
         chrLock.lock();
@@ -3356,22 +3246,6 @@ public class Character extends AbstractCharacterObject {
                 }
             }
             return new ArrayList<>(ret.values());
-        } finally {
-            chrLock.unlock();
-            effLock.unlock();
-        }
-    }
-
-    public List<Pair<BuffStat, Integer>> getAllActiveStatups() {
-        effLock.lock();
-        chrLock.lock();
-        try {
-            List<Pair<BuffStat, Integer>> ret = new ArrayList<>();
-            for (BuffStat mbs : effects.keySet()) {
-                BuffStatValueHolder mbsvh = effects.get(mbs);
-                ret.add(new Pair<>(mbs, mbsvh.value));
-            }
-            return ret;
         } finally {
             chrLock.unlock();
             effLock.unlock();
@@ -3484,22 +3358,6 @@ public class Character extends AbstractCharacterObject {
         buffExpires.remove(sourceid);
     }
 
-    private void dropWorstEffectFromItemEffectHolder(BuffStat mbs) {
-        Integer min = Integer.MAX_VALUE;
-        Integer srcid = -1;
-        for (Entry<Integer, Map<BuffStat, BuffStatValueHolder>> bpl : buffEffects.entrySet()) {
-            BuffStatValueHolder mbsvh = bpl.getValue().get(mbs);
-            if (mbsvh != null) {
-                if (mbsvh.value < min) {
-                    min = mbsvh.value;
-                    srcid = bpl.getKey();
-                }
-            }
-        }
-
-        removeEffectFromItemEffectHolder(srcid, mbs);
-    }
-
     private BuffStatValueHolder fetchBestEffectFromItemEffectHolder(BuffStat mbs) {
         Pair<Integer, Integer> max = new Pair<>(Integer.MIN_VALUE, 0);
         BuffStatValueHolder mbsvh = null;
@@ -3556,20 +3414,6 @@ public class Character extends AbstractCharacterObject {
             log.debug("-------------------");
             log.debug("IN ACTION: {}", effects.entrySet().stream()
                     .map(entry -> entry.getKey().name() + " -> " + ItemInformationProvider.getInstance().getName(entry.getValue().effect.getSourceId()))
-                    .collect(Collectors.joining(", "))
-            );
-        } finally {
-            chrLock.unlock();
-            effLock.unlock();
-        }
-    }
-
-    public void debugListAllBuffsCount() {
-        effLock.lock();
-        chrLock.lock();
-        try {
-            log.debug("ALL BUFFS COUNT: {}", buffEffectsCount.entrySet().stream()
-                    .map(entry -> entry.getKey().name() + " -> " + entry.getValue())
                     .collect(Collectors.joining(", "))
             );
         } finally {
@@ -5225,7 +5069,7 @@ public class Character extends AbstractCharacterObject {
         int elapsedDays = 0;
 
         try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT `timestamp` FROM `fredstorage` WHERE `cid` = ?")) {
+             PreparedStatement ps = con.prepareStatement("SELECT timestamp FROM fredstorage WHERE cid = ?")) {
             ps.setInt(1, id);
 
             try (ResultSet rs = ps.executeQuery()) {
@@ -6856,7 +6700,9 @@ public class Character extends AbstractCharacterObject {
                             if (equip.getRingId() > -1) {
                                 Ring ring = Ring.loadFromDb(equip.getRingId());
                                 if (item.getRight().equals(InventoryType.EQUIPPED)) {
-                                    ring.equip();
+                                    if (ring != null) {
+                                        ring.equip();
+                                    }
                                 }
 
                                 ret.addPlayerRing(ring);
@@ -6986,7 +6832,7 @@ public class Character extends AbstractCharacterObject {
             }
 
             // Area info
-            try (PreparedStatement ps = con.prepareStatement("SELECT `area`,`info` FROM area_info WHERE charid = ?")) {
+            try (PreparedStatement ps = con.prepareStatement("SELECT area,info FROM area_info WHERE charid = ?")) {
                 ps.setInt(1, ret.id);
 
                 try (ResultSet rs = ps.executeQuery()) {
@@ -6997,7 +6843,7 @@ public class Character extends AbstractCharacterObject {
             }
 
             // Event stats
-            try (PreparedStatement ps = con.prepareStatement("SELECT `name`,`info` FROM eventstats WHERE characterid = ?")) {
+            try (PreparedStatement ps = con.prepareStatement("SELECT name,info FROM eventstats WHERE characterid = ?")) {
                 ps.setInt(1, ret.id);
 
                 try (ResultSet rs = ps.executeQuery()) {
@@ -7168,7 +7014,7 @@ public class Character extends AbstractCharacterObject {
                 }
 
                 // Key config
-                try (PreparedStatement ps = con.prepareStatement("SELECT `key`,`type`,`action` FROM keymap WHERE characterid = ?")) {
+                try (PreparedStatement ps = con.prepareStatement("SELECT key,type,action FROM keymap WHERE characterid = ?")) {
                     ps.setInt(1, charid);
 
                     try (ResultSet rs = ps.executeQuery()) {
@@ -7182,7 +7028,7 @@ public class Character extends AbstractCharacterObject {
                 }
 
                 // Saved locations
-                try (PreparedStatement ps = con.prepareStatement("SELECT `locationtype`,`map`,`portal` FROM savedlocations WHERE characterid = ?")) {
+                try (PreparedStatement ps = con.prepareStatement("SELECT locationtype,map,portal FROM savedlocations WHERE characterid = ?")) {
                     ps.setInt(1, charid);
 
                     try (ResultSet rs = ps.executeQuery()) {
@@ -7193,7 +7039,13 @@ public class Character extends AbstractCharacterObject {
                 }
 
                 // Fame history
-                try (PreparedStatement ps = con.prepareStatement("SELECT `characterid_to`,`when` FROM famelog WHERE characterid = ? AND DATEDIFF(NOW(),`when`) < 30")) {
+                final var query = """
+                        SELECT characterid_to,"when"
+                        FROM famelog
+                        WHERE characterid = ?
+                        AND NOW()::date - "when"::date < 30
+                        """;
+                try (PreparedStatement ps = con.prepareStatement(query)) {
                     ps.setInt(1, charid);
 
                     try (ResultSet rs = ps.executeQuery()) {
@@ -7998,7 +7850,7 @@ public class Character extends AbstractCharacterObject {
 
             try {
                 // Character info
-                try (PreparedStatement ps = con.prepareStatement("INSERT INTO characters (str, dex, luk, `int`, gm, skincolor, gender, job, hair, face, map, meso, spawnpoint, accountid, name, world, hp, mp, maxhp, maxmp, level, ap, sp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
+                try (PreparedStatement ps = con.prepareStatement("INSERT INTO characters (str, dex, luk, int, gm, skincolor, gender, job, hair, face, map, meso, spawnpoint, accountid, name, world, hp, mp, maxhp, maxmp, level, ap, sp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
                     ps.setInt(1, str);
                     ps.setInt(2, dex);
                     ps.setInt(3, luk);
@@ -8062,7 +7914,7 @@ public class Character extends AbstractCharacterObject {
                 }
 
                 // Key config
-                try (PreparedStatement ps = con.prepareStatement("INSERT INTO keymap (characterid, `key`, `type`, `action`) VALUES (?, ?, ?, ?)")) {
+                try (PreparedStatement ps = con.prepareStatement("INSERT INTO keymap (characterid, key, type, action) VALUES (?, ?, ?, ?)")) {
                     ps.setInt(1, id);
                     for (int i = 0; i < selectedKey.length; i++) {
                         ps.setInt(2, selectedKey[i]);
@@ -8151,14 +8003,15 @@ public class Character extends AbstractCharacterObject {
         Calendar c = Calendar.getInstance();
         log.debug("Attempting to {} chr {}", notAutosave ? "save" : "autosave", name);
 
-        Server.getInstance().updateCharacterEntry(this);
+        // TODO: come up with better character management
+//        Server.getInstance().updateCharacterEntry(this);
 
         try (Connection con = DatabaseConnection.getStaticConnection()) {
             con.setAutoCommit(false);
             con.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
 
             try {
-                try (PreparedStatement ps = con.prepareStatement("UPDATE characters SET level = ?, fame = ?, str = ?, dex = ?, luk = ?, `int` = ?, exp = ?, gachaexp = ?, hp = ?, mp = ?, maxhp = ?, maxmp = ?, sp = ?, ap = ?, gm = ?, skincolor = ?, gender = ?, job = ?, hair = ?, face = ?, map = ?, meso = ?, hpMpUsed = ?, spawnpoint = ?, party = ?, buddyCapacity = ?, messengerid = ?, messengerposition = ?, mountlevel = ?, mountexp = ?, mounttiredness= ?, equipslots = ?, useslots = ?, setupslots = ?, etcslots = ?,  monsterbookcover = ?, vanquisherStage = ?, dojoPoints = ?, lastDojoStage = ?, finishedDojoTutorial = ?, vanquisherKills = ?, matchcardwins = ?, matchcardlosses = ?, matchcardties = ?, omokwins = ?, omoklosses = ?, omokties = ?, dataString = ?, fquest = ?, jailexpire = ?, partnerId = ?, marriageItemId = ?, lastExpGainTime = ?, ariantPoints = ?, partySearch = ? WHERE id = ?", Statement.RETURN_GENERATED_KEYS)) {
+                try (PreparedStatement ps = con.prepareStatement("UPDATE characters SET level = ?, fame = ?, str = ?, dex = ?, luk = ?, int = ?, exp = ?, gachaexp = ?, hp = ?, mp = ?, maxhp = ?, maxmp = ?, sp = ?, ap = ?, gm = ?, skincolor = ?, gender = ?, job = ?, hair = ?, face = ?, map = ?, meso = ?, hpMpUsed = ?, spawnpoint = ?, party = ?, buddyCapacity = ?, messengerid = ?, messengerposition = ?, mountlevel = ?, mountexp = ?, mounttiredness= ?, equipslots = ?, useslots = ?, setupslots = ?, etcslots = ?,  monsterbookcover = ?, vanquisherStage = ?, dojoPoints = ?, lastDojoStage = ?, finishedDojoTutorial = ?, vanquisherKills = ?, matchcardwins = ?, matchcardlosses = ?, matchcardties = ?, omokwins = ?, omoklosses = ?, omokties = ?, dataString = ?, fquest = ?, jailexpire = ?, partnerId = ?, marriageItemId = ?, lastExpGainTime = ?, ariantPoints = ?, partySearch = ? WHERE id = ?", Statement.RETURN_GENERATED_KEYS)) {
                     ps.setInt(1, level);    // thanks CanIGetaPR for noticing an unnecessary "level" limitation when persisting DB data
                     ps.setInt(2, fame);
 
@@ -8271,7 +8124,7 @@ public class Character extends AbstractCharacterObject {
                     ps.setInt(52, marriageItemid);
                     ps.setTimestamp(53, new Timestamp(lastExpGainTime));
                     ps.setInt(54, ariantPoints);
-                    ps.setBoolean(55, canRecvPartySearchInvite);
+                    ps.setInt(55, canRecvPartySearchInvite ? 1 : 0);
                     ps.setInt(56, id);
 
                     int updateRows = ps.executeUpdate();
@@ -8314,7 +8167,7 @@ public class Character extends AbstractCharacterObject {
 
                 // Key config
                 deleteWhereCharacterId(con, "DELETE FROM keymap WHERE characterid = ?");
-                try (PreparedStatement psKey = con.prepareStatement("INSERT INTO keymap (characterid, `key`, `type`, `action`) VALUES (?, ?, ?, ?)")) {
+                try (PreparedStatement psKey = con.prepareStatement("INSERT INTO keymap (characterid, key, type, action) VALUES (?, ?, ?, ?)")) {
                     psKey.setInt(1, id);
 
                     Set<Entry<Integer, KeyBinding>> keybindingItems = Collections.unmodifiableSet(keymap.entrySet());
@@ -8332,7 +8185,7 @@ public class Character extends AbstractCharacterObject {
                 if (!bQuickslotEquals) {
                     long nQuickslotKeymapped = LongTool.BytesToLong(this.m_pQuickslotKeyMapped.GetKeybindings());
 
-                    try (final PreparedStatement psQuick = con.prepareStatement("INSERT INTO quickslotkeymapped (accountid, keymap) VALUES (?, ?) ON DUPLICATE KEY UPDATE keymap = ?;")) {
+                    try (final PreparedStatement psQuick = con.prepareStatement("INSERT INTO quickslotkeymapped (accountid, keymap) VALUES (?, ?) ON CONFLICT (accountid) DO UPDATE SET keymap = ?;")) {
                         psQuick.setInt(1, this.getAccountID());
                         psQuick.setLong(2, nQuickslotKeymapped);
                         psQuick.setLong(3, nQuickslotKeymapped);
@@ -8369,8 +8222,17 @@ public class Character extends AbstractCharacterObject {
                 // Items
                 ItemFactory.INVENTORY.saveItems(itemsWithType, id, con);
 
+                final var query = """
+                        INSERT INTO skills (characterid, skillid, skilllevel, masterlevel, expiration)
+                        VALUES (?, ?, ?, ?, ?)
+                        ON CONFLICT (characterid, skillid) DO UPDATE SET
+                            skilllevel = EXCLUDED.skilllevel,
+                            masterlevel = EXCLUDED.masterlevel,
+                            expiration = EXCLUDED.expiration
+                        """;
+
                 // Skills
-                try (PreparedStatement psSkill = con.prepareStatement("REPLACE INTO skills (characterid, skillid, skilllevel, masterlevel, expiration) VALUES (?, ?, ?, ?, ?)")) {
+                try (PreparedStatement psSkill = con.prepareStatement(query)) {
                     psSkill.setInt(1, id);
                     for (Entry<Skill, SkillEntry> skill : skills.entrySet()) {
                         psSkill.setInt(2, skill.getKey().getId());
@@ -8384,7 +8246,7 @@ public class Character extends AbstractCharacterObject {
 
                 // Saved locations
                 deleteWhereCharacterId(con, "DELETE FROM savedlocations WHERE characterid = ?");
-                try (PreparedStatement psLoc = con.prepareStatement("INSERT INTO savedlocations (characterid, `locationtype`, `map`, `portal`) VALUES (?, ?, ?, ?)")) {
+                try (PreparedStatement psLoc = con.prepareStatement("INSERT INTO savedlocations (characterid, locationtype, map, portal) VALUES (?, ?, ?, ?)")) {
                     psLoc.setInt(1, id);
                     for (SavedLocationType savedLocationType : SavedLocationType.values()) {
                         if (savedLocations[savedLocationType.ordinal()] != null) {
@@ -8425,7 +8287,7 @@ public class Character extends AbstractCharacterObject {
 
                 // Buddy
                 deleteWhereCharacterId(con, "DELETE FROM buddies WHERE characterid = ? AND pending = 0");
-                try (PreparedStatement psBuddy = con.prepareStatement("INSERT INTO buddies (characterid, `buddyid`, `pending`, `group`) VALUES (?, ?, 0, ?)")) {
+                try (PreparedStatement psBuddy = con.prepareStatement("INSERT INTO buddies (characterid, buddyid, pending, group) VALUES (?, ?, 0, ?)")) {
                     psBuddy.setInt(1, id);
 
                     for (BuddylistEntry entry : buddylist.getBuddies()) {
@@ -8468,7 +8330,7 @@ public class Character extends AbstractCharacterObject {
                 deleteQuestProgressWhereCharacterId(con, id);
 
                 // Quests and medals
-                try (PreparedStatement psStatus = con.prepareStatement("INSERT INTO queststatus (`queststatusid`, `characterid`, `quest`, `status`, `time`, `expires`, `forfeited`, `completed`) VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
+                try (PreparedStatement psStatus = con.prepareStatement("INSERT INTO queststatus (queststatusid, characterid, quest, status, time, expires, forfeited, completed) VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
                      PreparedStatement psProgress = con.prepareStatement("INSERT INTO questprogress VALUES (DEFAULT, ?, ?, ?, ?)");
                      PreparedStatement psMedal = con.prepareStatement("INSERT INTO medalmaps VALUES (DEFAULT, ?, ?, ?)")) {
                     psStatus.setInt(1, id);
@@ -8565,15 +8427,6 @@ public class Character extends AbstractCharacterObject {
             client.disconnect(false, false);
         }
         log.info(message);
-        //Server.getInstance().broadcastGMMessage(0, PacketCreator.serverNotice(1, getName() + " received this - " + text));
-        //sendPacket(PacketCreator.sendPolice(text));
-        //this.isbanned = true;
-        //TimerManager.getInstance().schedule(new Runnable() {
-        //    @Override
-        //    public void run() {
-        //        client.disconnect(false, false);
-        //    }
-        //}, 6000);
     }
 
     public void sendKeymap() {
@@ -10309,7 +10162,7 @@ public class Character extends AbstractCharacterObject {
             return false;
         }
 
-        try (PreparedStatement ps = con.prepareStatement("UPDATE gifts SET `from` = ? WHERE `from` = ?")) {
+        try (PreparedStatement ps = con.prepareStatement("UPDATE gifts SET from = ? WHERE from = ?")) {
             ps.setString(1, newName);
             ps.setString(2, oldName);
             ps.executeUpdate();
@@ -10378,7 +10231,7 @@ public class Character extends AbstractCharacterObject {
             return false;
         }
 
-        try (PreparedStatement ps = con.prepareStatement("UPDATE notes SET `to` = ? WHERE `to` = ?")) {
+        try (PreparedStatement ps = con.prepareStatement("UPDATE notes SET to = ? WHERE to = ?")) {
             ps.setString(1, newName);
             ps.setString(2, oldName);
             ps.executeUpdate();
@@ -10388,7 +10241,7 @@ public class Character extends AbstractCharacterObject {
             return false;
         }
 
-        try (PreparedStatement ps = con.prepareStatement("UPDATE notes SET `from` = ? WHERE `from` = ?")) {
+        try (PreparedStatement ps = con.prepareStatement("UPDATE notes SET from = ? WHERE from = ?")) {
             ps.setString(1, newName);
             ps.setString(2, oldName);
             ps.executeUpdate();
@@ -10516,7 +10369,7 @@ public class Character extends AbstractCharacterObject {
                 return false;
             }
 
-            try (PreparedStatement ps = con.prepareStatement("INSERT INTO worldtransfers (characterid, `from`, `to`) VALUES (?, ?, ?)")) {
+            try (PreparedStatement ps = con.prepareStatement("INSERT INTO worldtransfers (characterid, from, to) VALUES (?, ?, ?)")) {
                 ps.setInt(1, getId());
                 ps.setInt(2, getWorld());
                 ps.setInt(3, newWorld);
@@ -10758,10 +10611,6 @@ public class Character extends AbstractCharacterObject {
 
     public void setAriantColiseum(AriantColiseum ariantColiseum) {
         this.ariantColiseum = ariantColiseum;
-    }
-
-    public MonsterCarnivalParty getMonsterCarnivalParty() {
-        return this.monsterCarnivalParty;
     }
 
     public void setMonsterCarnivalParty(MonsterCarnivalParty mcp) {

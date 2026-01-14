@@ -36,7 +36,7 @@ import java.util.List;
 /**
  * @author Ronan
  */
-public final class PlayerMapTransitionHandler extends AbstractPacketHandler {
+public class PlayerMapTransitionHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

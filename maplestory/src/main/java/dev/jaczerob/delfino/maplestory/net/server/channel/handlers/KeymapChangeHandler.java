@@ -30,7 +30,7 @@ import dev.jaczerob.delfino.maplestory.constants.game.GameConstants;
 import dev.jaczerob.delfino.maplestory.net.AbstractPacketHandler;
 import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
 
-public final class KeymapChangeHandler extends AbstractPacketHandler {
+public class KeymapChangeHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         if (p.available() >= 8) {

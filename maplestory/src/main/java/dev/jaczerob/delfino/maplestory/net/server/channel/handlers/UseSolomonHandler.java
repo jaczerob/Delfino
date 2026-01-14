@@ -37,7 +37,7 @@ import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
  * <p>
  * Modified by -- kevintjuh93, Ronan
  */
-public final class UseSolomonHandler extends AbstractPacketHandler {
+public class UseSolomonHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

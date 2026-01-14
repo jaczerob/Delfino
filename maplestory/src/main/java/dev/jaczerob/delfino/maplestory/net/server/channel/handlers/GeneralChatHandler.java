@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 import dev.jaczerob.delfino.maplestory.server.ChatLogger;
 import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
-public final class GeneralChatHandler extends AbstractPacketHandler {
+public class GeneralChatHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(GeneralChatHandler.class);
 
     @Override

@@ -39,7 +39,7 @@ import java.time.Instant;
  *
  * @author BubblesDev
  */
-public final class ReportHandler extends AbstractPacketHandler {
+public class ReportHandler extends AbstractPacketHandler {
     public final void handlePacket(InPacket p, Client c) {
         int type = p.readByte(); //00 = Illegal program claim, 01 = Conversation claim
         String victim = p.readString();
@@ -83,7 +83,7 @@ public final class ReportHandler extends AbstractPacketHandler {
 
     private void addReport(int reporterid, int victimid, int reason, String description, String chatlog) {
         try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("INSERT INTO reports (`reporttime`, `reporterid`, `victimid`, `reason`, `chatlog`, `description`) VALUES (?, ?, ?, ?, ?, ?)")) {
+             PreparedStatement ps = con.prepareStatement("INSERT INTO reports (reporttime, reporterid, victimid, reason, chatlog, description) VALUES (?, ?, ?, ?, ?, ?)")) {
             ps.setTimestamp(1, Timestamp.from(Instant.now()));
             ps.setInt(2, reporterid);
             ps.setInt(3, victimid);

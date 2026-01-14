@@ -157,7 +157,7 @@ public class Alliance {
 
         int id = -1;
         try (Connection con = DatabaseConnection.getStaticConnection()) {
-            try (PreparedStatement ps = con.prepareStatement("INSERT INTO `alliance` (`name`) VALUES (?)", PreparedStatement.RETURN_GENERATED_KEYS)) {
+            try (PreparedStatement ps = con.prepareStatement("INSERT INTO alliance (name) VALUES (?)", PreparedStatement.RETURN_GENERATED_KEYS)) {
                 ps.setString(1, name);
                 ps.executeUpdate();
                 try (ResultSet rs = ps.getGeneratedKeys()) {
@@ -167,7 +167,7 @@ public class Alliance {
             }
 
             for (int guild : guilds) {
-                try (PreparedStatement ps = con.prepareStatement("INSERT INTO `allianceguilds` (`allianceid`, `guildid`) VALUES (?, ?)")) {
+                try (PreparedStatement ps = con.prepareStatement("INSERT INTO allianceguilds (allianceid, guildid) VALUES (?, ?)")) {
                     ps.setInt(1, id);
                     ps.setInt(2, guild);
                     ps.executeUpdate();
@@ -229,7 +229,7 @@ public class Alliance {
     public void saveToDB() {
         try (Connection con = DatabaseConnection.getStaticConnection()) {
 
-            try (PreparedStatement ps = con.prepareStatement("UPDATE `alliance` SET capacity = ?, notice = ?, rank1 = ?, rank2 = ?, rank3 = ?, rank4 = ?, rank5 = ? WHERE id = ?")) {
+            try (PreparedStatement ps = con.prepareStatement("UPDATE alliance SET capacity = ?, notice = ?, rank1 = ?, rank2 = ?, rank3 = ?, rank4 = ?, rank5 = ? WHERE id = ?")) {
                 ps.setInt(1, this.capacity);
                 ps.setString(2, this.notice);
 
@@ -243,13 +243,13 @@ public class Alliance {
                 ps.executeUpdate();
             }
 
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM `allianceguilds` WHERE allianceid = ?")) {
+            try (PreparedStatement ps = con.prepareStatement("DELETE FROM allianceguilds WHERE allianceid = ?")) {
                 ps.setInt(1, this.allianceId);
                 ps.executeUpdate();
             }
 
             for (int guild : guilds) {
-                try (PreparedStatement ps = con.prepareStatement("INSERT INTO `allianceguilds` (`allianceid`, `guildid`) VALUES (?, ?)")) {
+                try (PreparedStatement ps = con.prepareStatement("INSERT INTO allianceguilds (allianceid, guildid) VALUES (?, ?)")) {
                     ps.setInt(1, this.allianceId);
                     ps.setInt(2, guild);
                     ps.executeUpdate();
@@ -263,12 +263,12 @@ public class Alliance {
     public static void disbandAlliance(int allianceId) {
         try (Connection con = DatabaseConnection.getStaticConnection()) {
 
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM `alliance` WHERE id = ?")) {
+            try (PreparedStatement ps = con.prepareStatement("DELETE FROM alliance WHERE id = ?")) {
                 ps.setInt(1, allianceId);
                 ps.executeUpdate();
             }
 
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM `allianceguilds` WHERE allianceid = ?")) {
+            try (PreparedStatement ps = con.prepareStatement("DELETE FROM allianceguilds WHERE allianceid = ?")) {
                 ps.setInt(1, allianceId);
                 ps.executeUpdate();
             }
@@ -282,7 +282,7 @@ public class Alliance {
 
     private static void removeGuildFromAllianceOnDb(int guildId) {
         try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("DELETE FROM `allianceguilds` WHERE guildid = ?")) {
+             PreparedStatement ps = con.prepareStatement("DELETE FROM allianceguilds WHERE guildid = ?")) {
             ps.setInt(1, guildId);
             ps.executeUpdate();
         } catch (SQLException sqle) {

@@ -75,7 +75,7 @@ import java.util.List;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-public final class UseCashItemHandler extends AbstractPacketHandler {
+public class UseCashItemHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(UseCashItemHandler.class);
 
     private final NoteService noteService;

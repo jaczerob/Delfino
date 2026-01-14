@@ -48,7 +48,7 @@ import java.util.List;
  * @author ExtremeDevilz
  * @author Ronan (HeavenMS)
  */
-public final class MoveLifeHandler extends AbstractMovementPacketHandler {
+public class MoveLifeHandler extends AbstractMovementPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(MoveLifeHandler.class);
 
     @Override

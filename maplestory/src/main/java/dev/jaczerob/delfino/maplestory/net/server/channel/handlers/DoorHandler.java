@@ -32,7 +32,7 @@ import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 /**
  * @author Matze
  */
-public final class DoorHandler extends AbstractPacketHandler {
+public class DoorHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         int ownerid = p.readInt();

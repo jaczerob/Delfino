@@ -32,14 +32,14 @@ import dev.jaczerob.delfino.maplestory.client.inventory.ItemFactory;
 import dev.jaczerob.delfino.maplestory.client.inventory.manipulator.InventoryManipulator;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.net.server.world.World;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
 import dev.jaczerob.delfino.maplestory.server.maps.HiredMerchant;
 import dev.jaczerob.delfino.maplestory.service.NoteService;
 import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
 import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -117,7 +117,7 @@ public class FredrickProcessor {
     }
 
     private static void removeFredrickLog(Connection con, int cid) throws SQLException {
-        try (PreparedStatement ps = con.prepareStatement("DELETE FROM `fredstorage` WHERE `cid` = ?")) {
+        try (PreparedStatement ps = con.prepareStatement("DELETE FROM fredstorage WHERE cid = ?")) {
             ps.setInt(1, cid);
             ps.executeUpdate();
         }
@@ -127,7 +127,7 @@ public class FredrickProcessor {
         try (Connection con = DatabaseConnection.getStaticConnection()) {
 
             removeFredrickLog(con, cid);
-            try (PreparedStatement ps = con.prepareStatement("INSERT INTO `fredstorage` (`cid`, `daynotes`, `timestamp`) VALUES (?, 0, ?)")) {
+            try (PreparedStatement ps = con.prepareStatement("INSERT INTO fredstorage (cid, daynotes, timestamp) VALUES (?, 0, ?)")) {
                 ps.setInt(1, cid);
                 ps.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
                 ps.executeUpdate();
@@ -147,7 +147,7 @@ public class FredrickProcessor {
         }
 
         try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("DELETE FROM `notes` WHERE `from` LIKE ? AND `to` LIKE ?")) {
+             PreparedStatement ps = con.prepareStatement("DELETE FROM notes WHERE from LIKE ? AND to LIKE ?")) {
             ps.setString(1, "FREDRICK");
 
             for (String cname : expiredCnames) {
@@ -199,7 +199,7 @@ public class FredrickProcessor {
             }
 
             if (!expiredCids.isEmpty()) {
-                try (PreparedStatement ps = con.prepareStatement("DELETE FROM `inventoryitems` WHERE `type` = ? AND `characterid` = ?")) {
+                try (PreparedStatement ps = con.prepareStatement("DELETE FROM inventoryitems WHERE type = ? AND characterid = ?")) {
                     ps.setInt(1, ItemFactory.MERCHANT.getValue());
 
                     for (Pair<Integer, Integer> cid : expiredCids) {
@@ -210,7 +210,7 @@ public class FredrickProcessor {
                     ps.executeBatch();
                 }
 
-                try (PreparedStatement ps = con.prepareStatement("UPDATE `characters` SET `MerchantMesos` = 0 WHERE `id` = ?")) {
+                try (PreparedStatement ps = con.prepareStatement("UPDATE characters SET MerchantMesos = 0 WHERE id = ?")) {
                     for (Pair<Integer, Integer> cid : expiredCids) {
                         ps.setInt(1, cid.getLeft());
                         ps.addBatch();
@@ -229,7 +229,7 @@ public class FredrickProcessor {
 
                 removeFredrickReminders(expiredCids);
 
-                try (PreparedStatement ps = con.prepareStatement("DELETE FROM `fredstorage` WHERE `cid` = ?")) {
+                try (PreparedStatement ps = con.prepareStatement("DELETE FROM fredstorage WHERE cid = ?")) {
                     for (Pair<Integer, Integer> cid : expiredCids) {
                         ps.setInt(1, cid.getLeft());
                         ps.addBatch();
@@ -240,7 +240,7 @@ public class FredrickProcessor {
             }
 
             if (!notifCids.isEmpty()) {
-                try (PreparedStatement ps = con.prepareStatement("UPDATE `fredstorage` SET `daynotes` = ? WHERE `cid` = ?")) {
+                try (PreparedStatement ps = con.prepareStatement("UPDATE fredstorage SET daynotes = ? WHERE cid = ?")) {
                     for (Pair<Pair<Integer, String>, Integer> cid : notifCids) {
                         ps.setInt(1, cid.getRight());
                         ps.setInt(2, cid.getLeft().getLeft());
@@ -260,7 +260,7 @@ public class FredrickProcessor {
 
     private static boolean deleteFredrickItems(int cid) {
         try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("DELETE FROM `inventoryitems` WHERE `type` = ? AND `characterid` = ?")) {
+             PreparedStatement ps = con.prepareStatement("DELETE FROM inventoryitems WHERE type = ? AND characterid = ?")) {
             ps.setInt(1, ItemFactory.MERCHANT.getValue());
             ps.setInt(2, cid);
             ps.executeUpdate();

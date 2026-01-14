@@ -29,7 +29,7 @@ import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
 import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
 import dev.jaczerob.delfino.maplestory.server.StatEffect;
 
-public final class PetAutoPotHandler extends AbstractPacketHandler {
+public class PetAutoPotHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

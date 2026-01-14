@@ -36,7 +36,7 @@ import dev.jaczerob.delfino.maplestory.net.PacketHandler;
 import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
 import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
-public final class CancelBuffHandler extends AbstractPacketHandler implements PacketHandler {
+public class CancelBuffHandler extends AbstractPacketHandler implements PacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

@@ -1,32 +1,27 @@
 package dev.jaczerob.delfino.maplestory.config;
 
 import com.esotericsoftware.yamlbeans.YamlReader;
-import dev.jaczerob.delfino.maplestory.constants.string.CharsetConstants;
+import org.springframework.core.io.ClassPathResource;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 
 
 public class YamlConfig {
     public static final String CONFIG_FILE_NAME = "config.yaml";
-    public static final YamlConfig config = loadConfig();
+    public static final YamlConfig config;
 
     public List<WorldConfig> worlds;
     public ServerConfig server;
 
-    private static YamlConfig loadConfig() {
-        try {
-            YamlReader reader = new YamlReader(Files.newBufferedReader(Path.of(CONFIG_FILE_NAME), CharsetConstants.CHARSET));
-            YamlConfig config = reader.read(YamlConfig.class);
-            reader.close();
-            return config;
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException("Could not read config file " + YamlConfig.CONFIG_FILE_NAME + ": " + e.getMessage());
-        } catch (IOException e) {
-            throw new RuntimeException("Could not successfully parse config file " + YamlConfig.CONFIG_FILE_NAME + ": " + e.getMessage());
+    static {
+        final var configResource = new ClassPathResource(CONFIG_FILE_NAME);
+
+        try (final var reader = new YamlReader(Files.newBufferedReader(configResource.getFilePath()))) {
+            reader.getConfig().readConfig.setIgnoreUnknownProperties(true);
+            config = reader.read(YamlConfig.class);
+        } catch (final Exception exc) {
+            throw new RuntimeException("Could not parse %s".formatted(CONFIG_FILE_NAME), exc);
         }
     }
 }

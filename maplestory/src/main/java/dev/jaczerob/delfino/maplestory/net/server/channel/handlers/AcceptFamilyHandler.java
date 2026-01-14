@@ -45,7 +45,7 @@ import java.sql.SQLException;
  * @author Jay Estrella
  * @author Ubaware
  */
-public final class AcceptFamilyHandler extends AbstractPacketHandler {
+public class AcceptFamilyHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(AcceptFamilyHandler.class);
 
     @Override

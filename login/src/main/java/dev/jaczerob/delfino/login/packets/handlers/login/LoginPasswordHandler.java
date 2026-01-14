@@ -1,5 +1,6 @@
 package dev.jaczerob.delfino.login.packets.handlers.login;
 
+import dev.jaczerob.delfino.common.cache.login.LoginStatus;
 import dev.jaczerob.delfino.grpc.proto.account.Account;
 import dev.jaczerob.delfino.grpc.proto.account.AccountRequest;
 import dev.jaczerob.delfino.grpc.proto.account.AccountServiceGrpc;
@@ -39,7 +40,7 @@ public class LoginPasswordHandler extends AbstractPacketHandler {
 
     @Override
     public boolean validateState(final LoginClient client) {
-        return this.sessionCoordinator.getLoggedInUserStatus(client) != dev.jaczerob.delfino.login.client.LoginStatus.LOGGED_IN;
+        return this.sessionCoordinator.getLoggedInUserStatus(client) != LoginStatus.LOGGED_IN;
     }
 
     @Override
@@ -63,7 +64,7 @@ public class LoginPasswordHandler extends AbstractPacketHandler {
 
         final var loginStatus = this.login(account, payload.password());
 
-        if (loginStatus != LoginStatus.SUCCESS) {
+        if (loginStatus != MapleLoginStatus.SUCCESS) {
             context.writeAndFlush(this.loginPacketCreator.getLoginFailed(loginStatus.code()));
             return;
         }
@@ -73,18 +74,18 @@ public class LoginPasswordHandler extends AbstractPacketHandler {
         context.writeAndFlush(this.loginPacketCreator.getAuthSuccess(client));
     }
 
-    private LoginStatus login(final Account account, final String password) {
-        return this.passwordEncoder.matches(password, account.getPassword()) ? LoginStatus.SUCCESS : LoginStatus.INVALID_CREDENTIALS;
+    private MapleLoginStatus login(final Account account, final String password) {
+        return this.passwordEncoder.matches(password, account.getPassword()) ? MapleLoginStatus.SUCCESS : MapleLoginStatus.INVALID_CREDENTIALS;
     }
 
-    private enum LoginStatus {
+    private enum MapleLoginStatus {
         SUCCESS(0),
         INVALID_CREDENTIALS(4),
         FAILED_TO_LOGIN(7);
 
         private final int code;
 
-        LoginStatus(final int code) {
+        MapleLoginStatus(final int code) {
             this.code = code;
         }
 

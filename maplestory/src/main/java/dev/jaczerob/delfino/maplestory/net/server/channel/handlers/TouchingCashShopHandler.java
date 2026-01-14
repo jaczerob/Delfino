@@ -29,7 +29,7 @@ import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 /**
  * @author Terry Han (Acrylic)
  */
-public final class TouchingCashShopHandler extends AbstractPacketHandler {
+public class TouchingCashShopHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         c.sendPacket(PacketCreator.showCash(c.getPlayer()));

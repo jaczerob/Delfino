@@ -26,7 +26,7 @@ import dev.jaczerob.delfino.maplestory.net.AbstractPacketHandler;
 import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
 import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
-public final class UseDeathItemHandler extends AbstractPacketHandler {
+public class UseDeathItemHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         int itemId = p.readInt();

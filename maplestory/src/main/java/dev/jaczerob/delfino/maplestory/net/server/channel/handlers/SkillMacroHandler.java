@@ -28,7 +28,7 @@ import dev.jaczerob.delfino.maplestory.client.autoban.AutobanFactory;
 import dev.jaczerob.delfino.maplestory.net.AbstractPacketHandler;
 import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
 
-public final class SkillMacroHandler extends AbstractPacketHandler {
+public class SkillMacroHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

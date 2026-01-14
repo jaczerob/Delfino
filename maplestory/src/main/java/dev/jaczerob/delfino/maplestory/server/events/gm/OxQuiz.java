@@ -37,7 +37,7 @@ import java.util.List;
 /**
  * @author FloppyDisk
  */
-public final class OxQuiz {
+public class OxQuiz {
     private int round = 1;
     private int question = 1;
     private MapleMap map = null;

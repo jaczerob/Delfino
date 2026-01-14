@@ -30,7 +30,7 @@ import dev.jaczerob.delfino.maplestory.tools.exceptions.EmptyMovementException;
 
 import java.util.List;
 
-public final class MovePetHandler extends AbstractMovementPacketHandler {
+public class MovePetHandler extends AbstractMovementPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         int petId = p.readInt();

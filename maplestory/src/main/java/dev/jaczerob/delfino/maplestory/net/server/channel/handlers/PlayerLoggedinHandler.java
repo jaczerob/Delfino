@@ -1,24 +1,3 @@
-/*
- This file is part of the OdinMS Maple Story Server
- Copyright (C) 2008 Patrick Huy <patrick.huy@frz.cc>
- Matthias Butz <matze@odinms.de>
- Jan Christian Meyer <vimes@odinms.de>
-
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU Affero General Public License as
- published by the Free Software Foundation version 3 as published by
- the Free Software Foundation. You may not use, modify or distribute
- this program under any other version of the GNU Affero General Public
- License.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU Affero General Public License for more details.
-
- You should have received a copy of the GNU Affero General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package dev.jaczerob.delfino.maplestory.net.server.channel.handlers;
 
 import dev.jaczerob.delfino.maplestory.client.BuddyList;
@@ -45,8 +24,6 @@ import dev.jaczerob.delfino.maplestory.net.server.PlayerBuffValueHolder;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.net.server.channel.Channel;
 import dev.jaczerob.delfino.maplestory.net.server.channel.CharacterIdChannelPair;
-import dev.jaczerob.delfino.maplestory.net.server.coordinator.session.Hwid;
-import dev.jaczerob.delfino.maplestory.net.server.coordinator.session.SessionCoordinator;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.world.EventRecallCoordinator;
 import dev.jaczerob.delfino.maplestory.net.server.guild.Alliance;
 import dev.jaczerob.delfino.maplestory.net.server.guild.Guild;
@@ -77,7 +54,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public final class PlayerLoggedinHandler extends AbstractPacketHandler {
+public class PlayerLoggedinHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(PlayerLoggedinHandler.class);
     private static final Set<Integer> attemptingLoginAccounts = new HashSet<>();
 
@@ -111,8 +88,8 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {
-        final int cid = p.readInt(); // TODO: investigate if this is the "client id" supplied in PacketCreator#getServerIP()
-        final Server server = Server.getInstance();
+        final var cid = p.readInt(); // TODO: investigate if this is the "client id" supplied in PacketCreator#getServerIP()
+        final var server = Server.getInstance();
 
         if (!c.tryacquireClient()) {
             // thanks MedicOP for assisting on concurrency protection here
@@ -139,23 +116,11 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
 
             Character player = wserv.getPlayerStorage().getCharacterById(cid);
 
-            final Hwid hwid;
-            if (player == null) {
-                hwid = SessionCoordinator.getInstance().pickLoginSessionHwid(c);
-                if (hwid == null) {
-                    c.disconnect(true, false);
-                    return;
-                }
-            } else {
-                hwid = player.getClient().getHwid();
-            }
-
-            c.setHwid(hwid);
-
-            if (!server.validateCharacteridInTransition(c, cid)) {
-                c.disconnect(true, false);
-                return;
-            }
+            // TODO: Check if player is in transitioning state
+//            if (!server.validateCharacteridInTransition(c, cid)) {
+//                c.disconnect(true, false);
+//                return;
+//            }
 
             boolean newcomer = false;
             if (player == null) {
@@ -166,7 +131,7 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
                     e.printStackTrace();
                 }
 
-                if (player == null) { //If you are still getting null here then please just uninstall the game >.>, we dont need you fucking with the logs
+                if (player == null) {
                     c.disconnect(true, false);
                     return;
                 }
@@ -179,19 +144,20 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
             int accId = c.getAccID();
             if (tryAcquireAccount(accId)) { // Sync this to prevent wrong login state for double loggedin handling
                 try {
-                    int state = c.getLoginState();
-                    if (state != Client.LOGIN_SERVER_TRANSITION || !allowLogin) {
-                        c.setPlayer(null);
-                        c.setAccID(0);
-
-                        if (state == Client.LOGIN_LOGGEDIN) {
-                            c.disconnect(true, false);
-                        } else {
-                            c.sendPacket(PacketCreator.getAfterLoginError(7));
-                        }
-
-                        return;
-                    }
+                    // TODO: Check if character is in transition state... again?
+//                    int state = c.getLoginState();
+//                    if (state != Client.LOGIN_SERVER_TRANSITION ) {
+//                        c.setPlayer(null);
+//                        c.setAccID(0);
+//
+//                        if (state == Client.LOGIN_LOGGEDIN) {
+//                            c.disconnect(true, false);
+//                        } else {
+//                            c.sendPacket(PacketCreator.getAfterLoginError(7));
+//                        }
+//
+//                        return;
+//                    }
                     c.updateLoginState(Client.LOGIN_LOGGEDIN);
                 } finally {
                     releaseAccount(accId);

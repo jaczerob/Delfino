@@ -39,7 +39,7 @@ import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-public final class MagicDamageHandler extends AbstractDealDamageHandler {
+public class MagicDamageHandler extends AbstractDealDamageHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         Character chr = c.getPlayer();

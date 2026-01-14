@@ -28,7 +28,7 @@ import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
 import dev.jaczerob.delfino.maplestory.server.maps.MapObject;
 import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
-public final class CharInfoRequestHandler extends AbstractPacketHandler {
+public class CharInfoRequestHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

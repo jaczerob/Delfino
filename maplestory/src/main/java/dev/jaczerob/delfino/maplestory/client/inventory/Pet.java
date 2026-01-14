@@ -98,7 +98,7 @@ public class Pet extends Item {
 
     public static void deleteFromDb(Character owner, int petid) {
         try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("DELETE FROM pets WHERE `petid` = ?")) {
+             PreparedStatement ps = con.prepareStatement("DELETE FROM pets WHERE petid = ?")) {
             // thanks Vcoc for detecting petignores remaining after deletion
             ps.setInt(1, petid);
 

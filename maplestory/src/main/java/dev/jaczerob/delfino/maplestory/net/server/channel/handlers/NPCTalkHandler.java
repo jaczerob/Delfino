@@ -35,7 +35,7 @@ import dev.jaczerob.delfino.maplestory.server.life.PlayerNPC;
 import dev.jaczerob.delfino.maplestory.server.maps.MapObject;
 import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
-public final class NPCTalkHandler extends AbstractPacketHandler {
+public class NPCTalkHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(NPCTalkHandler.class);
 
     @Override

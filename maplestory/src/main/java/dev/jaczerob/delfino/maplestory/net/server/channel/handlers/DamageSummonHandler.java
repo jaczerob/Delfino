@@ -30,7 +30,7 @@ import dev.jaczerob.delfino.maplestory.server.maps.MapObject;
 import dev.jaczerob.delfino.maplestory.server.maps.Summon;
 import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
-public final class DamageSummonHandler extends AbstractPacketHandler {
+public class DamageSummonHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         int oid = p.readInt();

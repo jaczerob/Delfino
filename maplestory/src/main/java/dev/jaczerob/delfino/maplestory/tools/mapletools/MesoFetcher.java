@@ -100,7 +100,7 @@ public class MesoFetcher {
         printWriter.println(" # Only mobs with " + MIN_ITEMS + " or more items with no meso entry on the DB it was compiled are presented here.");
         printWriter.println();
 
-        printWriter.println("  INSERT IGNORE INTO drop_data (`dropperid`, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`) VALUES");
+        printWriter.println("  INSERT IGNORE INTO drop_data (dropperid, itemid, minimum_quantity, maximum_quantity, questid, chance) VALUES");
     }
 
     private static void printSqlExceptions() {
@@ -122,9 +122,9 @@ public class MesoFetcher {
     private static void generateMissingMobsMesoRange() {
         System.out.print("Generating missing ranges... ");
         try (Connection con = SimpleDatabaseConnection.getConnection();
-        	PreparedStatement ps = con.prepareStatement("SELECT dropperid FROM drop_data WHERE dropperid NOT IN (SELECT DISTINCT dropperid FROM drop_data WHERE itemid = 0) GROUP BY dropperid HAVING count(*) >= " + MIN_ITEMS + ";");
-        	ResultSet rs = ps.executeQuery();) {
-        	
+             PreparedStatement ps = con.prepareStatement("SELECT dropperid FROM drop_data WHERE dropperid NOT IN (SELECT DISTINCT dropperid FROM drop_data WHERE itemid = 0) GROUP BY dropperid HAVING count(*) >= " + MIN_ITEMS + ";");
+             ResultSet rs = ps.executeQuery();) {
+
             List<Integer> existingMobs = new ArrayList<>(200);
 
             if (rs.isBeforeFirst()) {
@@ -170,8 +170,8 @@ public class MesoFetcher {
     }
 
     public static void main(String[] args) {
-    	Instant instantStarted = Instant.now();
-    	// load mob stats from WZ
+        Instant instantStarted = Instant.now();
+        // load mob stats from WZ
         mobStats = MonsterStatFetcher.getAllMonsterStats();
 
         calcAllMobsMesoRange();
@@ -179,7 +179,7 @@ public class MesoFetcher {
         Instant instantStopped = Instant.now();
         Duration durationBetween = Duration.between(instantStarted, instantStopped);
         System.out.println("Get elapsed time in milliseconds: " + durationBetween.toMillis());
-      	System.out.println("Get elapsed time in seconds: " + durationBetween.toSeconds());
+        System.out.println("Get elapsed time in seconds: " + durationBetween.toSeconds());
 
     }
 

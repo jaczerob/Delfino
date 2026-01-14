@@ -244,7 +244,7 @@ public class CodeCouponGenerator {
         System.out.println("  Generating coupon '" + recipe.name + "'");
         generatedKeys = null;
 
-        PreparedStatement ps = con.prepareStatement("INSERT IGNORE INTO `nxcode` (`code`, `expiration`) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS);
+        PreparedStatement ps = con.prepareStatement("INSERT IGNORE INTO nxcode (code, expiration) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS);
         ps.setLong(2, currentTime + HOURS.toMillis(recipe.duration));
 
         for (int i = 0; i < recipe.quantity; i++) {
@@ -253,7 +253,7 @@ public class CodeCouponGenerator {
         }
         ps.executeBatch();
 
-        PreparedStatement ps2 = con.prepareStatement("INSERT IGNORE INTO `nxcode_items` (`codeid`, `type`, `item`, `quantity`) VALUES (?, ?, ?, ?)");
+        PreparedStatement ps2 = con.prepareStatement("INSERT IGNORE INTO nxcode_items (codeid, type, item, quantity) VALUES (?, ?, ?, ?)");
         if (!recipe.itemList.isEmpty()) {
             ps2.setInt(2, 5);
             List<Integer> keys = getGeneratedKeys(ps);

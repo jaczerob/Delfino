@@ -288,7 +288,7 @@ class PairedQuicksort {
     }
 }
 
-public final class InventorySortHandler extends AbstractPacketHandler {
+public class InventorySortHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         Character chr = c.getPlayer();

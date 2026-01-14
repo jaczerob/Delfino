@@ -29,7 +29,7 @@ import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 /**
  * @author Ronan
  */
-public final class TransferNameResultHandler extends AbstractPacketHandler {
+public class TransferNameResultHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

@@ -32,7 +32,7 @@ import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
  * @author Matze
  * @author Ronan - concurrency protection
  */
-public final class MesoDropHandler extends AbstractPacketHandler {
+public class MesoDropHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         Character player = c.getPlayer();

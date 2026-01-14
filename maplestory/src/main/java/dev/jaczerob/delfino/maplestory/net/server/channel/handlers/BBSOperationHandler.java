@@ -26,16 +26,16 @@ import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.net.AbstractPacketHandler;
 import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
 import dev.jaczerob.delfino.maplestory.net.server.guild.GuildPackets;
+import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public final class BBSOperationHandler extends AbstractPacketHandler {
+public class BBSOperationHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(BBSOperationHandler.class);
 
     private String correctLength(String in, int maxSize) {
@@ -132,7 +132,7 @@ public final class BBSOperationHandler extends AbstractPacketHandler {
                 }
             }
 
-            try (PreparedStatement ps = con.prepareStatement("INSERT INTO bbs_replies " + "(`threadid`, `postercid`, `timestamp`, `content`) VALUES " + "(?, ?, ?, ?)")) {
+            try (PreparedStatement ps = con.prepareStatement("INSERT INTO bbs_replies " + "(threadid, postercid, timestamp, content) VALUES " + "(?, ?, ?, ?)")) {
                 ps.setInt(1, threadid);
                 ps.setInt(2, c.getPlayer().getId());
                 ps.setLong(3, currentServerTime());
@@ -157,7 +157,7 @@ public final class BBSOperationHandler extends AbstractPacketHandler {
             return;
         }
         try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("UPDATE bbs_threads SET `name` = ?, `timestamp` = ?, " + "`icon` = ?, " + "`startpost` = ? WHERE guildid = ? AND localthreadid = ? AND (postercid = ? OR ?)")) {
+             PreparedStatement ps = con.prepareStatement("UPDATE bbs_threads SET name = ?, timestamp = ?, " + "icon = ?, " + "startpost = ? WHERE guildid = ? AND localthreadid = ? AND (postercid = ? OR ?)")) {
 
             ps.setString(1, title);
             ps.setLong(2, currentServerTime());
@@ -192,7 +192,7 @@ public final class BBSOperationHandler extends AbstractPacketHandler {
                 }
             }
 
-            try (PreparedStatement ps = con.prepareStatement("INSERT INTO bbs_threads (`postercid`, `name`, `timestamp`, `icon`, `startpost`, `guildid`, `localthreadid`) VALUES(?, ?, ?, ?, ?, ?, ?)")) {
+            try (PreparedStatement ps = con.prepareStatement("INSERT INTO bbs_threads (postercid, name, timestamp, icon, startpost, guildid, localthreadid) VALUES(?, ?, ?, ?, ?, ?, ?)")) {
                 ps.setInt(1, chr.getId());
                 ps.setString(2, title);
                 ps.setLong(3, currentServerTime());

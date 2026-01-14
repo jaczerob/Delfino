@@ -31,7 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
-public final class GiveFameHandler extends AbstractPacketHandler {
+public class GiveFameHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(GiveFameHandler.class);
 
     @Override

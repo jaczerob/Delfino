@@ -128,7 +128,7 @@ public class ExpeditionBossLog {
 
         try (Connection con = DatabaseConnection.getStaticConnection()) {
             for (Pair<Timestamp, BossLogEntry> p : resetTimestamps) {
-                try (PreparedStatement ps = con.prepareStatement("DELETE FROM " + getBossLogTable(week) + " WHERE attempttime <= ? AND bosstype LIKE ?")) {
+                try (PreparedStatement ps = con.prepareStatement("DELETE FROM " + getBossLogTable(week) + " WHERE attempttime <= ? AND bosstype::text LIKE ?")) {
                     ps.setTimestamp(1, p.getLeft());
                     ps.setString(2, p.getRight().name());
                     ps.executeUpdate();

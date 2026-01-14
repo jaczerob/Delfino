@@ -42,7 +42,7 @@ import dev.jaczerob.delfino.maplestory.tools.Randomizer;
 import java.util.Arrays;
 import java.util.List;
 
-public final class AdminCommandHandler extends AbstractPacketHandler {
+public class AdminCommandHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(AdminCommandHandler.class);
 
     @Override

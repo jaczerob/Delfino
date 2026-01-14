@@ -28,7 +28,7 @@ import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
 import dev.jaczerob.delfino.maplestory.server.life.Monster;
 import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
-public final class MonsterBombHandler extends AbstractPacketHandler {
+public class MonsterBombHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         int oid = p.readInt();

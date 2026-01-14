@@ -29,7 +29,7 @@ import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 /**
  * @author Xterminator
  */
-public final class CloseChalkboardHandler extends AbstractPacketHandler {
+public class CloseChalkboardHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

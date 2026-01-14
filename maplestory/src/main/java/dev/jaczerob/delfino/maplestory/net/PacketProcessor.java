@@ -1,24 +1,3 @@
-/*
- This file is part of the OdinMS Maple Story Server
- Copyright (C) 2008 Patrick Huy <patrick.huy@frz.cc>
- Matthias Butz <matze@odinms.de>
- Jan Christian Meyer <vimes@odinms.de>
-
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU Affero General Public License as
- published by the Free Software Foundation version 3 as published by
- the Free Software Foundation. You may not use, modify or distribute
- this program under any other version of the GNU Affero General Public
- License.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU Affero General Public License for more details.
-
- You should have received a copy of the GNU Affero General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package dev.jaczerob.delfino.maplestory.net;
 
 import dev.jaczerob.delfino.maplestory.net.opcodes.RecvOpcode;
@@ -170,33 +149,13 @@ import dev.jaczerob.delfino.maplestory.net.server.channel.handlers.WhisperHandle
 import dev.jaczerob.delfino.maplestory.net.server.handlers.CustomPacketHandler;
 import dev.jaczerob.delfino.maplestory.net.server.handlers.KeepAliveHandler;
 import dev.jaczerob.delfino.maplestory.net.server.handlers.LoginRequiringNoOpHandler;
-import dev.jaczerob.delfino.maplestory.net.server.handlers.login.AcceptToSHandler;
-import dev.jaczerob.delfino.maplestory.net.server.handlers.login.AfterLoginHandler;
-import dev.jaczerob.delfino.maplestory.net.server.handlers.login.CharSelectedHandler;
-import dev.jaczerob.delfino.maplestory.net.server.handlers.login.CharSelectedWithPicHandler;
-import dev.jaczerob.delfino.maplestory.net.server.handlers.login.CharlistRequestHandler;
-import dev.jaczerob.delfino.maplestory.net.server.handlers.login.CheckCharNameHandler;
-import dev.jaczerob.delfino.maplestory.net.server.handlers.login.CreateCharHandler;
-import dev.jaczerob.delfino.maplestory.net.server.handlers.login.DeleteCharHandler;
-import dev.jaczerob.delfino.maplestory.net.server.handlers.login.GuestLoginHandler;
-import dev.jaczerob.delfino.maplestory.net.server.handlers.login.LoginPasswordHandler;
-import dev.jaczerob.delfino.maplestory.net.server.handlers.login.RegisterPicHandler;
-import dev.jaczerob.delfino.maplestory.net.server.handlers.login.RegisterPinHandler;
-import dev.jaczerob.delfino.maplestory.net.server.handlers.login.RelogRequestHandler;
-import dev.jaczerob.delfino.maplestory.net.server.handlers.login.ServerStatusRequestHandler;
-import dev.jaczerob.delfino.maplestory.net.server.handlers.login.ServerlistRequestHandler;
-import dev.jaczerob.delfino.maplestory.net.server.handlers.login.SetGenderHandler;
-import dev.jaczerob.delfino.maplestory.net.server.handlers.login.ViewAllCharHandler;
-import dev.jaczerob.delfino.maplestory.net.server.handlers.login.ViewAllCharRegisterPicHandler;
-import dev.jaczerob.delfino.maplestory.net.server.handlers.login.ViewAllCharSelectedHandler;
-import dev.jaczerob.delfino.maplestory.net.server.handlers.login.ViewAllCharSelectedWithPicHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public final class PacketProcessor {
+public class PacketProcessor {
     private static final Logger log = LoggerFactory.getLogger(PacketProcessor.class);
     private static final Map<String, PacketProcessor> instances = new LinkedHashMap<>();
 
@@ -257,41 +216,12 @@ public final class PacketProcessor {
         handlers = new PacketHandler[handlers.length];
 
         registerCommonHandlers();
-
-        if (channel < 0) {
-            registerLoginHandlers();
-        } else {
-            registerChannelHandlers();
-        }
+        registerChannelHandlers();
     }
 
     private void registerCommonHandlers() {
         registerHandler(RecvOpcode.PONG, new KeepAliveHandler());
         registerHandler(RecvOpcode.CUSTOM_PACKET, new CustomPacketHandler());
-    }
-
-    private void registerLoginHandlers() {
-        registerHandler(RecvOpcode.ACCEPT_TOS, new AcceptToSHandler());
-        registerHandler(RecvOpcode.AFTER_LOGIN, new AfterLoginHandler());
-        registerHandler(RecvOpcode.SERVERLIST_REREQUEST, new ServerlistRequestHandler());
-        registerHandler(RecvOpcode.CHARLIST_REQUEST, new CharlistRequestHandler());
-        registerHandler(RecvOpcode.CHAR_SELECT, new CharSelectedHandler());
-        registerHandler(RecvOpcode.LOGIN_PASSWORD, new LoginPasswordHandler());
-        registerHandler(RecvOpcode.RELOG, new RelogRequestHandler());
-        registerHandler(RecvOpcode.SERVERLIST_REQUEST, new ServerlistRequestHandler());
-        registerHandler(RecvOpcode.SERVERSTATUS_REQUEST, new ServerStatusRequestHandler());
-        registerHandler(RecvOpcode.CHECK_CHAR_NAME, new CheckCharNameHandler());
-        registerHandler(RecvOpcode.CREATE_CHAR, new CreateCharHandler());
-        registerHandler(RecvOpcode.DELETE_CHAR, new DeleteCharHandler());
-        registerHandler(RecvOpcode.VIEW_ALL_CHAR, new ViewAllCharHandler());
-        registerHandler(RecvOpcode.PICK_ALL_CHAR, new ViewAllCharSelectedHandler());
-        registerHandler(RecvOpcode.REGISTER_PIN, new RegisterPinHandler());
-        registerHandler(RecvOpcode.GUEST_LOGIN, new GuestLoginHandler());
-        registerHandler(RecvOpcode.REGISTER_PIC, new RegisterPicHandler());
-        registerHandler(RecvOpcode.CHAR_SELECT_WITH_PIC, new CharSelectedWithPicHandler());
-        registerHandler(RecvOpcode.SET_GENDER, new SetGenderHandler());
-        registerHandler(RecvOpcode.VIEW_ALL_WITH_PIC, new ViewAllCharSelectedWithPicHandler());
-        registerHandler(RecvOpcode.VIEW_ALL_PIC_REGISTER, new ViewAllCharRegisterPicHandler());
     }
 
     private void registerChannelHandlers() {

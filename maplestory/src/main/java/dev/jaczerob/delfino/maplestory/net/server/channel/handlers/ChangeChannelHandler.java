@@ -30,7 +30,7 @@ import dev.jaczerob.delfino.maplestory.net.server.Server;
 /**
  * @author Matze
  */
-public final class ChangeChannelHandler extends AbstractPacketHandler {
+public class ChangeChannelHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

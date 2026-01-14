@@ -29,7 +29,7 @@ import dev.jaczerob.delfino.maplestory.server.maps.Reactor;
 /**
  * @author Lerk
  */
-public final class ReactorHitHandler extends AbstractPacketHandler {
+public class ReactorHitHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         //System.out.println(slea); //To see if there are any differences with packets

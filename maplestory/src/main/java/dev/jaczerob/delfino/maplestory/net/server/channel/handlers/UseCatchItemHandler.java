@@ -39,7 +39,7 @@ import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 /**
  * @author kevintjuh93
  */
-public final class UseCatchItemHandler extends AbstractPacketHandler {
+public class UseCatchItemHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         Character chr = c.getPlayer();

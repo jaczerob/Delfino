@@ -33,14 +33,14 @@ import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
 import dev.jaczerob.delfino.maplestory.net.packet.Packet;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.net.server.channel.Channel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import dev.jaczerob.delfino.maplestory.server.CashShop;
 import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
 import dev.jaczerob.delfino.maplestory.server.MTSItemInfo;
 import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
 import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -51,7 +51,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class MTSHandler extends AbstractPacketHandler {
+public class MTSHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(MTSHandler.class);
 
     @Override
@@ -148,7 +148,7 @@ public final class MTSHandler extends AbstractPacketHandler {
                                 }
                             } else {
                                 Equip equip = (Equip) i;
-                                try (PreparedStatement pse = con.prepareStatement("INSERT INTO mts_items (tab, type, itemid, quantity, expiration, giftFrom, seller, price, upgradeslots, level, str, dex, `int`, luk, hp, mp, watk, matk, wdef, mdef, acc, avoid, hands, speed, jump, locked, owner, sellername, sell_ends, vicious, flag, itemexp, itemlevel, ringid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                                try (PreparedStatement pse = con.prepareStatement("INSERT INTO mts_items (tab, type, itemid, quantity, expiration, giftFrom, seller, price, upgradeslots, level, str, dex, int, luk, hp, mp, watk, matk, wdef, mdef, acc, avoid, hands, speed, jump, locked, owner, sellername, sell_ends, vicious, flag, itemexp, itemlevel, ringid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
                                     pse.setInt(1, 1);
                                     pse.setInt(2, invType.getType());
                                     pse.setInt(3, equip.getItemId());

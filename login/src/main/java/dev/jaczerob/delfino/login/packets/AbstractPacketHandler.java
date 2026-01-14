@@ -1,5 +1,6 @@
 package dev.jaczerob.delfino.login.packets;
 
+import dev.jaczerob.delfino.common.cache.login.LoginStatus;
 import dev.jaczerob.delfino.login.client.LoginClient;
 import dev.jaczerob.delfino.login.coordinators.SessionCoordinator;
 import dev.jaczerob.delfino.login.tools.LoginPacketCreator;
@@ -16,6 +17,6 @@ public abstract class AbstractPacketHandler implements PacketHandler<LoginClient
 
     @Override
     public boolean validateState(final LoginClient client) {
-        return this.sessionCoordinator.getLoggedInUserStatus(client) == dev.jaczerob.delfino.login.client.LoginStatus.LOGGED_IN;
+        return this.sessionCoordinator.getLoggedInUserStatus(client) == LoginStatus.LOGGED_IN;
     }
 }

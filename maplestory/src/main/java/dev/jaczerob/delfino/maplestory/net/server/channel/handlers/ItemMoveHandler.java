@@ -31,7 +31,7 @@ import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 /**
  * @author Matze
  */
-public final class ItemMoveHandler extends AbstractPacketHandler {
+public class ItemMoveHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         p.skip(4);

@@ -30,7 +30,7 @@ import dev.jaczerob.delfino.maplestory.net.server.guild.Guild;
 /**
  * @author Xterminator
  */
-public final class DenyGuildRequestHandler extends AbstractPacketHandler {
+public class DenyGuildRequestHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

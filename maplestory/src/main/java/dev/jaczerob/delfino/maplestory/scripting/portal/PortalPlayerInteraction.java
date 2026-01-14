@@ -52,7 +52,7 @@ public class PortalPlayerInteraction extends AbstractPlayerInteraction {
 
     public boolean hasLevel30Character() {
         try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT `level` FROM `characters` WHERE accountid = ?")) {
+             PreparedStatement ps = con.prepareStatement("SELECT level FROM characters WHERE accountid = ?")) {
             ps.setInt(1, getPlayer().getAccountID());
 
             try (ResultSet rs = ps.executeQuery()) {

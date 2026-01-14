@@ -11,17 +11,16 @@
 - [ ] Re-implement character deletion
 - [ ] Re-implement checking if account is already logged in
 - [ ] Re-implement character creation
-- [ ] Re-implement session management
 - [ ] Fix channel capacity showing full
 - [ ] Fix naked characters showing up in character list
 
 ### In Progress
 
-- [ ] Remove all database calls and move to MDRS GRPC calls
-- [ ] Successfully move characters from login server to channel server
-    - [x] Login server
-    - [ ] Channel server
-
 ### Done ✓
 
+- [x] Re-implement session management
+- [x] Remove all database calls and move to MDRS GRPC calls
 - [x] Remove YamlConfig and replace with application.yaml
+- [x] Successfully move characters from login server to channel server
+    - [x] Login server
+    - [x] Channel server

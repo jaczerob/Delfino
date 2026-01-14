@@ -29,7 +29,7 @@ import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 /**
  * @author Ubaware
  */
-public final class OpenFamilyHandler extends AbstractPacketHandler {
+public class OpenFamilyHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         if (!YamlConfig.config.server.USE_FAMILY_SYSTEM) {

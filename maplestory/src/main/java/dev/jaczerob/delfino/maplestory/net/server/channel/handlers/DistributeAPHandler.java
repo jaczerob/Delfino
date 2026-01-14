@@ -26,7 +26,7 @@ import dev.jaczerob.delfino.maplestory.client.processor.stat.AssignAPProcessor;
 import dev.jaczerob.delfino.maplestory.net.AbstractPacketHandler;
 import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
 
-public final class DistributeAPHandler extends AbstractPacketHandler {
+public class DistributeAPHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

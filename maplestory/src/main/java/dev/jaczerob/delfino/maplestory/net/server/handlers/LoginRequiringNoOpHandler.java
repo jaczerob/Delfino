@@ -25,7 +25,7 @@ import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.net.PacketHandler;
 import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
 
-public final class LoginRequiringNoOpHandler implements PacketHandler {
+public class LoginRequiringNoOpHandler implements PacketHandler {
     private static final LoginRequiringNoOpHandler instance = new LoginRequiringNoOpHandler();
 
     public static LoginRequiringNoOpHandler getInstance() {

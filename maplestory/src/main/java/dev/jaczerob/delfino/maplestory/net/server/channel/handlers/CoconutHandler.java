@@ -33,7 +33,7 @@ import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 /**
  * @author kevintjuh93
  */
-public final class CoconutHandler extends AbstractPacketHandler {
+public class CoconutHandler extends AbstractPacketHandler {
     public final void handlePacket(InPacket p, Client c) {
         /*CB 00 A6 00 06 01
          * A6 00 = coconut id

@@ -45,10 +45,11 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class SummonDamageHandler extends AbstractDealDamageHandler {
+public class SummonDamageHandler extends AbstractDealDamageHandler {
     private static final Logger log = LoggerFactory.getLogger(SummonDamageHandler.class);
 
-    public record SummonAttackTarget(int monsterOid, int damage, short delay) {}
+    public record SummonAttackTarget(int monsterOid, int damage, short delay) {
+    }
 
     @Override
     public void handlePacket(InPacket p, Client c) {

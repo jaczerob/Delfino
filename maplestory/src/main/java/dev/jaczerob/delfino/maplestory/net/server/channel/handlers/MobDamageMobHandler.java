@@ -41,7 +41,7 @@ import java.util.Map;
  * @author Jay Estrella
  * @author Ronan
  */
-public final class MobDamageMobHandler extends AbstractPacketHandler {
+public class MobDamageMobHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(MobDamageMobHandler.class);
 
     @Override

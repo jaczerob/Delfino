@@ -30,7 +30,7 @@ import dev.jaczerob.delfino.maplestory.server.maps.Reactor;
 /**
  * @author Generic
  */
-public final class TouchReactorHandler extends AbstractPacketHandler {
+public class TouchReactorHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

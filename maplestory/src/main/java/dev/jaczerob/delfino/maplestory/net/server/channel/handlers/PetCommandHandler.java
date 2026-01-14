@@ -31,7 +31,7 @@ import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
 import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.Randomizer;
 
-public final class PetCommandHandler extends AbstractPacketHandler {
+public class PetCommandHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

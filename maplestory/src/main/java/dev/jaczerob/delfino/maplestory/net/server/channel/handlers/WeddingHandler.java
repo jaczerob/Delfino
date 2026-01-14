@@ -30,7 +30,7 @@ import java.util.List;
 /**
  * @author Drago (Dragohe4rt)
  */
-public final class WeddingHandler extends AbstractPacketHandler {
+public class WeddingHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(WeddingHandler.class);
 
     @Override

@@ -34,7 +34,7 @@ import dev.jaczerob.delfino.maplestory.net.server.world.MessengerCharacter;
 import dev.jaczerob.delfino.maplestory.net.server.world.World;
 import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
-public final class MessengerHandler extends AbstractPacketHandler {
+public class MessengerHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         if (c.tryacquireClient()) {

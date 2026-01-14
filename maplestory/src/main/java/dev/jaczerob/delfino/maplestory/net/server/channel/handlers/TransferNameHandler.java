@@ -41,7 +41,7 @@ import static java.util.concurrent.TimeUnit.DAYS;
  * @author Ronan
  * @author Ubaware
  */
-public final class TransferNameHandler extends AbstractPacketHandler {
+public class TransferNameHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

@@ -1,7 +1,7 @@
 package dev.jaczerob.delfino.login.packets.handlers.login;
 
+import dev.jaczerob.delfino.common.cache.login.LoginStatus;
 import dev.jaczerob.delfino.login.client.LoginClient;
-import dev.jaczerob.delfino.login.client.LoginStatus;
 import dev.jaczerob.delfino.login.coordinators.SessionCoordinator;
 import dev.jaczerob.delfino.login.packets.AbstractPacketHandler;
 import dev.jaczerob.delfino.login.tools.LoginPacketCreator;

@@ -31,7 +31,7 @@ import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.server.maps.MapleMap;
 import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
-public final class HealOvertimeHandler extends AbstractPacketHandler {
+public class HealOvertimeHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         Character chr = c.getPlayer();

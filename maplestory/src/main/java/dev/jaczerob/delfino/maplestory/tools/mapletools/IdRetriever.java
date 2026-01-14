@@ -60,7 +60,7 @@ public class IdRetriever {
         String[] tokens = line.split(" - ", 3);
 
         if (tokens.length > 1) {
-            PreparedStatement ps = con.prepareStatement("INSERT INTO `handbook` (`id`, `name`, `description`) VALUES (?, ?, ?)");
+            PreparedStatement ps = con.prepareStatement("INSERT INTO handbook (id, name, description) VALUES (?, ?, ?)");
             try {
                 ps.setInt(1, Integer.parseInt(tokens[0]));
             } catch (NumberFormatException npe) {   // odd...
@@ -110,16 +110,16 @@ public class IdRetriever {
     }
 
     private static void setupSqlTable() throws SQLException {
-        PreparedStatement ps = con.prepareStatement("DROP TABLE IF EXISTS `handbook`;");
+        PreparedStatement ps = con.prepareStatement("DROP TABLE IF EXISTS handbook;");
         ps.execute();
         ps.close();
 
-        ps = con.prepareStatement("CREATE TABLE `handbook` ("
-                + "`key` int(10) unsigned NOT NULL AUTO_INCREMENT,"
-                + "`id` int(10) DEFAULT NULL,"
-                + "`name` varchar(200) DEFAULT NULL,"
-                + "`description` varchar(1000) DEFAULT '',"
-                + "PRIMARY KEY (`key`)"
+        ps = con.prepareStatement("CREATE TABLE handbook ("
+                + "key int(10) unsigned NOT NULL AUTO_INCREMENT,"
+                + "id int(10) DEFAULT NULL,"
+                + "name varchar(200) DEFAULT NULL,"
+                + "description varchar(1000) DEFAULT '',"
+                + "PRIMARY KEY (key)"
                 + ");");
         ps.execute();
         ps.close();
@@ -142,7 +142,7 @@ public class IdRetriever {
 
     private static void fetchDataOnMapleHandbook() throws SQLException {
         try (BufferedReader br = Files.newBufferedReader(INPUT_FILE);
-                PrintWriter printWriter = new PrintWriter(Files.newOutputStream(OUTPUT_FILE));) {
+             PrintWriter printWriter = new PrintWriter(Files.newOutputStream(OUTPUT_FILE));) {
             bufferedReader = br;
             String line;
             while ((line = bufferedReader.readLine()) != null) {
@@ -151,7 +151,7 @@ public class IdRetriever {
                     continue;
                 }
 
-                PreparedStatement ps = con.prepareStatement("SELECT `id` FROM `handbook` WHERE `name` LIKE ? ORDER BY `id` ASC;");
+                PreparedStatement ps = con.prepareStatement("SELECT id FROM handbook WHERE name LIKE ? ORDER BY id ASC;");
                 ps.setString(1, line);
 
                 ResultSet rs = ps.executeQuery();

@@ -30,7 +30,7 @@ import dev.jaczerob.delfino.maplestory.net.server.coordinator.world.InviteCoordi
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.world.InviteCoordinator.InviteType;
 import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
-public final class DenyPartyRequestHandler extends AbstractPacketHandler {
+public class DenyPartyRequestHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

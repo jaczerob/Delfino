@@ -33,7 +33,7 @@ import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider.ScriptedIt
 /**
  * @author Jay Estrella
  */
-public final class ScriptedItemHandler extends AbstractPacketHandler {
+public class ScriptedItemHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         p.readInt(); // trash stamp, thanks RMZero213

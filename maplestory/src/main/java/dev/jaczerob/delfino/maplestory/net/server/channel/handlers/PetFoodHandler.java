@@ -34,7 +34,7 @@ import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
-public final class PetFoodHandler extends AbstractPacketHandler {
+public class PetFoodHandler extends AbstractPacketHandler {
 
     @Override
     public final void handlePacket(InPacket p, Client c) {

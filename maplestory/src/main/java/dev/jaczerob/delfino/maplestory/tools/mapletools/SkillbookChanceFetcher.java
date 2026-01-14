@@ -32,7 +32,8 @@ import java.util.Map;
 public class SkillbookChanceFetcher {
     private static final Path OUTPUT_FILE = ToolConstants.getOutputFile("skillbook_drop_data.sql");
 
-    private record DropIdentifier(int mobId, int itemId) {}
+    private record DropIdentifier(int mobId, int itemId) {
+    }
 
     public static void main(String[] args) {
         Instant start = Instant.now();
@@ -126,7 +127,7 @@ public class SkillbookChanceFetcher {
         pw.println(" # Generated data takes into account mob stats such as level and boss for the chance rates.");
         pw.println();
 
-        pw.println("  REPLACE INTO drop_data (`dropperid`, `itemid`, `minimum_quantity`, `maximum_quantity`, `questid`, `chance`) VALUES");
+        pw.println("  REPLACE INTO drop_data (dropperid, itemid, minimum_quantity, maximum_quantity, questid, chance) VALUES");
     }
 
     private static List<Map.Entry<DropIdentifier, Integer>> sortedSkillbookChances(

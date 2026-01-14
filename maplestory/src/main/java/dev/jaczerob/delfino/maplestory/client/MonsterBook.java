@@ -33,7 +33,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public final class MonsterBook {
+public class MonsterBook {
     private int specialCard = 0;
     private int normalCard = 0;
     private int bookLevel = 1;

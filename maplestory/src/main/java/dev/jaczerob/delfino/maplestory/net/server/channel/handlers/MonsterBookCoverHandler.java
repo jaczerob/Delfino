@@ -26,7 +26,7 @@ import dev.jaczerob.delfino.maplestory.net.AbstractPacketHandler;
 import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
 import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
-public final class MonsterBookCoverHandler extends AbstractPacketHandler {
+public class MonsterBookCoverHandler extends AbstractPacketHandler {
     public final void handlePacket(InPacket p, Client c) {
         int id = p.readInt();
         if (id == 0 || id / 10000 == 238) {
