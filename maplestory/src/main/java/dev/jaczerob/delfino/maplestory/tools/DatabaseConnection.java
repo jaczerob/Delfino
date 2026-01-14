@@ -30,14 +30,6 @@ public class DatabaseConnection {
         return INSTANCE.dataSource.getConnection();
     }
 
-    public static Handle getStaticHandle() {
-        if (INSTANCE == null) {
-            throw new IllegalStateException("Unable to get handle - connection pool is uninitialized");
-        }
-
-        return INSTANCE.jdbi.open();
-    }
-
     public Connection getConnection() throws SQLException {
         return this.dataSource.getConnection();
     }

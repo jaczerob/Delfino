@@ -28,7 +28,7 @@ import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.client.command.Command;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.net.server.world.World;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 public class SaveAllCommand extends Command {
     {
@@ -44,7 +44,7 @@ public class SaveAllCommand extends Command {
             }
         }
         String message = player.getName() + " used !saveall.";
-        Server.getInstance().broadcastGMMessage(c.getWorld(), PacketCreator.serverNotice(5, message));
+        Server.getInstance().broadcastGMMessage(c.getWorld(), ChannelPacketCreator.getInstance().serverNotice(5, message));
         player.message("All players saved successfully.");
     }
 }

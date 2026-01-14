@@ -29,14 +29,15 @@ import dev.jaczerob.delfino.maplestory.config.YamlConfig;
 import dev.jaczerob.delfino.maplestory.constants.game.GameConstants;
 import dev.jaczerob.delfino.maplestory.constants.id.ItemId;
 import dev.jaczerob.delfino.maplestory.constants.inventory.ItemConstants;
-import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
 import dev.jaczerob.delfino.maplestory.server.MakerItemFactory;
 import dev.jaczerob.delfino.maplestory.server.MakerItemFactory.MakerItemCreateEntry;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.Pair;
+import dev.jaczerob.delfino.network.packets.InPacket;
+import io.netty.channel.ChannelHandlerContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -66,8 +67,8 @@ public class MakerProcessor {
                     int fromLeftover = toCreate;
                     toCreate = ii.getMakerCrystalFromLeftover(toCreate);
                     if (toCreate == -1) {
-                        c.sendPacket(PacketCreator.serverNotice(1, ii.getName(fromLeftover) + " is unavailable for Monster Crystal conversion."));
-                        c.sendPacket(PacketCreator.makerEnableActions());
+                        c.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, ii.getName(fromLeftover) + " is unavailable for Monster Crystal conversion."));
+                        c.sendPacket(ChannelPacketCreator.getInstance().makerEnableActions());
                         return;
                     }
 
@@ -84,13 +85,13 @@ public class MakerProcessor {
                         if (pair != null) {
                             recipe = MakerItemFactory.generateDisassemblyCrystalEntry(toDisassemble, pair.getLeft(), pair.getRight());
                         } else {
-                            c.sendPacket(PacketCreator.serverNotice(1, ii.getName(toCreate) + " is unavailable for Monster Crystal disassembly."));
-                            c.sendPacket(PacketCreator.makerEnableActions());
+                            c.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, ii.getName(toCreate) + " is unavailable for Monster Crystal disassembly."));
+                            c.sendPacket(ChannelPacketCreator.getInstance().makerEnableActions());
                             return;
                         }
                     } else {
-                        c.sendPacket(PacketCreator.serverNotice(1, "An unknown error occurred when trying to apply that item for disassembly."));
-                        c.sendPacket(PacketCreator.makerEnableActions());
+                        c.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "An unknown error occurred when trying to apply that item for disassembly."));
+                        c.sendPacket(ChannelPacketCreator.getInstance().makerEnableActions());
                         return;
                     }
                 } else {
@@ -137,8 +138,8 @@ public class MakerProcessor {
 
                         if (!reagentids.isEmpty()) {
                             if (!removeOddMakerReagents(toCreate, reagentids)) {
-                                c.sendPacket(PacketCreator.serverNotice(1, "You can only use WATK and MATK Strengthening Gems on weapon items."));
-                                c.sendPacket(PacketCreator.makerEnableActions());
+                                c.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "You can only use WATK and MATK Strengthening Gems on weapon items."));
+                                c.sendPacket(ChannelPacketCreator.getInstance().makerEnableActions());
                                 return;
                             }
                         }
@@ -152,33 +153,33 @@ public class MakerProcessor {
                 switch (createStatus) {
                     case -1:// non-available for Maker itemid has been tried to forge
                         log.warn("Chr {} tried to craft itemid {} using the Maker skill.", c.getPlayer().getName(), toCreate);
-                        c.sendPacket(PacketCreator.serverNotice(1, "The requested item could not be crafted on this operation."));
-                        c.sendPacket(PacketCreator.makerEnableActions());
+                        c.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "The requested item could not be crafted on this operation."));
+                        c.sendPacket(ChannelPacketCreator.getInstance().makerEnableActions());
                         break;
 
                     case 1: // no items
-                        c.sendPacket(PacketCreator.serverNotice(1, "You don't have all required items in your inventory to make " + ii.getName(toCreate) + "."));
-                        c.sendPacket(PacketCreator.makerEnableActions());
+                        c.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "You don't have all required items in your inventory to make " + ii.getName(toCreate) + "."));
+                        c.sendPacket(ChannelPacketCreator.getInstance().makerEnableActions());
                         break;
 
                     case 2: // no meso
-                        c.sendPacket(PacketCreator.serverNotice(1, "You don't have enough mesos (" + GameConstants.numberWithCommas(recipe.getCost()) + ") to complete this operation."));
-                        c.sendPacket(PacketCreator.makerEnableActions());
+                        c.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "You don't have enough mesos (" + GameConstants.numberWithCommas(recipe.getCost()) + ") to complete this operation."));
+                        c.sendPacket(ChannelPacketCreator.getInstance().makerEnableActions());
                         break;
 
                     case 3: // no req level
-                        c.sendPacket(PacketCreator.serverNotice(1, "You don't have enough level to complete this operation."));
-                        c.sendPacket(PacketCreator.makerEnableActions());
+                        c.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "You don't have enough level to complete this operation."));
+                        c.sendPacket(ChannelPacketCreator.getInstance().makerEnableActions());
                         break;
 
                     case 4: // no req skill level
-                        c.sendPacket(PacketCreator.serverNotice(1, "You don't have enough Maker level to complete this operation."));
-                        c.sendPacket(PacketCreator.makerEnableActions());
+                        c.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "You don't have enough Maker level to complete this operation."));
+                        c.sendPacket(ChannelPacketCreator.getInstance().makerEnableActions());
                         break;
 
                     case 5: // inventory full
-                        c.sendPacket(PacketCreator.serverNotice(1, "Your inventory is full."));
-                        c.sendPacket(PacketCreator.makerEnableActions());
+                        c.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "Your inventory is full."));
+                        c.sendPacket(ChannelPacketCreator.getInstance().makerEnableActions());
                         break;
 
                     default:
@@ -221,15 +222,15 @@ public class MakerProcessor {
 
                         // thanks inhyuk for noticing missing MAKER_RESULT packets
                         if (type == 3) {
-                            c.sendPacket(PacketCreator.makerResultCrystal(recipe.getGainItems().get(0).getLeft(), recipe.getReqItems().get(0).getLeft()));
+                            c.sendPacket(ChannelPacketCreator.getInstance().makerResultCrystal(recipe.getGainItems().get(0).getLeft(), recipe.getReqItems().get(0).getLeft()));
                         } else if (type == 4) {
-                            c.sendPacket(PacketCreator.makerResultDesynth(recipe.getReqItems().get(0).getLeft(), recipe.getCost(), recipe.getGainItems()));
+                            c.sendPacket(ChannelPacketCreator.getInstance().makerResultDesynth(recipe.getReqItems().get(0).getLeft(), recipe.getCost(), recipe.getGainItems()));
                         } else {
-                            c.sendPacket(PacketCreator.makerResult(makerSucceeded, recipe.getGainItems().get(0).getLeft(), recipe.getGainItems().get(0).getRight(), recipe.getCost(), recipe.getReqItems(), stimulantid, new LinkedList<>(reagentids.keySet())));
+                            c.sendPacket(ChannelPacketCreator.getInstance().makerResult(makerSucceeded, recipe.getGainItems().get(0).getLeft(), recipe.getGainItems().get(0).getRight(), recipe.getCost(), recipe.getReqItems(), stimulantid, new LinkedList<>(reagentids.keySet())));
                         }
 
-                        c.sendPacket(PacketCreator.showMakerEffect(makerSucceeded));
-                        c.getPlayer().getMap().broadcastMessage(c.getPlayer(), PacketCreator.showForeignMakerEffect(c.getPlayer().getId(), makerSucceeded), false);
+                        c.sendPacket(ChannelPacketCreator.getInstance().showMakerEffect(makerSucceeded));
+                        c.getPlayer().getMap().broadcastMessage(c.getPlayer(), ChannelPacketCreator.getInstance().showForeignMakerEffect(c.getPlayer().getId(), makerSucceeded), false);
 
                         if (toCreate == 4260003 && type == 3 && c.getPlayer().getQuestStatus(6033) == 1) {
                             c.getAbstractPlayerInteraction().setQuestProgress(6033, 1);

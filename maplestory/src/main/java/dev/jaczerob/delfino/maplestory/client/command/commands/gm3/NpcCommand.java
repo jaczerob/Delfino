@@ -28,7 +28,7 @@ import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.client.command.Command;
 import dev.jaczerob.delfino.maplestory.server.life.LifeFactory;
 import dev.jaczerob.delfino.maplestory.server.life.NPC;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 public class NpcCommand extends Command {
     {
@@ -50,7 +50,7 @@ public class NpcCommand extends Command {
             npc.setRx1(player.getPosition().x - 50);
             npc.setFh(player.getMap().getFootholds().findBelow(c.getPlayer().getPosition()).getId());
             player.getMap().addMapObject(npc);
-            player.getMap().broadcastMessage(PacketCreator.spawnNPC(npc));
+            player.getMap().broadcastMessage(ChannelPacketCreator.getInstance().spawnNPC(npc));
         }
     }
 }

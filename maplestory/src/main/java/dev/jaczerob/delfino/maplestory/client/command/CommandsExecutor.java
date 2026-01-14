@@ -1,26 +1,3 @@
-/*
-    This file is part of the HeavenMS MapleStory Server, commands OdinMS-based
-    Copyleft (L) 2016 - 2019 RonanLana
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as
-    published by the Free Software Foundation version 3 as published by
-    the Free Software Foundation. You may not use, modify or distribute
-    this program under any other version of the GNU Affero General Public
-    License.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
-
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-/*
-   @Author: Arthur L - Refactored command content into modules
-*/
 package dev.jaczerob.delfino.maplestory.client.command;
 
 import dev.jaczerob.delfino.maplestory.client.Client;
@@ -130,7 +107,6 @@ import dev.jaczerob.delfino.maplestory.client.command.commands.gm3.NoticeCommand
 import dev.jaczerob.delfino.maplestory.client.command.commands.gm3.NpcCommand;
 import dev.jaczerob.delfino.maplestory.client.command.commands.gm3.OnlineTwoCommand;
 import dev.jaczerob.delfino.maplestory.client.command.commands.gm3.OpenPortalCommand;
-import dev.jaczerob.delfino.maplestory.client.command.commands.gm3.PeCommand;
 import dev.jaczerob.delfino.maplestory.client.command.commands.gm3.PosCommand;
 import dev.jaczerob.delfino.maplestory.client.command.commands.gm3.QuestCompleteCommand;
 import dev.jaczerob.delfino.maplestory.client.command.commands.gm3.QuestResetCommand;
@@ -213,6 +189,16 @@ public class CommandsExecutor {
     private final List<Pair<List<String>, List<String>>> commandsNameDesc = new ArrayList<>();
     private Pair<List<String>, List<String>> levelCommandsCursor;
 
+    private CommandsExecutor() {
+        registerLv0Commands();
+        registerLv1Commands();
+        registerLv2Commands();
+        registerLv3Commands();
+        registerLv4Commands();
+        registerLv5Commands();
+        registerLv6Commands();
+    }
+
     public static CommandsExecutor getInstance() {
         return instance;
     }
@@ -223,16 +209,6 @@ public class CommandsExecutor {
             return heading == USER_HEADING || heading == GM_HEADING;
         }
         return heading == USER_HEADING;
-    }
-
-    private CommandsExecutor() {
-        registerLv0Commands();
-        registerLv1Commands();
-        registerLv2Commands();
-        registerLv3Commands();
-        registerLv4Commands();
-        registerLv5Commands();
-        registerLv6Commands();
     }
 
     public List<Pair<List<String>, List<String>>> getGmCommands() {
@@ -461,7 +437,6 @@ public class CommandsExecutor {
         addCommand("rip", 3, RipCommand.class);
         addCommand("openportal", 3, OpenPortalCommand.class);
         addCommand("closeportal", 3, ClosePortalCommand.class);
-        addCommand("pe", 3, PeCommand.class);
         addCommand("startevent", 3, StartEventCommand.class);
         addCommand("endevent", 3, EndEventCommand.class);
         addCommand("startmapevent", 3, StartMapEventCommand.class);

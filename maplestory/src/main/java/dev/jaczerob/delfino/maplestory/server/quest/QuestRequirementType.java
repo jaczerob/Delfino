@@ -1,24 +1,3 @@
-/*
-	This file is part of the OdinMS Maple Story Server
-    Copyright (C) 2008 Patrick Huy <patrick.huy@frz.cc>
-		       Matthias Butz <matze@odinms.de>
-		       Jan Christian Meyer <vimes@odinms.de>
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as
-    published by the Free Software Foundation version 3 as published by
-    the Free Software Foundation. You may not use, modify or distribute
-    this program under any other version of the GNU Affero General Public
-    License.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
-
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package dev.jaczerob.delfino.maplestory.server.quest;
 
 /**
@@ -63,58 +42,58 @@ public enum QuestRequirementType {
 
     public static QuestRequirementType getByWZName(String name) {
         switch (name) {
-        case "job":
-            return JOB;
-        case "quest":
-            return QUEST;
-        case "item":
-            return ITEM;
-        case "lvmin":
-            return MIN_LEVEL;
-        case "lvmax":
-            return MAX_LEVEL;
-        case "end":
-            return END_DATE;
-        case "mob":
-            return MOB;
-        case "npc":
-            return NPC;
-        case "fieldEnter":
-            return FIELD_ENTER;
-        case "interval":
-            return INTERVAL;
-        case "startscript":
-            return SCRIPT;
-        case "endscript":
-            return SCRIPT;
-        case "pet":
-            return PET;
-        case "pettamenessmin":
-            return MIN_PET_TAMENESS;
-        case "mbmin":
-            return MONSTER_BOOK;
-        case "normalAutoStart":
-            return NORMAL_AUTO_START;
-        case "infoNumber":
-            return INFO_NUMBER;
-        case "infoex":
-            return INFO_EX;
-        case "questComplete":
-            return COMPLETED_QUEST;
-        case "start":
-            return START;
+            case "job":
+                return JOB;
+            case "quest":
+                return QUEST;
+            case "item":
+                return ITEM;
+            case "lvmin":
+                return MIN_LEVEL;
+            case "lvmax":
+                return MAX_LEVEL;
+            case "end":
+                return END_DATE;
+            case "mob":
+                return MOB;
+            case "npc":
+                return NPC;
+            case "fieldEnter":
+                return FIELD_ENTER;
+            case "interval":
+                return INTERVAL;
+            case "startscript":
+                return SCRIPT;
+            case "endscript":
+                return SCRIPT;
+            case "pet":
+                return PET;
+            case "pettamenessmin":
+                return MIN_PET_TAMENESS;
+            case "mbmin":
+                return MONSTER_BOOK;
+            case "normalAutoStart":
+                return NORMAL_AUTO_START;
+            case "infoNumber":
+                return INFO_NUMBER;
+            case "infoex":
+                return INFO_EX;
+            case "questComplete":
+                return COMPLETED_QUEST;
+            case "start":
+                return START;
 	/* case "end":already coded
             return END;*/
-        case "daybyday":
-            return DAY_BY_DAY;
-        case "money":
-            return MESO;
-        case "buff":
-            return BUFF;
-        case "exceptbuff":
-            return EXCEPT_BUFF;
-        default:
-            return UNDEFINED;
+            case "daybyday":
+                return DAY_BY_DAY;
+            case "money":
+                return MESO;
+            case "buff":
+                return BUFF;
+            case "exceptbuff":
+                return EXCEPT_BUFF;
+            default:
+                return UNDEFINED;
         }
     }
 }

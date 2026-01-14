@@ -21,14 +21,14 @@
  */
 package dev.jaczerob.delfino.maplestory.client;
 
-import dev.jaczerob.delfino.maplestory.net.packet.Packet;
+import dev.jaczerob.delfino.network.packets.Packet;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.net.server.world.World;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
+import dev.jaczerob.delfino.maplestory.tools.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
-import dev.jaczerob.delfino.maplestory.tools.Pair;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -176,7 +176,7 @@ public class Family {
         for (FamilyEntry entry : members.values()) {
             Character chr = entry.getChr();
             if (chr != null) {
-                chr.sendPacket(PacketCreator.getFamilyInfo(entry));
+                chr.sendPacket(ChannelPacketCreator.getInstance().getFamilyInfo(entry));
             }
         }
     }

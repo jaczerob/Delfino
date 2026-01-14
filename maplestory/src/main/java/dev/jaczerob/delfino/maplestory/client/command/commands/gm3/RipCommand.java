@@ -27,7 +27,7 @@ import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.client.command.Command;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 public class RipCommand extends Command {
     {
@@ -37,6 +37,6 @@ public class RipCommand extends Command {
     @Override
     public void execute(Client c, String[] params) {
         Character player = c.getPlayer();
-        Server.getInstance().broadcastMessage(c.getWorld(), PacketCreator.serverNotice(6, "[RIP]: " + joinStringFrom(params, 1)));
+        Server.getInstance().broadcastMessage(c.getWorld(), ChannelPacketCreator.getInstance().serverNotice(6, "[RIP]: " + joinStringFrom(params, 1)));
     }
 }

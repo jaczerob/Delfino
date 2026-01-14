@@ -22,13 +22,13 @@ package dev.jaczerob.delfino.maplestory.server.life.positioner;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.net.server.channel.Channel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import dev.jaczerob.delfino.maplestory.server.life.PlayerNPC;
 import dev.jaczerob.delfino.maplestory.server.maps.MapObject;
 import dev.jaczerob.delfino.maplestory.server.maps.MapObjectType;
 import dev.jaczerob.delfino.maplestory.server.maps.MapleMap;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -155,8 +155,8 @@ public class PlayerNPCPositioner {
 
                 for (PlayerNPC pn : playerNpcs) {
                     m.removeMapObject(pn);
-                    m.broadcastMessage(PacketCreator.removeNPCController(pn.getObjectId()));
-                    m.broadcastMessage(PacketCreator.removePlayerNPC(pn.getObjectId()));
+                    m.broadcastMessage(ChannelPacketCreator.getInstance().removeNPCController(pn.getObjectId()));
+                    m.broadcastMessage(ChannelPacketCreator.getInstance().removePlayerNPC(pn.getObjectId()));
                 }
             }
 
@@ -167,8 +167,8 @@ public class PlayerNPCPositioner {
 
                 for (PlayerNPC pn : playerNpcs) {
                     m.addPlayerNPCMapObject(pn);
-                    m.broadcastMessage(PacketCreator.spawnPlayerNPC(pn));
-                    m.broadcastMessage(PacketCreator.getPlayerNPC(pn));
+                    m.broadcastMessage(ChannelPacketCreator.getInstance().spawnPlayerNPC(pn));
+                    m.broadcastMessage(ChannelPacketCreator.getInstance().getPlayerNPC(pn));
                 }
             }
 

@@ -27,7 +27,7 @@ import dev.jaczerob.delfino.maplestory.client.QuestStatus;
 import dev.jaczerob.delfino.maplestory.constants.id.MapId;
 import dev.jaczerob.delfino.maplestory.scripting.AbstractPlayerInteraction;
 import dev.jaczerob.delfino.maplestory.server.quest.Quest;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 public class MapScriptMethods extends AbstractPlayerInteraction {
 
@@ -41,16 +41,21 @@ public class MapScriptMethods extends AbstractPlayerInteraction {
         switch (c.getPlayer().getMapId()) {
             case MapId.CYGNUS_INTRO_LEAD -> {
                 lockUI();
-                c.sendPacket(PacketCreator.showIntro("Effect/Direction.img/cygnusJobTutorial/Scene0"));
+                c.sendPacket(ChannelPacketCreator.getInstance().showIntro("Effect/Direction.img/cygnusJobTutorial/Scene0"));
             }
-            case MapId.CYGNUS_INTRO_WARRIOR -> c.sendPacket(PacketCreator.showIntro("Effect/Direction.img/cygnusJobTutorial/Scene1"));
-            case MapId.CYGNUS_INTRO_BOWMAN -> c.sendPacket(PacketCreator.showIntro("Effect/Direction.img/cygnusJobTutorial/Scene2"));
-            case MapId.CYGNUS_INTRO_MAGE -> c.sendPacket(PacketCreator.showIntro("Effect/Direction.img/cygnusJobTutorial/Scene3"));
-            case MapId.CYGNUS_INTRO_PIRATE -> c.sendPacket(PacketCreator.showIntro("Effect/Direction.img/cygnusJobTutorial/Scene4"));
-            case MapId.CYGNUS_INTRO_THIEF -> c.sendPacket(PacketCreator.showIntro("Effect/Direction.img/cygnusJobTutorial/Scene5"));
+            case MapId.CYGNUS_INTRO_WARRIOR ->
+                    c.sendPacket(ChannelPacketCreator.getInstance().showIntro("Effect/Direction.img/cygnusJobTutorial/Scene1"));
+            case MapId.CYGNUS_INTRO_BOWMAN ->
+                    c.sendPacket(ChannelPacketCreator.getInstance().showIntro("Effect/Direction.img/cygnusJobTutorial/Scene2"));
+            case MapId.CYGNUS_INTRO_MAGE ->
+                    c.sendPacket(ChannelPacketCreator.getInstance().showIntro("Effect/Direction.img/cygnusJobTutorial/Scene3"));
+            case MapId.CYGNUS_INTRO_PIRATE ->
+                    c.sendPacket(ChannelPacketCreator.getInstance().showIntro("Effect/Direction.img/cygnusJobTutorial/Scene4"));
+            case MapId.CYGNUS_INTRO_THIEF ->
+                    c.sendPacket(ChannelPacketCreator.getInstance().showIntro("Effect/Direction.img/cygnusJobTutorial/Scene5"));
             case MapId.CYGNUS_INTRO_CONCLUSION -> {
                 lockUI();
-                c.sendPacket(PacketCreator.showIntro("Effect/Direction.img/cygnusJobTutorial/Scene6"));
+                c.sendPacket(ChannelPacketCreator.getInstance().showIntro("Effect/Direction.img/cygnusJobTutorial/Scene6"));
             }
         }
     }
@@ -59,46 +64,49 @@ public class MapScriptMethods extends AbstractPlayerInteraction {
         switch (c.getPlayer().getMapId()) {
             case MapId.ARAN_TUTO_1 -> {
                 lockUI();
-                c.sendPacket(PacketCreator.showIntro("Effect/Direction1.img/aranTutorial/Scene0"));
+                c.sendPacket(ChannelPacketCreator.getInstance().showIntro("Effect/Direction1.img/aranTutorial/Scene0"));
             }
-            case MapId.ARAN_TUTO_2 -> c.sendPacket(PacketCreator.showIntro("Effect/Direction1.img/aranTutorial/Scene1" + c.getPlayer().getGender()));
-            case MapId.ARAN_TUTO_3 -> c.sendPacket(PacketCreator.showIntro("Effect/Direction1.img/aranTutorial/Scene2" + c.getPlayer().getGender()));
-            case MapId.ARAN_TUTO_4 -> c.sendPacket(PacketCreator.showIntro("Effect/Direction1.img/aranTutorial/Scene3"));
+            case MapId.ARAN_TUTO_2 ->
+                    c.sendPacket(ChannelPacketCreator.getInstance().showIntro("Effect/Direction1.img/aranTutorial/Scene1" + c.getPlayer().getGender()));
+            case MapId.ARAN_TUTO_3 ->
+                    c.sendPacket(ChannelPacketCreator.getInstance().showIntro("Effect/Direction1.img/aranTutorial/Scene2" + c.getPlayer().getGender()));
+            case MapId.ARAN_TUTO_4 ->
+                    c.sendPacket(ChannelPacketCreator.getInstance().showIntro("Effect/Direction1.img/aranTutorial/Scene3"));
             case MapId.ARAN_POLEARM -> {
                 lockUI();
-                c.sendPacket(PacketCreator.showIntro("Effect/Direction1.img/aranTutorial/HandedPoleArm" + c.getPlayer().getGender()));
+                c.sendPacket(ChannelPacketCreator.getInstance().showIntro("Effect/Direction1.img/aranTutorial/HandedPoleArm" + c.getPlayer().getGender()));
             }
         }
     }
 
     public void startExplorerExperience() {
         switch (c.getPlayer().getMapId()) {
-        case 1020100: //Swordman
-            c.sendPacket(PacketCreator.showIntro("Effect/Direction3.img/swordman/Scene" + c.getPlayer().getGender()));
-            break;
-        case 1020200: //Magician
-            c.sendPacket(PacketCreator.showIntro("Effect/Direction3.img/magician/Scene" + c.getPlayer().getGender()));
-            break;
-        case 1020300: //Archer
-            c.sendPacket(PacketCreator.showIntro("Effect/Direction3.img/archer/Scene" + c.getPlayer().getGender()));
-            break;
-        case 1020400: //Rogue
-            c.sendPacket(PacketCreator.showIntro("Effect/Direction3.img/rogue/Scene" + c.getPlayer().getGender()));
-            break;
-        case 1020500: //Pirate
-            c.sendPacket(PacketCreator.showIntro("Effect/Direction3.img/pirate/Scene" + c.getPlayer().getGender()));
-            break;
+            case 1020100: //Swordman
+                c.sendPacket(ChannelPacketCreator.getInstance().showIntro("Effect/Direction3.img/swordman/Scene" + c.getPlayer().getGender()));
+                break;
+            case 1020200: //Magician
+                c.sendPacket(ChannelPacketCreator.getInstance().showIntro("Effect/Direction3.img/magician/Scene" + c.getPlayer().getGender()));
+                break;
+            case 1020300: //Archer
+                c.sendPacket(ChannelPacketCreator.getInstance().showIntro("Effect/Direction3.img/archer/Scene" + c.getPlayer().getGender()));
+                break;
+            case 1020400: //Rogue
+                c.sendPacket(ChannelPacketCreator.getInstance().showIntro("Effect/Direction3.img/rogue/Scene" + c.getPlayer().getGender()));
+                break;
+            case 1020500: //Pirate
+                c.sendPacket(ChannelPacketCreator.getInstance().showIntro("Effect/Direction3.img/pirate/Scene" + c.getPlayer().getGender()));
+                break;
         }
     }
 
     public void goAdventure() {
         lockUI();
-        c.sendPacket(PacketCreator.showIntro("Effect/Direction3.img/goAdventure/Scene" + c.getPlayer().getGender()));
+        c.sendPacket(ChannelPacketCreator.getInstance().showIntro("Effect/Direction3.img/goAdventure/Scene" + c.getPlayer().getGender()));
     }
 
     public void goLith() {
         lockUI();
-        c.sendPacket(PacketCreator.showIntro("Effect/Direction3.img/goLith/Scene" + c.getPlayer().getGender()));
+        c.sendPacket(ChannelPacketCreator.getInstance().showIntro("Effect/Direction3.img/goLith/Scene" + c.getPlayer().getGender()));
     }
 
     public void explorerQuest(short questid, String questName) {
@@ -106,7 +114,7 @@ public class MapScriptMethods extends AbstractPlayerInteraction {
         if (isQuestCompleted(questid)) {
             return;
         }
-        
+
         if (!isQuestStarted(questid)) {
             if (!quest.forceStart(getPlayer(), 9000066)) {
                 return;
@@ -121,20 +129,20 @@ public class MapScriptMethods extends AbstractPlayerInteraction {
 
         // explorer quests all have an infoex/infonumber requirement that points to another quest
         // THAT quest's progress needs to be updated for Quest.canComplete() to return true
-        getPlayer().setQuestProgress(quest.getId(), (int)quest.getInfoNumber(qs.getStatus()), status);
+        getPlayer().setQuestProgress(quest.getId(), (int) quest.getInfoNumber(qs.getStatus()), status);
 
         StringBuilder smp = new StringBuilder();
         StringBuilder etm = new StringBuilder();
         if (status.equals(infoex)) {
             etm.append("Earned the ").append(questName).append(" title!");
             smp.append("You have earned the <").append(questName).append(">").append(rewardstring);
-            getPlayer().sendPacket(PacketCreator.getShowQuestCompletion(quest.getId()));
+            getPlayer().sendPacket(ChannelPacketCreator.getInstance().getShowQuestCompletion(quest.getId()));
         } else {
-            getPlayer().sendPacket(PacketCreator.earnTitleMessage(status + "/" + infoex + " regions explored."));
+            getPlayer().sendPacket(ChannelPacketCreator.getInstance().earnTitleMessage(status + "/" + infoex + " regions explored."));
             etm.append("Trying for the ").append(questName).append(" title.");
             smp.append("You made progress on the ").append(questName).append(" title. ").append(status).append("/").append(infoex);
         }
-        getPlayer().sendPacket(PacketCreator.earnTitleMessage(etm.toString()));
+        getPlayer().sendPacket(ChannelPacketCreator.getInstance().earnTitleMessage(etm.toString()));
         showInfoText(smp.toString());
     }
 
@@ -151,11 +159,11 @@ public class MapScriptMethods extends AbstractPlayerInteraction {
         }
         String status = Integer.toString(qs.getMedalProgress());
         getPlayer().announceUpdateQuest(DelayedQuestUpdate.UPDATE, qs, true);
-        getPlayer().sendPacket(PacketCreator.earnTitleMessage(status + "/5 Completed"));
-        getPlayer().sendPacket(PacketCreator.earnTitleMessage("The One Who's Touched the Sky title in progress."));
+        getPlayer().sendPacket(ChannelPacketCreator.getInstance().earnTitleMessage(status + "/5 Completed"));
+        getPlayer().sendPacket(ChannelPacketCreator.getInstance().earnTitleMessage("The One Who's Touched the Sky title in progress."));
         if (Integer.toString(qs.getMedalProgress()).equals(qs.getInfoEx(0))) {
             showInfoText("The One Who's Touched the Sky" + rewardstring);
-            getPlayer().sendPacket(PacketCreator.getShowQuestCompletion(quest.getId()));
+            getPlayer().sendPacket(ChannelPacketCreator.getInstance().getShowQuestCompletion(quest.getId()));
         } else {
             showInfoText("The One Who's Touched the Sky title in progress. " + status + "/5 Completed");
         }

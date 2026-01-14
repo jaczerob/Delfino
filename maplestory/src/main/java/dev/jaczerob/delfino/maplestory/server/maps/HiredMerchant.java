@@ -31,12 +31,12 @@ import dev.jaczerob.delfino.maplestory.client.inventory.manipulator.InventoryMan
 import dev.jaczerob.delfino.maplestory.client.inventory.manipulator.KarmaManipulator;
 import dev.jaczerob.delfino.maplestory.client.processor.npc.FredrickProcessor;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
-import dev.jaczerob.delfino.maplestory.net.packet.Packet;
+import dev.jaczerob.delfino.network.packets.Packet;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
 import dev.jaczerob.delfino.maplestory.server.Trade;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.Pair;
 
 import java.sql.Connection;
@@ -45,12 +45,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -143,8 +138,8 @@ public class HiredMerchant extends AbstractMapObject {
             int i = this.getFreeSlot();
             if (i > -1) {
                 visitors[i] = new Visitor(visitor, Instant.now());
-                broadcastToVisitors(PacketCreator.hiredMerchantVisitorAdd(visitor, i + 1));
-                this.getMap().broadcastMessage(PacketCreator.updateHiredMerchantBox(this));
+                broadcastToVisitors(ChannelPacketCreator.getInstance().hiredMerchantVisitorAdd(visitor, i + 1));
+                this.getMap().broadcastMessage(ChannelPacketCreator.getInstance().updateHiredMerchantBox(this));
 
                 return true;
             }
@@ -167,8 +162,8 @@ public class HiredMerchant extends AbstractMapObject {
             if (visitor != null && visitor.chr.getId() == chr.getId()) {
                 visitors[slot] = null;
                 addVisitorToHistory(visitor);
-                broadcastToVisitors(PacketCreator.hiredMerchantVisitorLeave(slot + 1));
-                this.getMap().broadcastMessage(PacketCreator.updateHiredMerchantBox(this));
+                broadcastToVisitors(ChannelPacketCreator.getInstance().hiredMerchantVisitorLeave(slot + 1));
+                this.getMap().broadcastMessage(ChannelPacketCreator.getInstance().updateHiredMerchantBox(this));
             }
         } finally {
             visitorLock.unlock();
@@ -210,14 +205,14 @@ public class HiredMerchant extends AbstractMapObject {
                 if (visitor != null) {
                     final Character visitorChr = visitor.chr;
                     visitorChr.setHiredMerchant(null);
-                    visitorChr.sendPacket(PacketCreator.leaveHiredMerchant(i + 1, 0x11));
-                    visitorChr.sendPacket(PacketCreator.hiredMerchantMaintenanceMessage());
+                    visitorChr.sendPacket(ChannelPacketCreator.getInstance().leaveHiredMerchant(i + 1, 0x11));
+                    visitorChr.sendPacket(ChannelPacketCreator.getInstance().hiredMerchantMaintenanceMessage());
                     visitors[i] = null;
                     addVisitorToHistory(visitor);
                 }
             }
 
-            this.getMap().broadcastMessage(PacketCreator.updateHiredMerchantBox(this));
+            this.getMap().broadcastMessage(ChannelPacketCreator.getInstance().updateHiredMerchantBox(this));
         } finally {
             visitorLock.unlock();
         }
@@ -225,8 +220,8 @@ public class HiredMerchant extends AbstractMapObject {
 
     private void removeOwner(Character owner) {
         if (owner.getHiredMerchant() == this) {
-            owner.sendPacket(PacketCreator.hiredMerchantOwnerLeave());
-            owner.sendPacket(PacketCreator.leaveHiredMerchant(0x00, 0x03));
+            owner.sendPacket(ChannelPacketCreator.getInstance().hiredMerchantOwnerLeave());
+            owner.sendPacket(ChannelPacketCreator.getInstance().leaveHiredMerchant(0x00, 0x03));
             owner.setHiredMerchant(null);
         }
     }
@@ -248,8 +243,8 @@ public class HiredMerchant extends AbstractMapObject {
                     iitem.setQuantity((short) (shopItem.getItem().getQuantity() * shopItem.getBundles()));
 
                     if (!Inventory.checkSpot(chr, iitem)) {
-                        chr.sendPacket(PacketCreator.serverNotice(1, "Have a slot available on your inventory to claim back the item."));
-                        chr.sendPacket(PacketCreator.enableActions());
+                        chr.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "Have a slot available on your inventory to claim back the item."));
+                        chr.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                         return;
                     }
 
@@ -257,7 +252,7 @@ public class HiredMerchant extends AbstractMapObject {
                 }
 
                 removeFromSlot(slot);
-                chr.sendPacket(PacketCreator.updateHiredMerchant(this, chr));
+                chr.sendPacket(ChannelPacketCreator.getInstance().updateHiredMerchant(this, chr));
             }
 
             if (YamlConfig.config.server.USE_ENFORCE_MERCHANT_SAVE) {
@@ -291,10 +286,10 @@ public class HiredMerchant extends AbstractMapObject {
 
             newItem.setQuantity((short) ((pItem.getItem().getQuantity() * quantity)));
             if (quantity < 1 || !pItem.isExist() || pItem.getBundles() < quantity) {
-                c.sendPacket(PacketCreator.enableActions());
+                c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                 return;
             } else if (newItem.getInventoryType().equals(InventoryType.EQUIP) && newItem.getQuantity() > 1) {
-                c.sendPacket(PacketCreator.enableActions());
+                c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                 return;
             }
 
@@ -346,12 +341,12 @@ public class HiredMerchant extends AbstractMapObject {
                     }
                 } else {
                     c.getPlayer().dropMessage(1, "Your inventory is full. Please clear a slot before buying this item.");
-                    c.sendPacket(PacketCreator.enableActions());
+                    c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                     return;
                 }
             } else {
                 c.getPlayer().dropMessage(1, "You don't have enough mesos to purchase this item.");
-                c.sendPacket(PacketCreator.enableActions());
+                c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                 return;
             }
             try {
@@ -373,7 +368,7 @@ public class HiredMerchant extends AbstractMapObject {
 
     public void forceClose() {
         //Server.getInstance().getChannel(world, channel).removeHiredMerchant(ownerId);
-        map.broadcastMessage(PacketCreator.removeHiredMerchantBox(getOwnerId()));
+        map.broadcastMessage(ChannelPacketCreator.getInstance().removeHiredMerchantBox(getOwnerId()));
         map.removeMapObject(this);
 
         Character owner = Server.getInstance().getWorld(world).getPlayerStorage().getCharacterById(ownerId);
@@ -426,7 +421,7 @@ public class HiredMerchant extends AbstractMapObject {
 
     private void closeShop(Client c, boolean timeout) {
         map.removeMapObject(this);
-        map.broadcastMessage(PacketCreator.removeHiredMerchantBox(ownerId));
+        map.broadcastMessage(ChannelPacketCreator.getInstance().removeHiredMerchantBox(ownerId));
         c.getChannelServer().removeHiredMerchant(ownerId);
 
         this.removeAllVisitors();
@@ -489,18 +484,18 @@ public class HiredMerchant extends AbstractMapObject {
                 this.setOpen(false);
                 this.removeAllVisitors();
 
-                chr.sendPacket(PacketCreator.getHiredMerchant(chr, this, false));
+                chr.sendPacket(ChannelPacketCreator.getInstance().getHiredMerchant(chr, this, false));
             } else if (!this.isOpen()) {
-                chr.sendPacket(PacketCreator.getMiniRoomError(18));
+                chr.sendPacket(ChannelPacketCreator.getInstance().getMiniRoomError(18));
                 return;
             } else if (isBlacklisted(chr.getName())) {
-                chr.sendPacket(PacketCreator.getMiniRoomError(17));
+                chr.sendPacket(ChannelPacketCreator.getInstance().getMiniRoomError(17));
                 return;
             } else if (!this.addVisitor(chr)) {
-                chr.sendPacket(PacketCreator.getMiniRoomError(2));
+                chr.sendPacket(ChannelPacketCreator.getInstance().getMiniRoomError(2));
                 return;
             } else {
-                chr.sendPacket(PacketCreator.getHiredMerchant(chr, this, false));
+                chr.sendPacket(ChannelPacketCreator.getInstance().getHiredMerchant(chr, this, false));
             }
             chr.setHiredMerchant(this);
         } finally {
@@ -637,7 +632,7 @@ public class HiredMerchant extends AbstractMapObject {
         synchronized (messages) {
             messages.add(new Pair<>(message, slot));
         }
-        broadcastToVisitorsThreadsafe(PacketCreator.hiredMerchantChat(message, slot));
+        broadcastToVisitorsThreadsafe(ChannelPacketCreator.getInstance().hiredMerchantChat(message, slot));
     }
 
     public List<PlayerShopItem> sendAvailableBundles(int itemid) {
@@ -792,7 +787,7 @@ public class HiredMerchant extends AbstractMapObject {
 
     @Override
     public void sendSpawnData(Client client) {
-        client.sendPacket(PacketCreator.spawnHiredMerchantBox(this));
+        client.sendPacket(ChannelPacketCreator.getInstance().spawnHiredMerchantBox(this));
     }
 
     public class SoldItem {

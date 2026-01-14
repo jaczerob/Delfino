@@ -32,7 +32,7 @@ import dev.jaczerob.delfino.maplestory.provider.DataTool;
 import dev.jaczerob.delfino.maplestory.provider.wz.WZFiles;
 import dev.jaczerob.delfino.maplestory.server.quest.actions.*;
 import dev.jaczerob.delfino.maplestory.server.quest.requirements.*;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -321,7 +321,7 @@ public class Quest {
             return false;
         }
         if (timeLimit > 0) {
-            chr.sendPacket(PacketCreator.removeQuestTimeLimit(id));
+            chr.sendPacket(ChannelPacketCreator.getInstance().removeQuestTimeLimit(id));
         }
         QuestStatus newStatus = new QuestStatus(this, Status.NOT_STARTED);
         newStatus.setForfeited(chr.getQuest(this).getForfeited() + 1);
@@ -367,7 +367,7 @@ public class Quest {
 
     public boolean forceComplete(Character chr, int npc) {
         if (timeLimit > 0) {
-            chr.sendPacket(PacketCreator.removeQuestTimeLimit(id));
+            chr.sendPacket(ChannelPacketCreator.getInstance().removeQuestTimeLimit(id));
         }
 
         QuestStatus newStatus = new QuestStatus(this, Status.COMPLETED, npc);
@@ -376,8 +376,8 @@ public class Quest {
         newStatus.setCompletionTime(System.currentTimeMillis());
         chr.updateQuestStatus(newStatus);
 
-        chr.sendPacket(PacketCreator.showSpecialEffect(9)); // Quest completion
-        chr.getMap().broadcastMessage(chr, PacketCreator.showForeignEffect(chr.getId(), 9), false); //use 9 instead of 12 for both
+        chr.sendPacket(ChannelPacketCreator.getInstance().showSpecialEffect(9)); // Quest completion
+        chr.getMap().broadcastMessage(chr, ChannelPacketCreator.getInstance().showForeignEffect(chr.getId(), 9), false); //use 9 instead of 12 for both
         return true;
     }
 

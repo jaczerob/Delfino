@@ -8,52 +8,35 @@ package dev.jaczerob.delfino.maplestory.tools.packets;
 
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.inventory.Item;
+import dev.jaczerob.delfino.maplestory.config.DelfinoConfigurationProperties;
 import dev.jaczerob.delfino.maplestory.constants.id.ItemId;
 import dev.jaczerob.delfino.maplestory.constants.id.MapId;
 import dev.jaczerob.delfino.maplestory.net.opcodes.SendOpcode;
-import dev.jaczerob.delfino.maplestory.net.packet.OutPacket;
-import dev.jaczerob.delfino.maplestory.net.packet.Packet;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.StringUtil;
+import dev.jaczerob.delfino.network.packets.OutPacket;
+import dev.jaczerob.delfino.network.packets.Packet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
-import dev.jaczerob.delfino.maplestory.tools.StringUtil;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * CField_Wedding, CField_WeddingPhoto, CWeddingMan, OnMarriageResult, and all Wedding/Marriage enum/structs.
- *
- * @author Eric
- * <p>
- * Wishlists edited by Drago (Dragohe4rt)
- */
-public class WeddingPackets extends PacketCreator {
+@Component
+public class WeddingPackets extends ChannelPacketCreator {
     private static final Logger log = LoggerFactory.getLogger(WeddingPackets.class);
 
-    /*
-        00000000 CWeddingMan     struc ; (sizeof=0x104)
-        00000000 vfptr           dd ?                    ; offset
-        00000004 ___u1           $01CBC6800BD386B8A8FD818EAD990BEC ?
-        0000000C m_mCharIDToMarriageNo ZMap<unsigned long,unsigned long,unsigned long> ?
-        00000024 m_mReservationPending ZMap<unsigned long,ZRef<GW_WeddingReservation>,unsigned long> ?
-        0000003C m_mReservationPendingGroom ZMap<unsigned long,ZRef<CUser>,unsigned long> ?
-        00000054 m_mReservationPendingBride ZMap<unsigned long,ZRef<CUser>,unsigned long> ?
-        0000006C m_mReservationStartUser ZMap<unsigned long,unsigned long,unsigned long> ?
-        00000084 m_mReservationCompleted ZMap<unsigned long,ZRef<GW_WeddingReservation>,unsigned long> ?
-        0000009C m_mGroomWishList ZMap<unsigned long,ZRef<ZArray<ZXString<char> > >,unsigned long> ?
-        000000B4 m_mBrideWishList ZMap<unsigned long,ZRef<ZArray<ZXString<char> > >,unsigned long> ?
-        000000CC m_mEngagementPending ZMap<unsigned long,ZRef<GW_MarriageRecord>,unsigned long> ?
-        000000E4 m_nCurrentWeddingState dd ?
-        000000E8 m_dwCurrentWeddingNo dd ?
-        000000EC m_dwCurrentWeddingMap dd ?
-        000000F0 m_bIsReservationLoaded dd ?
-        000000F4 m_dwNumGuestBless dd ?
-        000000F8 m_bPhotoSuccess dd ?
-        000000FC m_tLastUpdate   dd ?
-        00000100 m_bStartWeddingCeremony dd ?
-        00000104 CWeddingMan     ends
-    */
+    private static WeddingPackets INSTANCE;
+
+    public WeddingPackets(final DelfinoConfigurationProperties properties) {
+        super(properties);
+        INSTANCE = this;
+    }
+
+    public static WeddingPackets getInstance() {
+        return INSTANCE;
+    }
 
     public class Field_Wedding {
         public int m_nNoticeCount;
@@ -210,7 +193,7 @@ public class WeddingPackets extends PacketCreator {
      * @param playerid
      * @return mplew
      */
-    public static Packet onMarriageRequest(String name, int playerid) {
+    public Packet onMarriageRequest(String name, int playerid) {
         OutPacket p = OutPacket.create(SendOpcode.MARRIAGE_REQUEST);
         p.writeByte(0); //mode, 0 = engage, 1 = cancel, 2 = answer.. etc
         p.writeString(name); // name
@@ -238,7 +221,7 @@ public class WeddingPackets extends PacketCreator {
      * @param m_dwUsers         The List of all Character guests within the current cake map to be encoded
      * @return mplew (MaplePacket) Byte array to be converted and read for byte[]->ImageIO
      */
-    public static Packet onTakePhoto(String ReservedGroomName, String ReservedBrideName, int m_dwField, List<Character> m_dwUsers) { // OnIFailedAtWeddingPhotos
+    public Packet onTakePhoto(String ReservedGroomName, String ReservedBrideName, int m_dwField, List<Character> m_dwUsers) { // OnIFailedAtWeddingPhotos
         OutPacket p = OutPacket.create(SendOpcode.WEDDING_PHOTO);// v53 header, convert -> v83
         p.writeString(ReservedGroomName);
         p.writeString(ReservedBrideName);
@@ -247,7 +230,7 @@ public class WeddingPackets extends PacketCreator {
 
         for (Character guest : m_dwUsers) {
             // Begin Avatar Encoding
-            addCharLook(p, guest, false); // CUser::EncodeAvatar
+            this.addCharLook(p, guest, false); // CUser::EncodeAvatar
             p.writeInt(30000); // v20 = *(_DWORD *)(v13 + 2192) -- new groom marriage ID??
             p.writeInt(30000); // v20 = *(_DWORD *)(v13 + 2192) -- new bride marriage ID??
             p.writeString(guest.getName());
@@ -279,7 +262,7 @@ public class WeddingPackets extends PacketCreator {
      * @param wedding
      * @return mplew
      */
-    public static Packet OnMarriageResult(int marriageId, Character chr, boolean wedding) {
+    public Packet OnMarriageResult(int marriageId, Character chr, boolean wedding) {
         OutPacket p = OutPacket.create(SendOpcode.MARRIAGE_RESULT);
         p.writeByte(11);
         p.writeInt(marriageId);
@@ -305,7 +288,7 @@ public class WeddingPackets extends PacketCreator {
      * @param msg
      * @return mplew
      */
-    public static Packet OnMarriageResult(final byte msg) {
+    public Packet OnMarriageResult(final byte msg) {
         OutPacket p = OutPacket.create(SendOpcode.MARRIAGE_RESULT);
         p.writeByte(msg);
         if (msg == 36) {
@@ -322,7 +305,7 @@ public class WeddingPackets extends PacketCreator {
      * @param mapid
      * @return mplew
      */
-    public static Packet OnNotifyWeddingPartnerTransfer(int partner, int mapid) {
+    public Packet OnNotifyWeddingPartnerTransfer(int partner, int mapid) {
         OutPacket p = OutPacket.create(SendOpcode.NOTIFY_MARRIED_PARTNER_MAP_TRANSFER);
         p.writeInt(mapid);
         p.writeInt(partner);
@@ -340,7 +323,7 @@ public class WeddingPackets extends PacketCreator {
      * @param step
      * @return mplew
      */
-    public static Packet OnWeddingProgress(boolean setBlessEffect, int groom, int bride, byte step) {
+    public Packet OnWeddingProgress(boolean setBlessEffect, int groom, int bride, byte step) {
         OutPacket p = OutPacket.create(setBlessEffect ? SendOpcode.WEDDING_CEREMONY_END : SendOpcode.WEDDING_PROGRESS);
         if (!setBlessEffect) { // in order for ceremony packet to send, byte step = 2 must be sent first
             p.writeByte(step);
@@ -357,7 +340,7 @@ public class WeddingPackets extends PacketCreator {
      * @param bride
      * @return mplew
      */
-    public static Packet sendWeddingInvitation(String groom, String bride) {
+    public Packet sendWeddingInvitation(String groom, String bride) {
         OutPacket p = OutPacket.create(SendOpcode.MARRIAGE_RESULT);
         p.writeByte(15);
         p.writeString(groom);
@@ -366,7 +349,7 @@ public class WeddingPackets extends PacketCreator {
         return p;
     }
 
-    public static Packet sendWishList() { // fuck my life
+    public Packet sendWishList() { // fuck my life
         OutPacket p = OutPacket.create(SendOpcode.MARRIAGE_REQUEST);
         p.writeByte(9);
         return p;
@@ -380,7 +363,7 @@ public class WeddingPackets extends PacketCreator {
      * @param items
      * @return mplew
      */
-    public static Packet onWeddingGiftResult(byte mode, List<String> itemnames, List<Item> items) {
+    public Packet onWeddingGiftResult(byte mode, List<String> itemnames, List<Item> items) {
         OutPacket p = OutPacket.create(SendOpcode.WEDDING_GIFT_RESULT);
         p.writeByte(mode);
         switch (mode) {

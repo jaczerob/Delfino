@@ -27,7 +27,7 @@ import dev.jaczerob.delfino.maplestory.provider.Data;
 import dev.jaczerob.delfino.maplestory.provider.DataTool;
 import dev.jaczerob.delfino.maplestory.server.quest.Quest;
 import dev.jaczerob.delfino.maplestory.server.quest.QuestActionType;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 /**
  * @author Tyler (Twdtwd)
@@ -49,6 +49,6 @@ public class NextQuestAction extends AbstractQuestAction {
     @Override
     public void run(Character chr, Integer extSelection) {
         QuestStatus status = chr.getQuest(Quest.getInstance(questID));
-        chr.sendPacket(PacketCreator.updateQuestFinish((short) questID, status.getNpc(), (short) nextQuest));
+        chr.sendPacket(ChannelPacketCreator.getInstance().updateQuestFinish((short) questID, status.getNpc(), (short) nextQuest));
     }
 } 

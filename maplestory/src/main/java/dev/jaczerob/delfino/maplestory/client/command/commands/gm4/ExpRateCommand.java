@@ -26,7 +26,7 @@ package dev.jaczerob.delfino.maplestory.client.command.commands.gm4;
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.client.command.Command;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 public class ExpRateCommand extends Command {
     {
@@ -43,6 +43,6 @@ public class ExpRateCommand extends Command {
 
         int exprate = Math.max(Integer.parseInt(params[0]), 1);
         c.getWorldServer().setExpRate(exprate);
-        c.getWorldServer().broadcastPacket(PacketCreator.serverNotice(6, "[Rate] Exp Rate has been changed to " + exprate + "x."));
+        c.getWorldServer().broadcastPacket(ChannelPacketCreator.getInstance().serverNotice(6, "[Rate] Exp Rate has been changed to " + exprate + "x."));
     }
 }

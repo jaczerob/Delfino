@@ -26,7 +26,7 @@ package dev.jaczerob.delfino.maplestory.client.command.commands.gm3;
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.client.command.Command;
-import dev.jaczerob.delfino.maplestory.net.packet.logging.MonitoredChrLogger;
+import dev.jaczerob.delfino.network.packets.logging.MonitoredChrLogger;
 
 public class MonitorsCommand extends Command {
     {

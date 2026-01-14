@@ -23,7 +23,7 @@ import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.constants.id.MapId;
 import dev.jaczerob.delfino.maplestory.net.server.world.Party;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 import java.awt.*;
 import java.util.concurrent.locks.Lock;
@@ -91,7 +91,7 @@ public class DoorObject extends AbstractMapObject {
     public void warp(final Character chr) {
         Party party = chr.getParty();
         if (chr.getId() == ownerId || (party != null && party.getMemberById(ownerId) != null)) {
-            chr.sendPacket(PacketCreator.playPortalSound());
+            chr.sendPacket(ChannelPacketCreator.getInstance().playPortalSound());
 
             if (!inTown() && party == null) {
                 chr.changeMap(to, getLinkedPortalId());
@@ -99,8 +99,8 @@ public class DoorObject extends AbstractMapObject {
                 chr.changeMap(to, getLinkedPortalPosition());
             }
         } else {
-            chr.sendPacket(PacketCreator.blockedMessage(6));
-            chr.sendPacket(PacketCreator.enableActions());
+            chr.sendPacket(ChannelPacketCreator.getInstance().blockedMessage(6));
+            chr.sendPacket(ChannelPacketCreator.getInstance().enableActions());
         }
     }
 
@@ -113,12 +113,12 @@ public class DoorObject extends AbstractMapObject {
         Character chr = client.getPlayer();
         if (this.getFrom().getId() == chr.getMapId()) {
             if (chr.getParty() != null && (this.getOwnerId() == chr.getId() || chr.getParty().getMemberById(this.getOwnerId()) != null)) {
-                chr.sendPacket(PacketCreator.partyPortal(this.getFrom().getId(), this.getTo().getId(), this.toPosition()));
+                chr.sendPacket(ChannelPacketCreator.getInstance().partyPortal(this.getFrom().getId(), this.getTo().getId(), this.toPosition()));
             }
 
-            chr.sendPacket(PacketCreator.spawnPortal(this.getFrom().getId(), this.getTo().getId(), this.toPosition()));
+            chr.sendPacket(ChannelPacketCreator.getInstance().spawnPortal(this.getFrom().getId(), this.getTo().getId(), this.toPosition()));
             if (!this.inTown()) {
-                chr.sendPacket(PacketCreator.spawnDoor(this.getOwnerId(), this.getPosition(), launched));
+                chr.sendPacket(ChannelPacketCreator.getInstance().spawnDoor(this.getOwnerId(), this.getPosition(), launched));
             }
         }
     }
@@ -129,16 +129,16 @@ public class DoorObject extends AbstractMapObject {
         if (from.getId() == chr.getMapId()) {
             Party party = chr.getParty();
             if (party != null && (ownerId == chr.getId() || party.getMemberById(ownerId) != null)) {
-                client.sendPacket(PacketCreator.partyPortal(MapId.NONE, MapId.NONE, new Point(-1, -1)));
+                client.sendPacket(ChannelPacketCreator.getInstance().partyPortal(MapId.NONE, MapId.NONE, new Point(-1, -1)));
             }
-            client.sendPacket(PacketCreator.removeDoor(ownerId, inTown()));
+            client.sendPacket(ChannelPacketCreator.getInstance().removeDoor(ownerId, inTown()));
         }
     }
 
     public void sendDestroyData(Client client, boolean partyUpdate) {
         if (client != null && from.getId() == client.getPlayer().getMapId()) {
-            client.sendPacket(PacketCreator.partyPortal(MapId.NONE, MapId.NONE, new Point(-1, -1)));
-            client.sendPacket(PacketCreator.removeDoor(ownerId, inTown()));
+            client.sendPacket(ChannelPacketCreator.getInstance().partyPortal(MapId.NONE, MapId.NONE, new Point(-1, -1)));
+            client.sendPacket(ChannelPacketCreator.getInstance().removeDoor(ownerId, inTown()));
         }
     }
 

@@ -37,8 +37,6 @@ import dev.jaczerob.delfino.maplestory.constants.inventory.ItemConstants;
 import dev.jaczerob.delfino.maplestory.constants.net.OpcodeConstants;
 import dev.jaczerob.delfino.maplestory.constants.net.ServerConstants;
 import dev.jaczerob.delfino.maplestory.net.ChannelDependencies;
-import dev.jaczerob.delfino.maplestory.net.PacketProcessor;
-import dev.jaczerob.delfino.maplestory.net.packet.Packet;
 import dev.jaczerob.delfino.maplestory.net.server.channel.Channel;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.session.IpAddresses;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.session.SessionCoordinator;
@@ -65,6 +63,7 @@ import dev.jaczerob.delfino.maplestory.server.quest.Quest;
 import dev.jaczerob.delfino.maplestory.service.NoteService;
 import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
 import dev.jaczerob.delfino.maplestory.tools.Pair;
+import dev.jaczerob.delfino.network.packets.Packet;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,15 +102,11 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 @Component
 public class Server {
     private static final Logger log = LoggerFactory.getLogger(Server.class);
-    private static Server INSTANCE = null;
-
-    public static Server getInstance() {
-        return INSTANCE;
-    }
-
     private static final Set<Integer> activeFly = new HashSet<>();
     private static final Map<Integer, Integer> couponRates = new HashMap<>(30);
     private static final List<Integer> activeCoupons = new LinkedList<>();
+    public static long uptime = System.currentTimeMillis();
+    private static Server INSTANCE = null;
     private static ChannelDependencies channelDependencies;
 
     private final List<Map<Integer, String>> channels = new LinkedList<>();
@@ -139,18 +134,17 @@ public class Server {
     private final Lock lgnWLock;
 
     private final AtomicLong currentTime = new AtomicLong(0);
-    private long serverCurrentTime = 0;
-
-    private volatile boolean availableDeveloperRoom = false;
-    private boolean online = false;
-    public static long uptime = System.currentTimeMillis();
-
-    private final NoteService noteService;
     private final TimerManager timerManager;
     private final DatabaseConnection databaseConnection;
+    private final NoteService noteService;
+    private final FredrickProcessor fredrickProcessor;
+    private final boolean availableDeveloperRoom = false;
+    private long serverCurrentTime = 0;
+    private boolean online = false;
 
     public Server(
             final NoteService noteService,
+            final FredrickProcessor fredrickProcessor,
             final TimerManager timerManager,
             final DatabaseConnection databaseConnection
     ) {
@@ -165,6 +159,162 @@ public class Server {
         this.noteService = noteService;
         this.timerManager = timerManager;
         this.databaseConnection = databaseConnection;
+        this.fredrickProcessor = fredrickProcessor;
+    }
+
+    public static Server getInstance() {
+        return INSTANCE;
+    }
+
+    private static long getTimeLeftForNextHour() {
+        Calendar nextHour = Calendar.getInstance();
+        nextHour.add(Calendar.HOUR, 1);
+        nextHour.set(Calendar.MINUTE, 0);
+        nextHour.set(Calendar.SECOND, 0);
+
+        return Math.max(0, nextHour.getTimeInMillis() - System.currentTimeMillis());
+    }
+
+    public static long getTimeLeftForNextDay() {
+        Calendar nextDay = Calendar.getInstance();
+        nextDay.add(Calendar.DAY_OF_MONTH, 1);
+        nextDay.set(Calendar.HOUR_OF_DAY, 0);
+        nextDay.set(Calendar.MINUTE, 0);
+        nextDay.set(Calendar.SECOND, 0);
+
+        return Math.max(0, nextDay.getTimeInMillis() - System.currentTimeMillis());
+    }
+
+    public static void cleanNxcodeCoupons(Connection con) throws SQLException {
+        if (!YamlConfig.config.server.USE_CLEAR_OUTDATED_COUPONS) {
+            return;
+        }
+
+        long timeClear = System.currentTimeMillis() - DAYS.toMillis(14);
+
+        try (PreparedStatement ps = con.prepareStatement("SELECT * FROM nxcode WHERE expiration <= ?")) {
+            ps.setLong(1, timeClear);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.isLast()) {
+                    try (PreparedStatement ps2 = con.prepareStatement("DELETE FROM nxcode_items WHERE codeid = ?")) {
+                        while (rs.next()) {
+                            ps2.setInt(1, rs.getInt("id"));
+                            ps2.addBatch();
+                        }
+                        ps2.executeBatch();
+                    }
+
+                    try (PreparedStatement ps2 = con.prepareStatement("DELETE FROM nxcode WHERE expiration <= ?")) {
+                        ps2.setLong(1, timeClear);
+                        ps2.executeUpdate();
+                    }
+                }
+            }
+        }
+    }
+
+    private static void setAllMerchantsInactive(Connection con) throws SQLException {
+        try (PreparedStatement ps = con.prepareStatement("UPDATE characters SET HasMerchant = 0")) {
+            ps.executeUpdate();
+        }
+    }
+
+    private static void applyAllNameChanges(Connection con) throws SQLException {
+        try (PreparedStatement ps = con.prepareStatement("SELECT * FROM namechanges WHERE completionTime IS NULL");
+             ResultSet rs = ps.executeQuery()) {
+            List<Pair<String, String>> changedNames = new LinkedList<>(); //logging only
+
+            con.setAutoCommit(false);
+            try {
+                while (rs.next()) {
+                    int nameChangeId = rs.getInt("id");
+                    int characterId = rs.getInt("characterId");
+                    String oldName = rs.getString("old");
+                    String newName = rs.getString("new");
+                    boolean success = Character.doNameChange(con, characterId, oldName, newName, nameChangeId);
+                    if (!success) {
+                        con.rollback(); //discard changes
+                    } else {
+                        con.commit();
+                        changedNames.add(new Pair<>(oldName, newName));
+                    }
+                }
+            } finally {
+                con.setAutoCommit(true);
+            }
+            //log
+            for (Pair<String, String> namePair : changedNames) {
+                log.info("Name change applied - from: \"{}\" to \"{}\"", namePair.getLeft(), namePair.getRight());
+            }
+        } catch (SQLException e) {
+            log.warn("Failed to retrieve list of pending name changes", e);
+            throw e;
+        }
+    }
+
+    private static void applyAllWorldTransfers(Connection con) throws SQLException {
+        try (PreparedStatement ps = con.prepareStatement("SELECT * FROM worldtransfers WHERE completionTime IS NULL",
+                ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+             ResultSet rs = ps.executeQuery()) {
+            List<Integer> removedTransfers = new LinkedList<>();
+            while (rs.next()) {
+                int nameChangeId = rs.getInt("id");
+                int characterId = rs.getInt("characterId");
+                int oldWorld = rs.getInt("from");
+                int newWorld = rs.getInt("to");
+                String reason = Character.checkWorldTransferEligibility(con, characterId, oldWorld, newWorld); //check if character is still eligible
+                if (reason != null) {
+                    removedTransfers.add(nameChangeId);
+                    log.info("World transfer canceled: chrId {}, reason {}", characterId, reason);
+                    try (PreparedStatement delPs = con.prepareStatement("DELETE FROM worldtransfers WHERE id = ?")) {
+                        delPs.setInt(1, nameChangeId);
+                        delPs.executeUpdate();
+                    } catch (SQLException e) {
+                        log.error("Failed to delete world transfer for chrId {}", characterId, e);
+                    }
+                }
+            }
+            rs.beforeFirst();
+            List<Pair<Integer, Pair<Integer, Integer>>> worldTransfers = new LinkedList<>(); //logging only <charid, <oldWorld, newWorld>>
+
+            con.setAutoCommit(false);
+            try {
+                while (rs.next()) {
+                    int nameChangeId = rs.getInt("id");
+                    if (removedTransfers.contains(nameChangeId)) {
+                        continue;
+                    }
+                    int characterId = rs.getInt("characterId");
+                    int oldWorld = rs.getInt("from");
+                    int newWorld = rs.getInt("to");
+                    boolean success = Character.doWorldTransfer(con, characterId, oldWorld, newWorld, nameChangeId);
+                    if (!success) {
+                        con.rollback();
+                    } else {
+                        con.commit();
+                        worldTransfers.add(new Pair<>(characterId, new Pair<>(oldWorld, newWorld)));
+                    }
+                }
+            } finally {
+                con.setAutoCommit(true);
+            }
+
+            //log
+            for (Pair<Integer, Pair<Integer, Integer>> worldTransferPair : worldTransfers) {
+                int charId = worldTransferPair.getLeft();
+                int oldWorld = worldTransferPair.getRight().getLeft();
+                int newWorld = worldTransferPair.getRight().getRight();
+                log.info("World transfer applied - character id {} from world {} to world {}", charId, oldWorld, newWorld);
+            }
+        } catch (SQLException e) {
+            log.warn("Failed to retrieve list of pending world transfers", e);
+            throw e;
+        }
+    }
+
+    private static String getRemoteHost(Client client) {
+        return SessionCoordinator.getSessionRemoteHost(client);
     }
 
     public int getCurrentTimestamp() {
@@ -350,7 +500,6 @@ public class Server {
 
         int flag = YamlConfig.config.worlds.get(i).flag;
         String event_message = YamlConfig.config.worlds.get(i).event_message;
-        String why_am_i_recommended = YamlConfig.config.worlds.get(i).why_am_i_recommended;
 
         World world = new World(i,
                 flag,
@@ -402,56 +551,8 @@ public class Server {
         }
     }
 
-    private static long getTimeLeftForNextHour() {
-        Calendar nextHour = Calendar.getInstance();
-        nextHour.add(Calendar.HOUR, 1);
-        nextHour.set(Calendar.MINUTE, 0);
-        nextHour.set(Calendar.SECOND, 0);
-
-        return Math.max(0, nextHour.getTimeInMillis() - System.currentTimeMillis());
-    }
-
-    public static long getTimeLeftForNextDay() {
-        Calendar nextDay = Calendar.getInstance();
-        nextDay.add(Calendar.DAY_OF_MONTH, 1);
-        nextDay.set(Calendar.HOUR_OF_DAY, 0);
-        nextDay.set(Calendar.MINUTE, 0);
-        nextDay.set(Calendar.SECOND, 0);
-
-        return Math.max(0, nextDay.getTimeInMillis() - System.currentTimeMillis());
-    }
-
     public Map<Integer, Integer> getCouponRates() {
         return couponRates;
-    }
-
-    public static void cleanNxcodeCoupons(Connection con) throws SQLException {
-        if (!YamlConfig.config.server.USE_CLEAR_OUTDATED_COUPONS) {
-            return;
-        }
-
-        long timeClear = System.currentTimeMillis() - DAYS.toMillis(14);
-
-        try (PreparedStatement ps = con.prepareStatement("SELECT * FROM nxcode WHERE expiration <= ?")) {
-            ps.setLong(1, timeClear);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.isLast()) {
-                    try (PreparedStatement ps2 = con.prepareStatement("DELETE FROM nxcode_items WHERE codeid = ?")) {
-                        while (rs.next()) {
-                            ps2.setInt(1, rs.getInt("id"));
-                            ps2.addBatch();
-                        }
-                        ps2.executeBatch();
-                    }
-
-                    try (PreparedStatement ps2 = con.prepareStatement("DELETE FROM nxcode WHERE expiration <= ?")) {
-                        ps2.setLong(1, timeClear);
-                        ps2.executeUpdate();
-                    }
-                }
-            }
-        }
     }
 
     private void loadCouponRates(Connection c) throws SQLException {
@@ -750,18 +851,7 @@ public class Server {
     }
 
     private ChannelDependencies registerChannelDependencies() {
-        FredrickProcessor fredrickProcessor = new FredrickProcessor(this.noteService);
-        ChannelDependencies channelDependencies = new ChannelDependencies(this.noteService, fredrickProcessor);
-
-        PacketProcessor.registerGameHandlerDependencies(channelDependencies);
-
-        return channelDependencies;
-    }
-
-    private static void setAllMerchantsInactive(Connection con) throws SQLException {
-        try (PreparedStatement ps = con.prepareStatement("UPDATE characters SET HasMerchant = 0")) {
-            ps.executeUpdate();
-        }
+        return new ChannelDependencies(noteService, fredrickProcessor);
     }
 
     private void initializeTimelyTasks(ChannelDependencies channelDependencies) {
@@ -1252,99 +1342,6 @@ public class Server {
         }
     }
 
-    private static void applyAllNameChanges(Connection con) throws SQLException {
-        try (PreparedStatement ps = con.prepareStatement("SELECT * FROM namechanges WHERE completionTime IS NULL");
-             ResultSet rs = ps.executeQuery()) {
-            List<Pair<String, String>> changedNames = new LinkedList<>(); //logging only
-
-            con.setAutoCommit(false);
-            try {
-                while (rs.next()) {
-                    int nameChangeId = rs.getInt("id");
-                    int characterId = rs.getInt("characterId");
-                    String oldName = rs.getString("old");
-                    String newName = rs.getString("new");
-                    boolean success = Character.doNameChange(con, characterId, oldName, newName, nameChangeId);
-                    if (!success) {
-                        con.rollback(); //discard changes
-                    } else {
-                        con.commit();
-                        changedNames.add(new Pair<>(oldName, newName));
-                    }
-                }
-            } finally {
-                con.setAutoCommit(true);
-            }
-            //log
-            for (Pair<String, String> namePair : changedNames) {
-                log.info("Name change applied - from: \"{}\" to \"{}\"", namePair.getLeft(), namePair.getRight());
-            }
-        } catch (SQLException e) {
-            log.warn("Failed to retrieve list of pending name changes", e);
-            throw e;
-        }
-    }
-
-    private static void applyAllWorldTransfers(Connection con) throws SQLException {
-        try (PreparedStatement ps = con.prepareStatement("SELECT * FROM worldtransfers WHERE completionTime IS NULL",
-                ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-             ResultSet rs = ps.executeQuery()) {
-            List<Integer> removedTransfers = new LinkedList<>();
-            while (rs.next()) {
-                int nameChangeId = rs.getInt("id");
-                int characterId = rs.getInt("characterId");
-                int oldWorld = rs.getInt("from");
-                int newWorld = rs.getInt("to");
-                String reason = Character.checkWorldTransferEligibility(con, characterId, oldWorld, newWorld); //check if character is still eligible
-                if (reason != null) {
-                    removedTransfers.add(nameChangeId);
-                    log.info("World transfer canceled: chrId {}, reason {}", characterId, reason);
-                    try (PreparedStatement delPs = con.prepareStatement("DELETE FROM worldtransfers WHERE id = ?")) {
-                        delPs.setInt(1, nameChangeId);
-                        delPs.executeUpdate();
-                    } catch (SQLException e) {
-                        log.error("Failed to delete world transfer for chrId {}", characterId, e);
-                    }
-                }
-            }
-            rs.beforeFirst();
-            List<Pair<Integer, Pair<Integer, Integer>>> worldTransfers = new LinkedList<>(); //logging only <charid, <oldWorld, newWorld>>
-
-            con.setAutoCommit(false);
-            try {
-                while (rs.next()) {
-                    int nameChangeId = rs.getInt("id");
-                    if (removedTransfers.contains(nameChangeId)) {
-                        continue;
-                    }
-                    int characterId = rs.getInt("characterId");
-                    int oldWorld = rs.getInt("from");
-                    int newWorld = rs.getInt("to");
-                    boolean success = Character.doWorldTransfer(con, characterId, oldWorld, newWorld, nameChangeId);
-                    if (!success) {
-                        con.rollback();
-                    } else {
-                        con.commit();
-                        worldTransfers.add(new Pair<>(characterId, new Pair<>(oldWorld, newWorld)));
-                    }
-                }
-            } finally {
-                con.setAutoCommit(true);
-            }
-
-            //log
-            for (Pair<Integer, Pair<Integer, Integer>> worldTransferPair : worldTransfers) {
-                int charId = worldTransferPair.getLeft();
-                int oldWorld = worldTransferPair.getRight().getLeft();
-                int newWorld = worldTransferPair.getRight().getRight();
-                log.info("World transfer applied - character id {} from world {} to world {}", charId, oldWorld, newWorld);
-            }
-        } catch (SQLException e) {
-            log.warn("Failed to retrieve list of pending world transfers", e);
-            throw e;
-        }
-    }
-
     private int loadAccountCharactersView(Integer accId, int gmLevel, int fromWorldid) {    // returns the maximum gmLevel found
         List<World> wlist = this.getWorlds();
         Pair<Short, List<List<Character>>> accCharacters = loadAccountCharactersViewFromDb(accId, wlist.size());
@@ -1381,10 +1378,6 @@ public class Server {
         }
 
         return gmLevel;
-    }
-
-    private static String getRemoteHost(Client client) {
-        return SessionCoordinator.getSessionRemoteHost(client);
     }
 
     public void setCharacteridInTransition(Client client, int charId) {
@@ -1440,25 +1433,6 @@ public class Server {
         for (World w : getWorlds()) {
             w.shutdown();
         }
-
-        /*for (World w : getWorlds()) {
-            while (w.getPlayerStorage().getAllCharacters().size() > 0) {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException ie) {
-                    System.err.println("FUCK MY LIFE");
-                }
-            }
-        }
-        for (Channel ch : getAllChannels()) {
-            while (ch.getConnectedClients() > 0) {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException ie) {
-                    System.err.println("FUCK MY LIFE");
-                }
-            }
-        }*/
 
         List<Channel> allChannels = getAllChannels();
 

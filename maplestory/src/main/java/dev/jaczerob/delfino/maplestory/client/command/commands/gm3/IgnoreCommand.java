@@ -28,7 +28,7 @@ import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.client.autoban.AutobanFactory;
 import dev.jaczerob.delfino.maplestory.client.command.Command;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 public class IgnoreCommand extends Command {
     {
@@ -51,7 +51,7 @@ public class IgnoreCommand extends Command {
         boolean ignored = AutobanFactory.toggleIgnored(victim.getId());
         player.yellowMessage(victim.getName() + " is " + (ignored ? "now being ignored." : "no longer being ignored."));
         String message_ = player.getName() + (ignored ? " has started ignoring " : " has stopped ignoring ") + victim.getName() + ".";
-        Server.getInstance().broadcastGMMessage(c.getWorld(), PacketCreator.serverNotice(5, message_));
+        Server.getInstance().broadcastGMMessage(c.getWorld(), ChannelPacketCreator.getInstance().serverNotice(5, message_));
 
     }
 }

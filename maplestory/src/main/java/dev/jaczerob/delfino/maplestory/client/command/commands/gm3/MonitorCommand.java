@@ -26,9 +26,9 @@ package dev.jaczerob.delfino.maplestory.client.command.commands.gm3;
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.client.command.Command;
-import dev.jaczerob.delfino.maplestory.net.packet.logging.MonitoredChrLogger;
+import dev.jaczerob.delfino.network.packets.logging.MonitoredChrLogger;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 public class MonitorCommand extends Command {
     {
@@ -50,7 +50,7 @@ public class MonitorCommand extends Command {
         boolean monitored = MonitoredChrLogger.toggleMonitored(victim.getId());
         player.yellowMessage(victim.getId() + " is " + (monitored ? "now being monitored." : "no longer being monitored."));
         String message = player.getName() + (monitored ? " has started monitoring " : " has stopped monitoring ") + victim.getId() + ".";
-        Server.getInstance().broadcastGMMessage(c.getWorld(), PacketCreator.serverNotice(5, message));
+        Server.getInstance().broadcastGMMessage(c.getWorld(), ChannelPacketCreator.getInstance().serverNotice(5, message));
 
     }
 }

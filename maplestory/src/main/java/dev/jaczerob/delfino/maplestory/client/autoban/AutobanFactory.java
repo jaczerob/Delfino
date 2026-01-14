@@ -25,9 +25,9 @@ package dev.jaczerob.delfino.maplestory.client.autoban;
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -97,7 +97,7 @@ public enum AutobanFactory {
             if (chr != null && isIgnored(chr.getId())) {
                 return;
             }
-            Server.getInstance().broadcastGMMessage((chr != null ? chr.getWorld() : 0), PacketCreator.sendYellowTip((chr != null ? Character.makeMapleReadable(chr.getName()) : "") + " caused " + this.name() + " " + reason));
+            Server.getInstance().broadcastGMMessage((chr != null ? chr.getWorld() : 0), ChannelPacketCreator.getInstance().sendYellowTip((chr != null ? Character.makeMapleReadable(chr.getName()) : "") + " caused " + this.name() + " " + reason));
         }
         if (YamlConfig.config.server.USE_AUTOBAN_LOG) {
             final String chrName = chr != null ? Character.makeMapleReadable(chr.getName()) : "";

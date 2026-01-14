@@ -1,4 +1,4 @@
-package dev.jaczerob.delfino.maplestory.net.packet.logging;
+package dev.jaczerob.delfino.network.packets.logging;
 
 import io.netty.buffer.Unpooled;
 import dev.jaczerob.delfino.maplestory.net.opcodes.RecvOpcode;

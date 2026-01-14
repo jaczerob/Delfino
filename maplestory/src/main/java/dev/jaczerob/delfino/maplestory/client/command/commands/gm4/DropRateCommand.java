@@ -26,7 +26,7 @@ package dev.jaczerob.delfino.maplestory.client.command.commands.gm4;
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.client.command.Command;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 public class DropRateCommand extends Command {
     {
@@ -43,7 +43,7 @@ public class DropRateCommand extends Command {
 
         int droprate = Math.max(Integer.parseInt(params[0]), 1);
         c.getWorldServer().setDropRate(droprate);
-        c.getWorldServer().broadcastPacket(PacketCreator.serverNotice(6, "[Rate] Drop Rate has been changed to " + droprate + "x."));
+        c.getWorldServer().broadcastPacket(ChannelPacketCreator.getInstance().serverNotice(6, "[Rate] Drop Rate has been changed to " + droprate + "x."));
 
     }
 }

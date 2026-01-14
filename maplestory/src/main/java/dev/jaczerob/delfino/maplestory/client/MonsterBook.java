@@ -1,28 +1,7 @@
-/*
-	This file is part of the OdinMS Maple Story Server
-    Copyright (C) 2008 Patrick Huy <patrick.huy@frz.cc>
-		       Matthias Butz <matze@odinms.de>
-		       Jan Christian Meyer <vimes@odinms.de>
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as
-    published by the Free Software Foundation version 3 as published by
-    the Free Software Foundation. You may not use, modify or distribute
-    this program under any other version of the GNU Affero General Public
-    License.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
-
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package dev.jaczerob.delfino.maplestory.client;
 
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -50,7 +29,7 @@ public class MonsterBook {
     }
 
     public void addCard(final Client c, final int cardid) {
-        c.getPlayer().getMap().broadcastMessage(c.getPlayer(), PacketCreator.showForeignCardEffect(c.getPlayer().getId()), false);
+        c.getPlayer().getMap().broadcastMessage(c.getPlayer(), ChannelPacketCreator.getInstance().showForeignCardEffect(c.getPlayer().getId()), false);
 
         Integer qty;
         lock.lock();
@@ -80,10 +59,10 @@ public class MonsterBook {
                 calculateLevel();
             }
 
-            c.sendPacket(PacketCreator.addCard(false, cardid, qty + 1));
-            c.sendPacket(PacketCreator.showGainCard());
+            c.sendPacket(ChannelPacketCreator.getInstance().addCard(false, cardid, qty + 1));
+            c.sendPacket(ChannelPacketCreator.getInstance().showGainCard());
         } else {
-            c.sendPacket(PacketCreator.addCard(true, cardid, 5));
+            c.sendPacket(ChannelPacketCreator.getInstance().addCard(true, cardid, 5));
         }
     }
 

@@ -29,7 +29,7 @@ import dev.jaczerob.delfino.maplestory.client.command.Command;
 import dev.jaczerob.delfino.maplestory.constants.id.MobId;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.server.life.LifeFactory;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 public class BombCommand extends Command {
     {
@@ -43,7 +43,7 @@ public class BombCommand extends Command {
             Character victim = c.getWorldServer().getPlayerStorage().getCharacterByName(params[0]);
             if (victim != null) {
                 victim.getMap().spawnMonsterOnGroundBelow(LifeFactory.getMonster(MobId.ARPQ_BOMB), victim.getPosition());
-                Server.getInstance().broadcastGMMessage(c.getWorld(), PacketCreator.serverNotice(5, player.getName() + " used !bomb on " + victim.getName()));
+                Server.getInstance().broadcastGMMessage(c.getWorld(), ChannelPacketCreator.getInstance().serverNotice(5, player.getName() + " used !bomb on " + victim.getName()));
             } else {
                 player.message("Player '" + params[0] + "' could not be found on this world.");
             }

@@ -1,29 +1,8 @@
-/*
-	This file is part of the OdinMS Maple Story Server
-    Copyright (C) 2008 Patrick Huy <patrick.huy@frz.cc>
-		       Matthias Butz <matze@odinms.de>
-		       Jan Christian Meyer <vimes@odinms.de>
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as
-    published by the Free Software Foundation version 3 as published by
-    the Free Software Foundation. You may not use, modify or distribute
-    this program under any other version of the GNU Affero General Public
-    License.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
-
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package dev.jaczerob.delfino.maplestory.server.maps;
 
 import dev.jaczerob.delfino.maplestory.client.Client;
-import dev.jaczerob.delfino.maplestory.net.packet.Packet;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.network.packets.Packet;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 public class MapEffect {
     private final String msg;
@@ -36,11 +15,11 @@ public class MapEffect {
     }
 
     public final Packet makeDestroyData() {
-        return PacketCreator.removeMapEffect();
+        return ChannelPacketCreator.getInstance().removeMapEffect();
     }
 
     public final Packet makeStartData() {
-        return PacketCreator.startMapEffect(msg, itemId, active);
+        return ChannelPacketCreator.getInstance().startMapEffect(msg, itemId, active);
     }
 
     public void sendStartData(Client client) {

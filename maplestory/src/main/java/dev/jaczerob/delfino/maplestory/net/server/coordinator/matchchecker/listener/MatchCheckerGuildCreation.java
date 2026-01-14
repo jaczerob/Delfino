@@ -23,7 +23,7 @@ import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
 import dev.jaczerob.delfino.maplestory.constants.game.GameConstants;
 import dev.jaczerob.delfino.maplestory.constants.id.MapId;
-import dev.jaczerob.delfino.maplestory.net.packet.Packet;
+import dev.jaczerob.delfino.network.packets.Packet;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.matchchecker.AbstractMatchCheckerListener;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.matchchecker.MatchCheckerListenerRecipe;

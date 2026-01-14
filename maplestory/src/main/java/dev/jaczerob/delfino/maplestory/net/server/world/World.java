@@ -29,7 +29,7 @@ import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Family;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
 import dev.jaczerob.delfino.maplestory.constants.game.GameConstants;
-import dev.jaczerob.delfino.maplestory.net.packet.Packet;
+import dev.jaczerob.delfino.network.packets.Packet;
 import dev.jaczerob.delfino.maplestory.net.server.PlayerStorage;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.net.server.channel.Channel;
@@ -69,8 +69,9 @@ import dev.jaczerob.delfino.maplestory.server.maps.MiniDungeon;
 import dev.jaczerob.delfino.maplestory.server.maps.MiniDungeonInfo;
 import dev.jaczerob.delfino.maplestory.server.maps.PlayerShop;
 import dev.jaczerob.delfino.maplestory.server.maps.PlayerShopItem;
+import dev.jaczerob.delfino.maplestory.server.maps.*;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.Pair;
 import dev.jaczerob.delfino.maplestory.tools.packets.Fishing;
 import org.slf4j.Logger;
@@ -975,7 +976,7 @@ public class World {
                     chr.setParty(party);
                     chr.setMPC(partychar);
                 }
-                chr.sendPacket(PacketCreator.updateParty(chr.getClient().getChannel(), party, operation, target));
+                chr.sendPacket(ChannelPacketCreator.getInstance().updateParty(chr.getClient().getChannel(), party, operation, target));
             }
         }
         switch (operation) {
@@ -983,7 +984,7 @@ public class World {
             case EXPEL:
                 Character chr = getPlayerStorage().getCharacterById(target.getId());
                 if (chr != null) {
-                    chr.sendPacket(PacketCreator.updateParty(chr.getClient().getChannel(), party, operation, target));
+                    chr.sendPacket(ChannelPacketCreator.getInstance().updateParty(chr.getClient().getChannel(), party, operation, target));
                     chr.setParty(null);
                     chr.setMPC(null);
                 }
@@ -1080,7 +1081,7 @@ public class World {
             if (!(partychar.getName().equals(namefrom))) {
                 Character chr = getPlayerStorage().getCharacterByName(partychar.getName());
                 if (chr != null) {
-                    chr.sendPacket(PacketCreator.multiChat(namefrom, chattext, 1));
+                    chr.sendPacket(ChannelPacketCreator.getInstance().multiChat(namefrom, chattext, 1));
                 }
             }
         }
@@ -1092,7 +1093,7 @@ public class World {
             Character chr = playerStorage.getCharacterById(characterId);
             if (chr != null) {
                 if (chr.getBuddylist().containsVisible(cidFrom)) {
-                    chr.sendPacket(PacketCreator.multiChat(nameFrom, chattext, 0));
+                    chr.sendPacket(ChannelPacketCreator.getInstance().multiChat(nameFrom, chattext, 0));
                 }
             }
         }
@@ -1131,15 +1132,15 @@ public class World {
                     Character from = getChannel(fromchannel).getPlayerStorage().getCharacterByName(sender);
                     if (from != null) {
                         if (InviteCoordinator.createInvite(InviteType.MESSENGER, from, messengerid, targetChr.getId())) {
-                            targetChr.sendPacket(PacketCreator.messengerInvite(sender, messengerid));
-                            from.sendPacket(PacketCreator.messengerNote(target, 4, 1));
+                            targetChr.sendPacket(ChannelPacketCreator.getInstance().messengerInvite(sender, messengerid));
+                            from.sendPacket(ChannelPacketCreator.getInstance().messengerNote(target, 4, 1));
                         } else {
-                            from.sendPacket(PacketCreator.messengerChat(sender + " : " + target + " is already managing a Maple Messenger invitation"));
+                            from.sendPacket(ChannelPacketCreator.getInstance().messengerChat(sender + " : " + target + " is already managing a Maple Messenger invitation"));
                         }
                     }
                 } else {
                     Character from = getChannel(fromchannel).getPlayerStorage().getCharacterByName(sender);
-                    from.sendPacket(PacketCreator.messengerChat(sender + " : " + target + " is already using Maple Messenger"));
+                    from.sendPacket(ChannelPacketCreator.getInstance().messengerChat(sender + " : " + target + " is already using Maple Messenger"));
                 }
             }
         }
@@ -1153,10 +1154,10 @@ public class World {
             }
             if (!messengerchar.getName().equals(namefrom)) {
                 Character from = getChannel(fromchannel).getPlayerStorage().getCharacterByName(namefrom);
-                chr.sendPacket(PacketCreator.addMessengerPlayer(namefrom, from, position, (byte) (fromchannel - 1)));
-                from.sendPacket(PacketCreator.addMessengerPlayer(chr.getName(), chr, messengerchar.getPosition(), (byte) (messengerchar.getChannel() - 1)));
+                chr.sendPacket(ChannelPacketCreator.getInstance().addMessengerPlayer(namefrom, from, position, (byte) (fromchannel - 1)));
+                from.sendPacket(ChannelPacketCreator.getInstance().addMessengerPlayer(chr.getName(), chr, messengerchar.getPosition(), (byte) (messengerchar.getChannel() - 1)));
             } else {
-                chr.sendPacket(PacketCreator.joinMessenger(messengerchar.getPosition()));
+                chr.sendPacket(ChannelPacketCreator.getInstance().joinMessenger(messengerchar.getPosition()));
             }
         }
     }
@@ -1165,7 +1166,7 @@ public class World {
         for (MessengerCharacter messengerchar : messenger.getMembers()) {
             Character chr = getPlayerStorage().getCharacterByName(messengerchar.getName());
             if (chr != null) {
-                chr.sendPacket(PacketCreator.removeMessengerPlayer(position));
+                chr.sendPacket(ChannelPacketCreator.getInstance().removeMessengerPlayer(position));
             }
         }
     }
@@ -1178,7 +1179,7 @@ public class World {
             if (!(messengerchar.getName().equals(namefrom))) {
                 Character chr = getPlayerStorage().getCharacterByName(messengerchar.getName());
                 if (chr != null) {
-                    chr.sendPacket(PacketCreator.messengerChat(chattext));
+                    chr.sendPacket(ChannelPacketCreator.getInstance().messengerChat(chattext));
                     if (to1.equals("")) {
                         to1 = messengerchar.getName();
                     } else if (to2.equals("")) {
@@ -1196,7 +1197,7 @@ public class World {
             Character senderChr = getPlayerStorage().getCharacterByName(sender);
             if (senderChr != null && senderChr.getMessenger() != null) {
                 if (InviteCoordinator.answerInvite(InviteType.MESSENGER, player.getId(), senderChr.getMessenger().getId(), false).result == InviteResultType.DENIED) {
-                    senderChr.sendPacket(PacketCreator.messengerNote(player.getName(), 5, 0));
+                    senderChr.sendPacket(ChannelPacketCreator.getInstance().messengerNote(player.getName(), 5, 0));
                 }
             }
         }
@@ -1214,7 +1215,7 @@ public class World {
             if (!(messengerchar.getName().equals(namefrom))) {
                 Character chr = ch.getPlayerStorage().getCharacterByName(messengerchar.getName());
                 if (chr != null) {
-                    chr.sendPacket(PacketCreator.updateMessengerPlayer(namefrom, getChannel(fromchannel).getPlayerStorage().getCharacterByName(namefrom), position, (byte) (fromchannel - 1)));
+                    chr.sendPacket(ChannelPacketCreator.getInstance().updateMessengerPlayer(namefrom, getChannel(fromchannel).getPlayerStorage().getCharacterByName(namefrom), position, (byte) (fromchannel - 1)));
                 }
             }
         }
@@ -1280,13 +1281,13 @@ public class World {
                 case ADDED:
                     if (buddylist.contains(cidFrom)) {
                         buddylist.put(new BuddylistEntry(name, "Default Group", cidFrom, channel, true));
-                        addChar.sendPacket(PacketCreator.updateBuddyChannel(cidFrom, (byte) (channel - 1)));
+                        addChar.sendPacket(ChannelPacketCreator.getInstance().updateBuddyChannel(cidFrom, (byte) (channel - 1)));
                     }
                     break;
                 case DELETED:
                     if (buddylist.contains(cidFrom)) {
                         buddylist.put(new BuddylistEntry(name, "Default Group", cidFrom, (byte) -1, buddylist.get(cidFrom).isVisible()));
-                        addChar.sendPacket(PacketCreator.updateBuddyChannel(cidFrom, (byte) -1));
+                        addChar.sendPacket(ChannelPacketCreator.getInstance().updateBuddyChannel(cidFrom, (byte) -1));
                     }
                     break;
             }
@@ -1317,7 +1318,7 @@ public class World {
                         mcChannel = (byte) (channel - 1);
                     }
                     chr.getBuddylist().put(ble);
-                    chr.sendPacket(PacketCreator.updateBuddyChannel(ble.getCharacterId(), mcChannel));
+                    chr.sendPacket(ChannelPacketCreator.getInstance().updateBuddyChannel(ble.getCharacterId(), mcChannel));
                 }
             }
         }
@@ -1827,7 +1828,7 @@ public class World {
                 Character chr = players.getCharacterById(chrid);
 
                 if (chr != null && chr.isLoggedinWorld()) {
-                    chr.sendPacket(PacketCreator.serverMessage(chr.getClient().getChannelServer().getServerMessage()));
+                    chr.sendPacket(ChannelPacketCreator.getInstance().serverMessage(chr.getClient().getChannelServer().getServerMessage()));
                 }
             }
         }

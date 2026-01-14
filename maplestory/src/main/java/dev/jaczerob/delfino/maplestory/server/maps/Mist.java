@@ -1,40 +1,15 @@
-/*
-	This file is part of the OdinMS Maple Story Server
-    Copyright (C) 2008 Patrick Huy <patrick.huy@frz.cc>
-		       Matthias Butz <matze@odinms.de>
-		       Jan Christian Meyer <vimes@odinms.de>
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as
-    published by the Free Software Foundation version 3 as published by
-    the Free Software Foundation. You may not use, modify or distribute
-    this program under any other version of the GNU Affero General Public
-    License.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
-
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package dev.jaczerob.delfino.maplestory.server.maps;
 
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.client.Skill;
 import dev.jaczerob.delfino.maplestory.client.SkillFactory;
-import dev.jaczerob.delfino.maplestory.constants.skills.BlazeWizard;
-import dev.jaczerob.delfino.maplestory.constants.skills.Evan;
-import dev.jaczerob.delfino.maplestory.constants.skills.FPMage;
-import dev.jaczerob.delfino.maplestory.constants.skills.NightWalker;
-import dev.jaczerob.delfino.maplestory.constants.skills.Shadower;
-import dev.jaczerob.delfino.maplestory.net.packet.Packet;
+import dev.jaczerob.delfino.maplestory.constants.skills.*;
+import dev.jaczerob.delfino.network.packets.Packet;
 import dev.jaczerob.delfino.maplestory.server.StatEffect;
 import dev.jaczerob.delfino.maplestory.server.life.MobSkill;
 import dev.jaczerob.delfino.maplestory.server.life.Monster;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 import java.awt.*;
 
@@ -135,21 +110,21 @@ public class Mist extends AbstractMapObject {
     }
 
     public final Packet makeDestroyData() {
-        return PacketCreator.removeMist(getObjectId());
+        return ChannelPacketCreator.getInstance().removeMist(getObjectId());
     }
 
     public final Packet makeSpawnData() {
         if (owner != null) {
-            return PacketCreator.spawnMist(getObjectId(), owner.getId(), getSourceSkill().getId(), owner.getSkillLevel(SkillFactory.getSkill(source.getSourceId())), this);
+            return ChannelPacketCreator.getInstance().spawnMist(getObjectId(), owner.getId(), getSourceSkill().getId(), owner.getSkillLevel(SkillFactory.getSkill(source.getSourceId())), this);
         }
-        return PacketCreator.spawnMobMist(getObjectId(), mob.getId(), skill.getId(), this);
+        return ChannelPacketCreator.getInstance().spawnMobMist(getObjectId(), mob.getId(), skill.getId(), this);
     }
 
     public final Packet makeFakeSpawnData(int level) {
         if (owner != null) {
-            return PacketCreator.spawnMist(getObjectId(), owner.getId(), getSourceSkill().getId(), level, this);
+            return ChannelPacketCreator.getInstance().spawnMist(getObjectId(), owner.getId(), getSourceSkill().getId(), level, this);
         }
-        return PacketCreator.spawnMobMist(getObjectId(), mob.getId(), skill.getId(), this);
+        return ChannelPacketCreator.getInstance().spawnMobMist(getObjectId(), mob.getId(), skill.getId(), this);
     }
 
     @Override

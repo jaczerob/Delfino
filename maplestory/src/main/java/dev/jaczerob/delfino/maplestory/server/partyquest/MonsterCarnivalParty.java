@@ -2,7 +2,7 @@ package dev.jaczerob.delfino.maplestory.server.partyquest;
 
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.server.maps.MapleMap;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -113,7 +113,7 @@ public class MonsterCarnivalParty {
         final String effect = winner ? "quest/carnival/win" : "quest/carnival/lose";
 
         for (final Character chr : members) {
-            chr.sendPacket(PacketCreator.showEffect(effect));
+            chr.sendPacket(ChannelPacketCreator.getInstance().showEffect(effect));
         }
     }
 

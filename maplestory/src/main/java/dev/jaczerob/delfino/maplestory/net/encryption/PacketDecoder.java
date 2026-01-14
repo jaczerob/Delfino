@@ -5,7 +5,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ReplayingDecoder;
 import dev.jaczerob.delfino.maplestory.net.netty.InvalidPacketHeaderException;
-import dev.jaczerob.delfino.maplestory.net.packet.ByteBufInPacket;
+import dev.jaczerob.delfino.network.packets.ByteBufInPacket;
 
 import java.util.List;
 

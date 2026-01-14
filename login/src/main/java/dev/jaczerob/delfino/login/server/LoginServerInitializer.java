@@ -2,7 +2,7 @@ package dev.jaczerob.delfino.login.server;
 
 import dev.jaczerob.delfino.login.client.LoginClient;
 import dev.jaczerob.delfino.login.config.DelfinoConfigurationProperties;
-import dev.jaczerob.delfino.login.packets.PacketProcessor;
+import dev.jaczerob.delfino.login.packets.LoginPacketProcessor;
 import dev.jaczerob.delfino.login.tools.LoginPacketCreator;
 import dev.jaczerob.delfino.network.packets.logging.InPacketLogger;
 import dev.jaczerob.delfino.network.packets.logging.OutPacketLogger;
@@ -42,7 +42,7 @@ public class LoginServerInitializer extends ServerChannelInitializer {
         log.debug("Client connected to login server from {} ", clientIp);
 
         final var remoteAddress = this.getRemoteAddress(socketChannel);
-        final var client = new LoginClient(remoteAddress, PacketProcessor.getInstance(), this.loginPacketCreator);
+        final var client = new LoginClient(remoteAddress, LoginPacketProcessor.getInstance(), this.loginPacketCreator);
         this.initPipeline(socketChannel, client);
     }
 }

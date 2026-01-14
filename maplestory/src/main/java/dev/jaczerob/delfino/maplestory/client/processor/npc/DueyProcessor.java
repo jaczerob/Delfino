@@ -39,8 +39,8 @@ import dev.jaczerob.delfino.maplestory.net.server.channel.Channel;
 import dev.jaczerob.delfino.maplestory.server.DueyPackage;
 import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
 import dev.jaczerob.delfino.maplestory.server.Trade;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -126,7 +126,7 @@ public class DueyProcessor {
                         ps2.setInt(1, player.getId());
                         ps2.executeUpdate();
 
-                        c.sendPacket(PacketCreator.sendDueyParcelReceived(rs.getString("SenderName"), rs.getInt("Type") == 1));
+                        c.sendPacket(ChannelPacketCreator.getInstance().sendDueyParcelReceived(rs.getString("SenderName"), rs.getInt("Type") == 1));
                     }
                 }
             }
@@ -293,7 +293,7 @@ public class DueyProcessor {
                 if (c.getPlayer().isGM() && c.getPlayer().gmLevel() < YamlConfig.config.server.MINIMUM_GM_LEVEL_TO_USE_DUEY) {
                     c.getPlayer().message("You cannot use Duey to send items at your GM level.");
                     log.info(String.format("GM %s tried to send a package to %s", c.getPlayer().getName(), recipient));
-                    c.sendPacket(PacketCreator.sendDueyMSG(Actions.TOCLIENT_SEND_INCORRECT_REQUEST.getCode()));
+                    c.sendPacket(ChannelPacketCreator.getInstance().sendDueyMSG(Actions.TOCLIENT_SEND_INCORRECT_REQUEST.getCode()));
                     return;
                 }
 
@@ -322,7 +322,7 @@ public class DueyProcessor {
                 }
 
                 if (c.getPlayer().getMeso() < finalcost) {
-                    c.sendPacket(PacketCreator.sendDueyMSG(Actions.TOCLIENT_SEND_NOT_ENOUGH_MESOS.getCode()));
+                    c.sendPacket(ChannelPacketCreator.getInstance().sendDueyMSG(Actions.TOCLIENT_SEND_NOT_ENOUGH_MESOS.getCode()));
                     return;
                 }
 
@@ -331,12 +331,12 @@ public class DueyProcessor {
                 var recipientCid = accIdCid.getRight();
 
                 if (recipientAccId == -1 || recipientCid == -1) {
-                    c.sendPacket(PacketCreator.sendDueyMSG(Actions.TOCLIENT_SEND_NAME_DOES_NOT_EXIST.getCode()));
+                    c.sendPacket(ChannelPacketCreator.getInstance().sendDueyMSG(Actions.TOCLIENT_SEND_NAME_DOES_NOT_EXIST.getCode()));
                     return;
                 }
 
                 if (recipientAccId == c.getAccID()) {
-                    c.sendPacket(PacketCreator.sendDueyMSG(Actions.TOCLIENT_SEND_SAMEACC_ERROR.getCode()));
+                    c.sendPacket(ChannelPacketCreator.getInstance().sendDueyMSG(Actions.TOCLIENT_SEND_SAMEACC_ERROR.getCode()));
                     return;
                 }
 
@@ -346,18 +346,18 @@ public class DueyProcessor {
 
                 int packageId = createPackage(sendMesos, sendMessage, c.getPlayer().getName(), recipientCid, quick);
                 if (packageId == -1) {
-                    c.sendPacket(PacketCreator.sendDueyMSG(Actions.TOCLIENT_SEND_ENABLE_ACTIONS.getCode()));
+                    c.sendPacket(ChannelPacketCreator.getInstance().sendDueyMSG(Actions.TOCLIENT_SEND_ENABLE_ACTIONS.getCode()));
                     return;
                 }
                 c.getPlayer().gainMeso((int) -finalcost, false);
 
                 int res = addPackageItemFromInventory(packageId, c, invTypeId, itemPos, amount);
                 if (res == 0) {
-                    c.sendPacket(PacketCreator.sendDueyMSG(Actions.TOCLIENT_SEND_SUCCESSFULLY_SENT.getCode()));
+                    c.sendPacket(ChannelPacketCreator.getInstance().sendDueyMSG(Actions.TOCLIENT_SEND_SUCCESSFULLY_SENT.getCode()));
                 } else if (res > 0) {
-                    c.sendPacket(PacketCreator.sendDueyMSG(Actions.TOCLIENT_SEND_ENABLE_ACTIONS.getCode()));
+                    c.sendPacket(ChannelPacketCreator.getInstance().sendDueyMSG(Actions.TOCLIENT_SEND_ENABLE_ACTIONS.getCode()));
                 } else {
-                    c.sendPacket(PacketCreator.sendDueyMSG(Actions.TOCLIENT_SEND_INCORRECT_REQUEST.getCode()));
+                    c.sendPacket(ChannelPacketCreator.getInstance().sendDueyMSG(Actions.TOCLIENT_SEND_INCORRECT_REQUEST.getCode()));
                 }
 
                 Client rClient = null;
@@ -385,7 +385,7 @@ public class DueyProcessor {
         if (c.tryacquireClient()) {
             try {
                 removePackageFromDB(packageid);
-                c.sendPacket(PacketCreator.removeItemFromDuey(playerRemove, packageid));
+                c.sendPacket(ChannelPacketCreator.getInstance().removeItemFromDuey(playerRemove, packageid));
             } finally {
                 c.releaseClient();
             }
@@ -409,29 +409,29 @@ public class DueyProcessor {
                     }
 
                     if (dp == null) {
-                        c.sendPacket(PacketCreator.sendDueyMSG(Actions.TOCLIENT_RECV_UNKNOWN_ERROR.getCode()));
+                        c.sendPacket(ChannelPacketCreator.getInstance().sendDueyMSG(Actions.TOCLIENT_RECV_UNKNOWN_ERROR.getCode()));
                         log.warn("Chr {} tried to receive package from duey with id {}", c.getPlayer().getName(), packageId);
                         return;
                     }
 
                     if (dp.isDeliveringTime()) {
-                        c.sendPacket(PacketCreator.sendDueyMSG(Actions.TOCLIENT_RECV_UNKNOWN_ERROR.getCode()));
+                        c.sendPacket(ChannelPacketCreator.getInstance().sendDueyMSG(Actions.TOCLIENT_RECV_UNKNOWN_ERROR.getCode()));
                         return;
                     }
 
                     Item dpItem = dp.getItem();
                     if (dpItem != null) {
                         if (!c.getPlayer().canHoldMeso(dp.getMesos())) {
-                            c.sendPacket(PacketCreator.sendDueyMSG(Actions.TOCLIENT_RECV_UNKNOWN_ERROR.getCode()));
+                            c.sendPacket(ChannelPacketCreator.getInstance().sendDueyMSG(Actions.TOCLIENT_RECV_UNKNOWN_ERROR.getCode()));
                             return;
                         }
 
                         if (!InventoryManipulator.checkSpace(c, dpItem.getItemId(), dpItem.getQuantity(), dpItem.getOwner())) {
                             int itemid = dpItem.getItemId();
                             if (ItemInformationProvider.getInstance().isPickupRestricted(itemid) && c.getPlayer().getInventory(ItemConstants.getInventoryType(itemid)).findById(itemid) != null) {
-                                c.sendPacket(PacketCreator.sendDueyMSG(Actions.TOCLIENT_RECV_RECEIVER_WITH_UNIQUE.getCode()));
+                                c.sendPacket(ChannelPacketCreator.getInstance().sendDueyMSG(Actions.TOCLIENT_RECV_RECEIVER_WITH_UNIQUE.getCode()));
                             } else {
-                                c.sendPacket(PacketCreator.sendDueyMSG(Actions.TOCLIENT_RECV_NO_FREE_SLOTS.getCode()));
+                                c.sendPacket(ChannelPacketCreator.getInstance().sendDueyMSG(Actions.TOCLIENT_RECV_NO_FREE_SLOTS.getCode()));
                             }
 
                             return;
@@ -457,15 +457,15 @@ public class DueyProcessor {
             try {
                 long timeNow = System.currentTimeMillis();
                 if (timeNow - c.getPlayer().getNpcCooldown() < YamlConfig.config.server.BLOCK_NPC_RACE_CONDT) {
-                    c.sendPacket(PacketCreator.enableActions());
+                    c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                     return;
                 }
                 c.getPlayer().setNpcCooldown(timeNow);
 
                 if (quickDelivery) {
-                    c.sendPacket(PacketCreator.sendDuey(0x1A, null));
+                    c.sendPacket(ChannelPacketCreator.getInstance().sendDuey(0x1A, null));
                 } else {
-                    c.sendPacket(PacketCreator.sendDuey(0x8, loadPackages(c.getPlayer())));
+                    c.sendPacket(ChannelPacketCreator.getInstance().sendDuey(0x8, loadPackages(c.getPlayer())));
                 }
             } finally {
                 c.releaseClient();

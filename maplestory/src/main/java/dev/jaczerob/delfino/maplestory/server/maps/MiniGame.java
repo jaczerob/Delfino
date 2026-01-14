@@ -1,31 +1,10 @@
-/*
-	This file is part of the OdinMS Maple Story Server
-    Copyright (C) 2008 Patrick Huy <patrick.huy@frz.cc>
-		       Matthias Butz <matze@odinms.de>
-		       Jan Christian Meyer <vimes@odinms.de>
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as
-    published by the Free Software Foundation version 3 as published by
-    the Free Software Foundation. You may not use, modify or distribute
-    this program under any other version of the GNU Affero General Public
-    License.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
-
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package dev.jaczerob.delfino.maplestory.server.maps;
 
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Client;
-import dev.jaczerob.delfino.maplestory.net.packet.Packet;
+import dev.jaczerob.delfino.network.packets.Packet;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -109,21 +88,21 @@ public class MiniGame extends AbstractMapObject {
 
         Character owner = this.getOwner();
         if (GameType == MiniGameType.OMOK) {
-            owner.sendPacket(PacketCreator.getMiniGameNewVisitor(this, challenger, 1));
-            owner.getMap().broadcastMessage(PacketCreator.addOmokBox(owner, 2, 0));
+            owner.sendPacket(ChannelPacketCreator.getInstance().getMiniGameNewVisitor(this, challenger, 1));
+            owner.getMap().broadcastMessage(ChannelPacketCreator.getInstance().addOmokBox(owner, 2, 0));
         } else if (GameType == MiniGameType.MATCH_CARD) {
-            owner.sendPacket(PacketCreator.getMatchCardNewVisitor(this, challenger, 1));
-            owner.getMap().broadcastMessage(PacketCreator.addMatchCardBox(owner, 2, 0));
+            owner.sendPacket(ChannelPacketCreator.getInstance().getMatchCardNewVisitor(this, challenger, 1));
+            owner.getMap().broadcastMessage(ChannelPacketCreator.getInstance().addMatchCardBox(owner, 2, 0));
         }
     }
 
     public void closeRoom(boolean forceClose) {
-        owner.getMap().broadcastMessage(PacketCreator.removeMinigameBox(owner));
+        owner.getMap().broadcastMessage(ChannelPacketCreator.getInstance().removeMinigameBox(owner));
 
         if (forceClose) {
-            this.broadcastToOwner(PacketCreator.getMiniGameClose(false, 4));
+            this.broadcastToOwner(ChannelPacketCreator.getInstance().getMiniGameClose(false, 4));
         }
-        this.broadcastToVisitor(PacketCreator.getMiniGameClose(true, 3));
+        this.broadcastToVisitor(ChannelPacketCreator.getInstance().getMiniGameClose(true, 3));
 
         if (visitor != null) {
             visitor.setMiniGame(null);
@@ -140,17 +119,17 @@ public class MiniGame extends AbstractMapObject {
                 minigameMatchOwnerWins(true);
             }
             if (forceClose) {
-                visitor.sendPacket(PacketCreator.getMiniGameClose(true, 4));
+                visitor.sendPacket(ChannelPacketCreator.getInstance().getMiniGameClose(true, 4));
             }
 
             challenger.setMiniGame(null);
             visitor = null;
 
-            this.getOwner().sendPacket(PacketCreator.getMiniGameRemoveVisitor());
+            this.getOwner().sendPacket(ChannelPacketCreator.getInstance().getMiniGameRemoveVisitor());
             if (GameType == MiniGameType.OMOK) {
-                this.getOwner().getMap().broadcastMessage(PacketCreator.addOmokBox(owner, 1, 0));
+                this.getOwner().getMap().broadcastMessage(ChannelPacketCreator.getInstance().addOmokBox(owner, 1, 0));
             } else if (GameType == MiniGameType.MATCH_CARD) {
-                this.getOwner().getMap().broadcastMessage(PacketCreator.addMatchCardBox(owner, 1, 0));
+                this.getOwner().getMap().broadcastMessage(ChannelPacketCreator.getInstance().addMatchCardBox(owner, 1, 0));
             }
         }
     }
@@ -181,7 +160,7 @@ public class MiniGame extends AbstractMapObject {
     }
 
     private void updateMiniGameBox() {
-        this.getOwner().getMap().broadcastMessage(PacketCreator.addOmokBox(owner, visitor != null ? 2 : 1, inprogress));
+        this.getOwner().getMap().broadcastMessage(ChannelPacketCreator.getInstance().addOmokBox(owner, visitor != null ? 2 : 1, inprogress));
     }
 
     private synchronized boolean minigameMatchFinish() {
@@ -252,7 +231,7 @@ public class MiniGame extends AbstractMapObject {
             visitorforfeits++;
         }
 
-        this.broadcast(PacketCreator.getMiniGameOwnerWin(this, forfeit));
+        this.broadcast(ChannelPacketCreator.getInstance().getMiniGameOwnerWin(this, forfeit));
 
         minigameMatchFinished();
     }
@@ -272,7 +251,7 @@ public class MiniGame extends AbstractMapObject {
             ownerforfeits++;
         }
 
-        this.broadcast(PacketCreator.getMiniGameVisitorWin(this, forfeit));
+        this.broadcast(ChannelPacketCreator.getInstance().getMiniGameVisitorWin(this, forfeit));
 
         minigameMatchFinished();
     }
@@ -292,7 +271,7 @@ public class MiniGame extends AbstractMapObject {
             nextavailabletie = timeNow + MINUTES.toMillis(5);
         }
 
-        this.broadcast(PacketCreator.getMiniGameTie(this));
+        this.broadcast(ChannelPacketCreator.getInstance().getMiniGameTie(this));
 
         minigameMatchFinished();
     }
@@ -409,15 +388,15 @@ public class MiniGame extends AbstractMapObject {
     }
 
     public void chat(Client c, String chat) {
-        broadcast(PacketCreator.getPlayerShopChat(c.getPlayer(), chat, isOwner(c.getPlayer())));
+        broadcast(ChannelPacketCreator.getInstance().getPlayerShopChat(c.getPlayer(), chat, isOwner(c.getPlayer())));
     }
 
     public void sendOmok(Client c, int type) {
-        c.sendPacket(PacketCreator.getMiniGame(c, this, isOwner(c.getPlayer()), type));
+        c.sendPacket(ChannelPacketCreator.getInstance().getMiniGame(c, this, isOwner(c.getPlayer()), type));
     }
 
     public void sendMatchCard(Client c, int type) {
-        c.sendPacket(PacketCreator.getMatchCard(c, this, isOwner(c.getPlayer()), type));
+        c.sendPacket(ChannelPacketCreator.getInstance().getMatchCard(c, this, isOwner(c.getPlayer()), type));
     }
 
     public Character getOwner() {
@@ -432,7 +411,7 @@ public class MiniGame extends AbstractMapObject {
         int slot = move2 * 15 + move1 + 1;
         if (piece[slot] == 0) {
             piece[slot] = type;
-            this.broadcast(PacketCreator.getMiniGameMoveOmok(this, move1, move2, type));
+            this.broadcast(ChannelPacketCreator.getInstance().getMiniGameMoveOmok(this, move1, move2, type));
             for (int y = 0; y < 15; y++) {
                 for (int x = 0; x < 11; x++) {
                     if (searchCombo(x, y, type)) {
@@ -528,10 +507,12 @@ public class MiniGame extends AbstractMapObject {
     }
 
     @Override
-    public void sendDestroyData(Client client) {}
+    public void sendDestroyData(Client client) {
+    }
 
     @Override
-    public void sendSpawnData(Client client) {}
+    public void sendSpawnData(Client client) {
+    }
 
     @Override
     public MapObjectType getType() {

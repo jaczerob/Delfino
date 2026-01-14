@@ -4,7 +4,7 @@ import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.client.inventory.Item;
 import dev.jaczerob.delfino.maplestory.client.inventory.manipulator.InventoryManipulator;
 import dev.jaczerob.delfino.maplestory.constants.id.ItemId;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.Randomizer;
 
 /**
@@ -18,7 +18,7 @@ public class RockPaperScissor {
     private boolean win = false;
 
     public RockPaperScissor(final Client c, final byte mode) {
-        c.sendPacket(PacketCreator.rpsMode((byte) (9 + mode)));
+        c.sendPacket(ChannelPacketCreator.getInstance().rpsMode((byte) (9 + mode)));
         if (mode == 0) {
             c.getPlayer().gainMeso(-1000, true, true, true);
         }
@@ -28,14 +28,14 @@ public class RockPaperScissor {
         if (ableAnswer && !win && answer >= 0 && answer <= 2) {
             final int response = Randomizer.nextInt(3);
             if (response == answer) {
-                c.sendPacket(PacketCreator.rpsSelection((byte) response, (byte) round));
+                c.sendPacket(ChannelPacketCreator.getInstance().rpsSelection((byte) response, (byte) round));
                 // dont do anything. they can still answer once a draw
             } else if ((answer == 0 && response == 2) || (answer == 1 && response == 0) || (answer == 2 && response == 1)) { // they win
-                c.sendPacket(PacketCreator.rpsSelection((byte) response, (byte) (round + 1)));
+                c.sendPacket(ChannelPacketCreator.getInstance().rpsSelection((byte) response, (byte) (round + 1)));
                 ableAnswer = false;
                 win = true;
             } else { // they lose
-                c.sendPacket(PacketCreator.rpsSelection((byte) response, (byte) -1));
+                c.sendPacket(ChannelPacketCreator.getInstance().rpsSelection((byte) response, (byte) -1));
                 ableAnswer = false;
             }
             return true;
@@ -47,7 +47,7 @@ public class RockPaperScissor {
     public final boolean timeOut(final Client c) {
         if (ableAnswer && !win) {
             ableAnswer = false;
-            c.sendPacket(PacketCreator.rpsMode((byte) 0x0A));
+            c.sendPacket(ChannelPacketCreator.getInstance().rpsMode((byte) 0x0A));
             return true;
         }
         reward(c);
@@ -60,7 +60,7 @@ public class RockPaperScissor {
             if (round < 10) {
                 win = false;
                 ableAnswer = true;
-                c.sendPacket(PacketCreator.rpsMode((byte) 0x0C));
+                c.sendPacket(ChannelPacketCreator.getInstance().rpsMode((byte) 0x0C));
                 return true;
             } else {
                 round = 10;
@@ -79,6 +79,6 @@ public class RockPaperScissor {
 
     public final void dispose(final Client c) {
         reward(c);
-        c.sendPacket(PacketCreator.rpsMode((byte) 0x0D));
+        c.sendPacket(ChannelPacketCreator.getInstance().rpsMode((byte) 0x0D));
     }
 }

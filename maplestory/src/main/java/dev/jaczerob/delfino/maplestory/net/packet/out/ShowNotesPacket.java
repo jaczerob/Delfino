@@ -1,15 +1,14 @@
-package dev.jaczerob.delfino.maplestory.net.packet.out;
+package dev.jaczerob.delfino.network.packets.out;
 
 import dev.jaczerob.delfino.maplestory.model.Note;
 import dev.jaczerob.delfino.maplestory.net.opcodes.SendOpcode;
-import dev.jaczerob.delfino.maplestory.net.packet.ByteBufOutPacket;
+import dev.jaczerob.delfino.network.packets.ByteBufOutPacket;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 import java.util.List;
 import java.util.Objects;
 
-import static dev.jaczerob.delfino.maplestory.tools.PacketCreator.getTime;
-
-public class ShowNotesPacket extends ByteBufOutPacket {
+public final class ShowNotesPacket extends ByteBufOutPacket {
 
     public ShowNotesPacket(List<Note> notes) {
         super(SendOpcode.MEMO_RESULT);
@@ -24,7 +23,7 @@ public class ShowNotesPacket extends ByteBufOutPacket {
         writeInt(note.id());
         writeString(note.from() + " "); //Stupid nexon forgot space lol
         writeString(note.message());
-        writeLong(getTime(note.timestamp()));
+        writeLong(ChannelPacketCreator.getInstance().getTime(note.timestamp()));
         writeByte(note.fame());
     }
 }

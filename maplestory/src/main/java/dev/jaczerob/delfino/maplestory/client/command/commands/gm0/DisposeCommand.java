@@ -27,7 +27,7 @@ import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.client.command.Command;
 import dev.jaczerob.delfino.maplestory.scripting.npc.NPCScriptManager;
 import dev.jaczerob.delfino.maplestory.scripting.quest.QuestScriptManager;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 public class DisposeCommand extends Command {
     {
@@ -38,7 +38,7 @@ public class DisposeCommand extends Command {
     public void execute(Client c, String[] params) {
         NPCScriptManager.getInstance().dispose(c);
         QuestScriptManager.getInstance().dispose(c);
-        c.sendPacket(PacketCreator.enableActions());
+        c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
         c.removeClickedNPC();
         c.getPlayer().message("You've been disposed.");
     }

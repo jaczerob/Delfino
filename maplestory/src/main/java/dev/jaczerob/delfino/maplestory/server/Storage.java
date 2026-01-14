@@ -23,27 +23,22 @@ import dev.jaczerob.delfino.maplestory.client.inventory.InventoryType;
 import dev.jaczerob.delfino.maplestory.client.inventory.Item;
 import dev.jaczerob.delfino.maplestory.client.inventory.ItemFactory;
 import dev.jaczerob.delfino.maplestory.constants.game.GameConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import dev.jaczerob.delfino.maplestory.provider.Data;
 import dev.jaczerob.delfino.maplestory.provider.DataProvider;
 import dev.jaczerob.delfino.maplestory.provider.DataProviderFactory;
 import dev.jaczerob.delfino.maplestory.provider.DataTool;
 import dev.jaczerob.delfino.maplestory.provider.wz.WZFiles;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -232,7 +227,7 @@ public class Storage {
     public void sendStorage(Client c, int npcId) {
         if (c.getPlayer().getLevel() < 15) {
             c.getPlayer().dropMessage(1, "You may only use the storage once you have reached level 15.");
-            c.sendPacket(PacketCreator.enableActions());
+            c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
 
@@ -253,7 +248,7 @@ public class Storage {
             }
 
             currentNpcid = npcId;
-            c.sendPacket(PacketCreator.getStorage(npcId, slots, storageItems, meso));
+            c.sendPacket(ChannelPacketCreator.getInstance().getStorage(npcId, slots, storageItems, meso));
         } finally {
             lock.unlock();
         }
@@ -262,7 +257,7 @@ public class Storage {
     public void sendStored(Client c, InventoryType type) {
         lock.lock();
         try {
-            c.sendPacket(PacketCreator.storeStorage(slots, type, typeItems.get(type)));
+            c.sendPacket(ChannelPacketCreator.getInstance().storeStorage(slots, type, typeItems.get(type)));
         } finally {
             lock.unlock();
         }
@@ -271,7 +266,7 @@ public class Storage {
     public void sendTakenOut(Client c, InventoryType type) {
         lock.lock();
         try {
-            c.sendPacket(PacketCreator.takeOutStorage(slots, type, typeItems.get(type)));
+            c.sendPacket(ChannelPacketCreator.getInstance().takeOutStorage(slots, type, typeItems.get(type)));
         } finally {
             lock.unlock();
         }
@@ -288,7 +283,7 @@ public class Storage {
                 typeItems.put(type, new ArrayList<>(items));
             }
 
-            c.sendPacket(PacketCreator.arrangeStorage(slots, items));
+            c.sendPacket(ChannelPacketCreator.getInstance().arrangeStorage(slots, items));
         } finally {
             lock.unlock();
         }
@@ -306,7 +301,7 @@ public class Storage {
     }
 
     public void sendMeso(Client c) {
-        c.sendPacket(PacketCreator.mesoStorage(slots, meso));
+        c.sendPacket(ChannelPacketCreator.getInstance().mesoStorage(slots, meso));
     }
 
     public int getStoreFee() {  // thanks to GabrielSin

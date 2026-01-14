@@ -25,7 +25,7 @@ package dev.jaczerob.delfino.maplestory.client.command.commands.gm2;
 
 import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.client.command.Command;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 public class UnBugCommand extends Command {
     {
@@ -34,6 +34,6 @@ public class UnBugCommand extends Command {
 
     @Override
     public void execute(Client c, String[] params) {
-        c.getPlayer().getMap().broadcastMessage(PacketCreator.enableActions());
+        c.getPlayer().getMap().broadcastMessage(ChannelPacketCreator.getInstance().enableActions());
     }
 }

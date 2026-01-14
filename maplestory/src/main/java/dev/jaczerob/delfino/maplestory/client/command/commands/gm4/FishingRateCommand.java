@@ -26,7 +26,7 @@ package dev.jaczerob.delfino.maplestory.client.command.commands.gm4;
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.client.command.Command;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 public class FishingRateCommand extends Command {
     {
@@ -43,6 +43,6 @@ public class FishingRateCommand extends Command {
 
         int fishrate = Math.max(Integer.parseInt(params[0]), 1);
         c.getWorldServer().setFishingRate(fishrate);
-        c.getWorldServer().broadcastPacket(PacketCreator.serverNotice(6, "[Rate] Fishing Rate has been changed to " + fishrate + "x."));
+        c.getWorldServer().broadcastPacket(ChannelPacketCreator.getInstance().serverNotice(6, "[Rate] Fishing Rate has been changed to " + fishrate + "x."));
     }
 }

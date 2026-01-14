@@ -23,7 +23,7 @@ package dev.jaczerob.delfino.maplestory.server.maps;
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.client.inventory.Item;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 import java.awt.*;
 import java.util.concurrent.locks.Lock;
@@ -208,7 +208,7 @@ public class MapItem extends AbstractMapObject {
         if (chr.needQuestItem(questid, getItemId())) {
             this.lockItem();
             try {
-                client.sendPacket(PacketCreator.dropItemFromMapObject(chr, this, null, getPosition(),
+                client.sendPacket(ChannelPacketCreator.getInstance().dropItemFromMapObject(chr, this, null, getPosition(),
                         (byte) 2, (short) 0));
             } finally {
                 this.unlockItem();
@@ -218,6 +218,6 @@ public class MapItem extends AbstractMapObject {
 
     @Override
     public void sendDestroyData(final Client client) {
-        client.sendPacket(PacketCreator.removeItemFromMap(getObjectId(), 1, 0));
+        client.sendPacket(ChannelPacketCreator.getInstance().removeItemFromMap(getObjectId(), 1, 0));
     }
 }

@@ -28,8 +28,8 @@ import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.client.command.Command;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.server.TimerManager;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -73,15 +73,15 @@ public class BanCommand extends Command {
             target.ban(reason);
             target.yellowMessage("You have been banned by #b" + c.getPlayer().getName() + " #k.");
             target.yellowMessage("Reason: " + reason);
-            c.sendPacket(PacketCreator.getGMEffect(4, (byte) 0));
+            c.sendPacket(ChannelPacketCreator.getInstance().getGMEffect(4, (byte) 0));
             final Character rip = target;
             TimerManager.getInstance().schedule(() -> rip.getClient().disconnect(false, false), 5000); //5 Seconds
-            Server.getInstance().broadcastMessage(c.getWorld(), PacketCreator.serverNotice(6, "[RIP]: " + ign + " has been banned."));
+            Server.getInstance().broadcastMessage(c.getWorld(), ChannelPacketCreator.getInstance().serverNotice(6, "[RIP]: " + ign + " has been banned."));
         } else if (Character.ban(ign, reason, false)) {
-            c.sendPacket(PacketCreator.getGMEffect(4, (byte) 0));
-            Server.getInstance().broadcastMessage(c.getWorld(), PacketCreator.serverNotice(6, "[RIP]: " + ign + " has been banned."));
+            c.sendPacket(ChannelPacketCreator.getInstance().getGMEffect(4, (byte) 0));
+            Server.getInstance().broadcastMessage(c.getWorld(), ChannelPacketCreator.getInstance().serverNotice(6, "[RIP]: " + ign + " has been banned."));
         } else {
-            c.sendPacket(PacketCreator.getGMEffect(6, (byte) 1));
+            c.sendPacket(ChannelPacketCreator.getInstance().getGMEffect(6, (byte) 1));
         }
     }
 }

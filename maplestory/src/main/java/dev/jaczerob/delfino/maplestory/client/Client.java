@@ -24,13 +24,7 @@ package dev.jaczerob.delfino.maplestory.client;
 import dev.jaczerob.delfino.maplestory.client.inventory.InventoryType;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
 import dev.jaczerob.delfino.maplestory.constants.id.MapId;
-import dev.jaczerob.delfino.maplestory.net.PacketHandler;
-import dev.jaczerob.delfino.maplestory.net.PacketProcessor;
 import dev.jaczerob.delfino.maplestory.net.netty.InvalidPacketHeaderException;
-import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
-import dev.jaczerob.delfino.maplestory.net.packet.Packet;
-import dev.jaczerob.delfino.maplestory.net.packet.logging.LoggingUtil;
-import dev.jaczerob.delfino.maplestory.net.packet.logging.MonitoredChrLogger;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.net.server.channel.Channel;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.session.Hwid;
@@ -44,6 +38,7 @@ import dev.jaczerob.delfino.maplestory.net.server.world.Party;
 import dev.jaczerob.delfino.maplestory.net.server.world.PartyCharacter;
 import dev.jaczerob.delfino.maplestory.net.server.world.PartyOperation;
 import dev.jaczerob.delfino.maplestory.net.server.world.World;
+import dev.jaczerob.delfino.maplestory.packets.ChannelPacketProcessor;
 import dev.jaczerob.delfino.maplestory.scripting.AbstractPlayerInteraction;
 import dev.jaczerob.delfino.maplestory.scripting.event.EventInstanceManager;
 import dev.jaczerob.delfino.maplestory.scripting.event.EventManager;
@@ -58,9 +53,13 @@ import dev.jaczerob.delfino.maplestory.server.maps.FieldLimit;
 import dev.jaczerob.delfino.maplestory.server.maps.MapleMap;
 import dev.jaczerob.delfino.maplestory.server.maps.MiniDungeonInfo;
 import dev.jaczerob.delfino.maplestory.tools.BCrypt;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
 import dev.jaczerob.delfino.maplestory.tools.HexTool;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.network.packets.InPacket;
+import dev.jaczerob.delfino.network.packets.Packet;
+import dev.jaczerob.delfino.network.packets.logging.LoggingUtil;
+import dev.jaczerob.delfino.network.packets.logging.MonitoredChrLogger;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.timeout.IdleStateEvent;
@@ -95,20 +94,19 @@ import java.util.concurrent.locks.ReentrantLock;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class Client extends ChannelInboundHandlerAdapter {
-    private static final Logger log = LoggerFactory.getLogger(Client.class);
-
     public static final int LOGIN_NOTLOGGEDIN = 0;
     public static final int LOGIN_SERVER_TRANSITION = 1;
     public static final int LOGIN_LOGGEDIN = 2;
-
+    private static final Logger log = LoggerFactory.getLogger(Client.class);
     private final Type type;
     private final long sessionId;
-    private final PacketProcessor packetProcessor;
-
+    private final ChannelPacketProcessor packetProcessor;
+    private final Semaphore actionsSemaphore = new Semaphore(7);
+    private final Lock lock = new ReentrantLock(true);
+    private final Lock announcerLock = new ReentrantLock(true);
     private Hwid hwid;
     private String remoteAddress;
     private volatile boolean inTransition;
-
     private io.netty.channel.Channel ioChannel;
     private Character player;
     private int channel = 1;
@@ -127,20 +125,12 @@ public class Client extends ChannelInboundHandlerAdapter {
     private byte csattempt = 0;
     private byte gender = -1;
     private boolean disconnecting = false;
-    private final Semaphore actionsSemaphore = new Semaphore(7);
-    private final Lock lock = new ReentrantLock(true);
-    private final Lock announcerLock = new ReentrantLock(true);
     private int votePoints;
     private long lastNpcClick;
     private long lastPacket = System.currentTimeMillis();
     private int lang = 0;
 
-    public enum Type {
-        LOGIN,
-        CHANNEL
-    }
-
-    public Client(Type type, long sessionId, String remoteAddress, PacketProcessor packetProcessor, int world, int channel) {
+    public Client(Type type, long sessionId, String remoteAddress, ChannelPacketProcessor packetProcessor, int world, int channel) {
         this.type = type;
         this.sessionId = sessionId;
         this.remoteAddress = remoteAddress;
@@ -149,13 +139,34 @@ public class Client extends ChannelInboundHandlerAdapter {
         this.channel = channel;
     }
 
-    public static Client createChannelClient(long sessionId, String remoteAddress, PacketProcessor packetProcessor,
+    public static Client createChannelClient(long sessionId, String remoteAddress, ChannelPacketProcessor packetProcessor,
                                              int world, int channel) {
         return new Client(Type.CHANNEL, sessionId, remoteAddress, packetProcessor, world, channel);
     }
 
     public static Client createMock() {
         return new Client(null, -1, null, null, -123, -123);
+    }
+
+    private static String getRemoteAddress(io.netty.channel.Channel channel) {
+        String remoteAddress = "null";
+        try {
+            remoteAddress = ((InetSocketAddress) channel.remoteAddress()).getAddress().getHostAddress();
+        } catch (NullPointerException npe) {
+            log.warn("Unable to get remote address for client", npe);
+        }
+
+        return remoteAddress;
+    }
+
+    private static boolean checkHash(String hash, String type, String password) {
+        try {
+            MessageDigest digester = MessageDigest.getInstance(type);
+            digester.update(password.getBytes(StandardCharsets.UTF_8), 0, password.length());
+            return HexTool.toHexString(digester.digest()).replace(" ", "").toLowerCase().equals(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Encoding the string failed", e);
+        }
     }
 
     @Override
@@ -170,17 +181,6 @@ public class Client extends ChannelInboundHandlerAdapter {
         this.ioChannel = channel;
     }
 
-    private static String getRemoteAddress(io.netty.channel.Channel channel) {
-        String remoteAddress = "null";
-        try {
-            remoteAddress = ((InetSocketAddress) channel.remoteAddress()).getAddress().getHostAddress();
-        } catch (NullPointerException npe) {
-            log.warn("Unable to get remote address for client", npe);
-        }
-
-        return remoteAddress;
-    }
-
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (!(msg instanceof InPacket packet)) {
@@ -189,7 +189,7 @@ public class Client extends ChannelInboundHandlerAdapter {
         }
 
         short opcode = packet.readShort();
-        final PacketHandler handler = packetProcessor.getHandler(opcode);
+        final var handler = packetProcessor.getHandler(opcode);
 
         if (YamlConfig.config.server.USE_DEBUG_SHOW_RCVD_PACKET && !LoggingUtil.isIgnoredRecvPacket(opcode)) {
             log.debug("Received packet id {}", opcode);
@@ -198,7 +198,7 @@ public class Client extends ChannelInboundHandlerAdapter {
         if (handler != null && handler.validateState(this)) {
             try {
                 MonitoredChrLogger.logPacketIfMonitored(this, opcode, packet.getBytes());
-                handler.handlePacket(packet, this);
+                handler.handlePacket(packet, this, ctx);
             } catch (final Throwable t) {
                 final String chrInfo = player != null ? player.getName() + " on map " + player.getMapId() : "?";
                 log.warn("Error in packet handler {}. Chr {}, account {}. Packet: {}", handler.getClass().getSimpleName(),
@@ -474,13 +474,12 @@ public class Client extends ChannelInboundHandlerAdapter {
         return null;
     }
 
+    public int getAccID() {
+        return accId;
+    }
 
     public void setAccID(int id) {
         this.accId = id;
-    }
-
-    public int getAccID() {
-        return accId;
     }
 
     public void updateLoginState(int newState) {
@@ -764,6 +763,10 @@ public class Client extends ChannelInboundHandlerAdapter {
         return channel;
     }
 
+    public void setChannel(int channel) {
+        this.channel = channel;
+    }
+
     public Channel getChannelServer() {
         return Server.getInstance().getChannel(world, channel);
     }
@@ -784,10 +787,6 @@ public class Client extends ChannelInboundHandlerAdapter {
         this.accountName = a;
     }
 
-    public void setChannel(int channel) {
-        this.channel = channel;
-    }
-
     public int getWorld() {
         return world;
     }
@@ -802,7 +801,7 @@ public class Client extends ChannelInboundHandlerAdapter {
 
     public void checkIfIdle(final IdleStateEvent event) {
         final long pingedAt = System.currentTimeMillis();
-        sendPacket(PacketCreator.getPing());
+        sendPacket(ChannelPacketCreator.getInstance().getPing());
         TimerManager.getInstance().schedule(() -> {
             try {
                 if (lastPong < pingedAt) {
@@ -906,28 +905,6 @@ public class Client extends ChannelInboundHandlerAdapter {
         actionsSemaphore.release();
     }
 
-    private static class CharNameAndId {
-
-        public String name;
-        public int id;
-
-        public CharNameAndId(String name, int id) {
-            super();
-            this.name = name;
-            this.id = id;
-        }
-    }
-
-    private static boolean checkHash(String hash, String type, String password) {
-        try {
-            MessageDigest digester = MessageDigest.getInstance(type);
-            digester.update(password.getBytes(StandardCharsets.UTF_8), 0, password.length());
-            return HexTool.toHexString(digester.digest()).replace(" ", "").toLowerCase().equals(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Encoding the string failed", e);
-        }
-    }
-
     public short getAvailableCharacterSlots() {
         return (short) Math.max(0, characterSlots - Server.getInstance().getAccountCharacterCount(accId));
     }
@@ -974,12 +951,12 @@ public class Client extends ChannelInboundHandlerAdapter {
 
     private void announceDisableServerMessage() {
         if (!this.getWorldServer().registerDisabledServerMessage(player.getId())) {
-            sendPacket(PacketCreator.serverMessage(""));
+            sendPacket(ChannelPacketCreator.getInstance().serverMessage(""));
         }
     }
 
     public void announceServerMessage() {
-        sendPacket(PacketCreator.serverMessage(this.getChannelServer().getServerMessage()));
+        sendPacket(ChannelPacketCreator.getInstance().serverMessage(this.getChannelServer().getServerMessage()));
     }
 
     public synchronized void announceBossHpBar(Monster mm, final int mobHash, Packet packet) {
@@ -1013,8 +990,8 @@ public class Client extends ChannelInboundHandlerAdapter {
     }
 
     public void announceHint(String msg, int length) {
-        sendPacket(PacketCreator.sendHint(msg, length, 10));
-        sendPacket(PacketCreator.enableActions());
+        sendPacket(ChannelPacketCreator.getInstance().sendHint(msg, length, 10));
+        sendPacket(ChannelPacketCreator.getInstance().enableActions());
     }
 
     public void changeChannel(int channel) {
@@ -1024,18 +1001,18 @@ public class Client extends ChannelInboundHandlerAdapter {
             return;
         }
         if (!player.isAlive() || FieldLimit.CANNOTMIGRATE.check(player.getMap().getFieldLimit())) {
-            sendPacket(PacketCreator.enableActions());
+            sendPacket(ChannelPacketCreator.getInstance().enableActions());
             return;
         } else if (MiniDungeonInfo.isDungeonMap(player.getMapId())) {
-            sendPacket(PacketCreator.serverNotice(5, "Changing channels or entering Cash Shop or MTS are disabled when inside a Mini-Dungeon."));
-            sendPacket(PacketCreator.enableActions());
+            sendPacket(ChannelPacketCreator.getInstance().serverNotice(5, "Changing channels or entering Cash Shop or MTS are disabled when inside a Mini-Dungeon."));
+            sendPacket(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
 
         String[] socket = Server.getInstance().getInetSocket(this, getWorld(), channel);
         if (socket == null) {
-            sendPacket(PacketCreator.serverNotice(1, "Channel " + channel + " is currently disabled. Try another channel."));
-            sendPacket(PacketCreator.enableActions());
+            sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "Channel " + channel + " is currently disabled. Try another channel."));
+            sendPacket(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
 
@@ -1065,7 +1042,7 @@ public class Client extends ChannelInboundHandlerAdapter {
 
         player.setSessionTransitionState();
         try {
-            sendPacket(PacketCreator.getChannelChange(InetAddress.getByName(socket[0]), Integer.parseInt(socket[1])));
+            sendPacket(ChannelPacketCreator.getInstance().getChannelChange(InetAddress.getByName(socket[0]), Integer.parseInt(socket[1])));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -1108,7 +1085,7 @@ public class Client extends ChannelInboundHandlerAdapter {
     }
 
     public void enableCSActions() {
-        sendPacket(PacketCreator.enableCSUse(player));
+        sendPacket(ChannelPacketCreator.getInstance().enableCSUse(player));
     }
 
     public int getLanguage() {
@@ -1117,5 +1094,22 @@ public class Client extends ChannelInboundHandlerAdapter {
 
     public void setLanguage(int lingua) {
         this.lang = lingua;
+    }
+
+    public enum Type {
+        LOGIN,
+        CHANNEL
+    }
+
+    private static class CharNameAndId {
+
+        public String name;
+        public int id;
+
+        public CharNameAndId(String name, int id) {
+            super();
+            this.name = name;
+            this.id = id;
+        }
     }
 }

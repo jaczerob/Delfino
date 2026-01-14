@@ -1,24 +1,3 @@
-/*
-	This file is part of the OdinMS Maple Story Server
-    Copyright (C) 2008 Patrick Huy <patrick.huy@frz.cc>
-		       Matthias Butz <matze@odinms.de>
-		       Jan Christian Meyer <vimes@odinms.de>
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as
-    published by the Free Software Foundation version 3 as published by
-    the Free Software Foundation. You may not use, modify or distribute
-    this program under any other version of the GNU Affero General Public
-    License.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
-
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package dev.jaczerob.delfino.maplestory.server.maps;
 
 import dev.jaczerob.delfino.maplestory.client.Character;
@@ -28,17 +7,12 @@ import dev.jaczerob.delfino.maplestory.client.inventory.InventoryType;
 import dev.jaczerob.delfino.maplestory.client.inventory.Item;
 import dev.jaczerob.delfino.maplestory.client.inventory.manipulator.InventoryManipulator;
 import dev.jaczerob.delfino.maplestory.client.inventory.manipulator.KarmaManipulator;
-import dev.jaczerob.delfino.maplestory.net.packet.Packet;
+import dev.jaczerob.delfino.network.packets.Packet;
 import dev.jaczerob.delfino.maplestory.server.Trade;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.Pair;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -128,8 +102,8 @@ public class PlayerShop extends AbstractMapObject {
                 visitors[i] = visitor;
                 visitor.setSlot(i);
 
-                this.broadcast(PacketCreator.getPlayerShopNewVisitor(visitor, i + 1));
-                owner.getMap().broadcastMessage(PacketCreator.updatePlayerShopBox(this));
+                this.broadcast(ChannelPacketCreator.getInstance().getPlayerShopNewVisitor(visitor, i + 1));
+                owner.getMap().broadcastMessage(ChannelPacketCreator.getInstance().updatePlayerShopBox(this));
                 break;
             }
         }
@@ -149,8 +123,8 @@ public class PlayerShop extends AbstractMapObject {
                     visitors[i] = null;
                     visitor.setSlot(-1);
 
-                    this.broadcast(PacketCreator.getPlayerShopRemoveVisitor(i + 1));
-                    owner.getMap().broadcastMessage(PacketCreator.updatePlayerShopBox(this));
+                    this.broadcast(ChannelPacketCreator.getInstance().getPlayerShopRemoveVisitor(i + 1));
+                    owner.getMap().broadcastMessage(ChannelPacketCreator.getInstance().updatePlayerShopBox(this));
                     return;
                 }
             }
@@ -172,7 +146,7 @@ public class PlayerShop extends AbstractMapObject {
 
                         for (int j = i; j < 2; j++) {
                             if (visitors[j] != null) {
-                                owner.sendPacket(PacketCreator.getPlayerShopRemoveVisitor(j + 1));
+                                owner.sendPacket(ChannelPacketCreator.getInstance().getPlayerShopRemoveVisitor(j + 1));
                             }
                             visitors[j] = visitors[j + 1];
                             if (visitors[j] != null) {
@@ -182,12 +156,12 @@ public class PlayerShop extends AbstractMapObject {
                         visitors[2] = null;
                         for (int j = i; j < 2; j++) {
                             if (visitors[j] != null) {
-                                owner.sendPacket(PacketCreator.getPlayerShopNewVisitor(visitors[j], j + 1));
+                                owner.sendPacket(ChannelPacketCreator.getInstance().getPlayerShopNewVisitor(visitors[j], j + 1));
                             }
                         }
 
                         this.broadcastRestoreToVisitors();
-                        owner.getMap().broadcastMessage(PacketCreator.updatePlayerShopBox(this));
+                        owner.getMap().broadcastMessage(ChannelPacketCreator.getInstance().updatePlayerShopBox(this));
                         return;
                     }
                 }
@@ -195,7 +169,7 @@ public class PlayerShop extends AbstractMapObject {
                 visitorLock.unlock();
             }
 
-            owner.getMap().broadcastMessage(PacketCreator.updatePlayerShopBox(this));
+            owner.getMap().broadcastMessage(ChannelPacketCreator.getInstance().updatePlayerShopBox(this));
         }
     }
 
@@ -236,8 +210,8 @@ public class PlayerShop extends AbstractMapObject {
                     iitem.setQuantity((short) (shopItem.getItem().getQuantity() * shopItem.getBundles()));
 
                     if (!Inventory.checkSpot(chr, iitem)) {
-                        chr.sendPacket(PacketCreator.serverNotice(1, "Have a slot available on your inventory to claim back the item."));
-                        chr.sendPacket(PacketCreator.enableActions());
+                        chr.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "Have a slot available on your inventory to claim back the item."));
+                        chr.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                         return;
                     }
 
@@ -245,7 +219,7 @@ public class PlayerShop extends AbstractMapObject {
                 }
 
                 removeFromSlot(slot);
-                chr.sendPacket(PacketCreator.getPlayerShopItemUpdate(this));
+                chr.sendPacket(ChannelPacketCreator.getInstance().getPlayerShopItemUpdate(this));
             }
         }
     }
@@ -265,10 +239,10 @@ public class PlayerShop extends AbstractMapObject {
 
                 newItem.setQuantity((short) ((pItem.getItem().getQuantity() * quantity)));
                 if (quantity < 1 || !pItem.isExist() || pItem.getBundles() < quantity) {
-                    c.sendPacket(PacketCreator.enableActions());
+                    c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                     return false;
                 } else if (newItem.getInventoryType().equals(InventoryType.EQUIP) && newItem.getQuantity() > 1) {
-                    c.sendPacket(PacketCreator.enableActions());
+                    c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                     return false;
                 }
 
@@ -281,7 +255,7 @@ public class PlayerShop extends AbstractMapObject {
                     if (c.getPlayer().getMeso() >= price) {
                         if (!owner.canHoldMeso(price)) {    // thanks Rohenn for noticing owner hold check misplaced
                             c.getPlayer().dropMessage(1, "Transaction failed since the shop owner can't hold any more mesos.");
-                            c.sendPacket(PacketCreator.enableActions());
+                            c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                             return false;
                         }
 
@@ -291,7 +265,7 @@ public class PlayerShop extends AbstractMapObject {
                             owner.gainMeso(price, true);
 
                             SoldItem soldItem = new SoldItem(c.getPlayer().getName(), pItem.getItem().getItemId(), quantity, price);
-                            owner.sendPacket(PacketCreator.getPlayerShopOwnerUpdate(soldItem, item));
+                            owner.sendPacket(ChannelPacketCreator.getInstance().getPlayerShopOwnerUpdate(soldItem, item));
 
                             synchronized (sold) {
                                 sold.add(soldItem);
@@ -309,12 +283,12 @@ public class PlayerShop extends AbstractMapObject {
                             }
                         } else {
                             c.getPlayer().dropMessage(1, "Your inventory is full. Please clear a slot before buying this item.");
-                            c.sendPacket(PacketCreator.enableActions());
+                            c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                             return false;
                         }
                     } else {
                         c.getPlayer().dropMessage(1, "You don't have enough mesos to purchase this item.");
-                        c.sendPacket(PacketCreator.enableActions());
+                        c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                         return false;
                     }
 
@@ -346,13 +320,13 @@ public class PlayerShop extends AbstractMapObject {
         try {
             for (int i = 0; i < 3; i++) {
                 if (visitors[i] != null) {
-                    visitors[i].sendPacket(PacketCreator.getPlayerShopRemoveVisitor(i + 1));
+                    visitors[i].sendPacket(ChannelPacketCreator.getInstance().getPlayerShopRemoveVisitor(i + 1));
                 }
             }
 
             for (int i = 0; i < 3; i++) {
                 if (visitors[i] != null) {
-                    visitors[i].sendPacket(PacketCreator.getPlayerShop(this, false));
+                    visitors[i].sendPacket(ChannelPacketCreator.getInstance().getPlayerShop(this, false));
                 }
             }
 
@@ -370,7 +344,7 @@ public class PlayerShop extends AbstractMapObject {
             try {
                 for (int i = 0; i < 3; i++) {
                     if (visitors[i] != null) {
-                        visitors[i].sendPacket(PacketCreator.shopErrorMessage(10, 1));
+                        visitors[i].sendPacket(ChannelPacketCreator.getInstance().shopErrorMessage(10, 1));
                         visitorList.add(visitors[i]);
                     }
                 }
@@ -424,7 +398,7 @@ public class PlayerShop extends AbstractMapObject {
             chatSlot.put(c.getPlayer().getId(), s);
         }
 
-        broadcast(PacketCreator.getPlayerShopChat(c.getPlayer(), chat, s));
+        broadcast(ChannelPacketCreator.getInstance().getPlayerShopChat(c.getPlayer(), chat, s));
     }
 
     private void recoverChatLog() {
@@ -433,7 +407,7 @@ public class PlayerShop extends AbstractMapObject {
                 Character chr = it.getLeft();
                 Byte pos = chatSlot.get(chr.getId());
 
-                broadcastToVisitors(PacketCreator.getPlayerShopChat(chr, it.getRight(), pos));
+                broadcastToVisitors(ChannelPacketCreator.getInstance().getPlayerShopChat(chr, it.getRight(), pos));
             }
         }
     }
@@ -447,13 +421,13 @@ public class PlayerShop extends AbstractMapObject {
     public void closeShop() {
         clearChatLog();
         removeVisitors();
-        owner.getMap().broadcastMessage(PacketCreator.removePlayerShopBox(this));
+        owner.getMap().broadcastMessage(ChannelPacketCreator.getInstance().removePlayerShopBox(this));
     }
 
     public void sendShop(Client c) {
         visitorLock.lock();
         try {
-            c.sendPacket(PacketCreator.getPlayerShop(this, isOwner(c.getPlayer())));
+            c.sendPacket(ChannelPacketCreator.getInstance().getPlayerShop(this, isOwner(c.getPlayer())));
         } finally {
             visitorLock.unlock();
         }
@@ -520,7 +494,7 @@ public class PlayerShop extends AbstractMapObject {
         }
 
         if (target != null) {
-            target.sendPacket(PacketCreator.shopErrorMessage(5, 1));
+            target.sendPacket(ChannelPacketCreator.getInstance().shopErrorMessage(5, 1));
             removeVisitor(target);
         }
     }
@@ -580,12 +554,12 @@ public class PlayerShop extends AbstractMapObject {
 
     @Override
     public void sendDestroyData(Client client) {
-        client.sendPacket(PacketCreator.removePlayerShopBox(this));
+        client.sendPacket(ChannelPacketCreator.getInstance().removePlayerShopBox(this));
     }
 
     @Override
     public void sendSpawnData(Client client) {
-        client.sendPacket(PacketCreator.updatePlayerShopBox(this));
+        client.sendPacket(ChannelPacketCreator.getInstance().updatePlayerShopBox(this));
     }
 
     @Override

@@ -19,13 +19,13 @@
 */
 package dev.jaczerob.delfino.maplestory.client;
 
-import dev.jaczerob.delfino.maplestory.net.packet.Packet;
+import dev.jaczerob.delfino.network.packets.Packet;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
+import dev.jaczerob.delfino.maplestory.tools.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
-import dev.jaczerob.delfino.maplestory.tools.Pair;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -304,7 +304,7 @@ public class FamilyEntry {
         }
         Character chr = getChr();
         if (chr != null) {
-            chr.sendPacket(PacketCreator.sendGainRep(gain, from != null ? from.getName() : ""));
+            chr.sendPacket(ChannelPacketCreator.getInstance().sendGainRep(gain, from != null ? from.getName() : ""));
         }
     }
 
@@ -497,13 +497,13 @@ public class FamilyEntry {
         if (senior != null) {
             Character seniorChr = senior.getChr();
             if (seniorChr != null) {
-                seniorChr.sendPacket(PacketCreator.getFamilyInfo(senior));
+                seniorChr.sendPacket(ChannelPacketCreator.getInstance().getFamilyInfo(senior));
             }
             senior = senior.getSenior();
             if (includeSuperSenior && senior != null) {
                 seniorChr = senior.getChr();
                 if (seniorChr != null) {
-                    seniorChr.sendPacket(PacketCreator.getFamilyInfo(senior));
+                    seniorChr.sendPacket(ChannelPacketCreator.getInstance().getFamilyInfo(senior));
                 }
             }
         }

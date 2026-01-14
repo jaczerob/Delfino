@@ -26,7 +26,7 @@ package dev.jaczerob.delfino.maplestory.client.command.commands.gm4;
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.client.command.Command;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 public class TravelRateCommand extends Command {
     {
@@ -43,6 +43,6 @@ public class TravelRateCommand extends Command {
 
         int travelrate = Math.max(Integer.parseInt(params[0]), 1);
         c.getWorldServer().setTravelRate(travelrate);
-        c.getWorldServer().broadcastPacket(PacketCreator.serverNotice(6, "[Rate] Travel Rate has been changed to " + travelrate + "x."));
+        c.getWorldServer().broadcastPacket(ChannelPacketCreator.getInstance().serverNotice(6, "[Rate] Travel Rate has been changed to " + travelrate + "x."));
     }
 }

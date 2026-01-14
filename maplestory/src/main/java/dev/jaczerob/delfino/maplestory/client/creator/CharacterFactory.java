@@ -27,10 +27,10 @@ import dev.jaczerob.delfino.maplestory.client.inventory.InventoryType;
 import dev.jaczerob.delfino.maplestory.client.inventory.Item;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
+import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
 /**
  * @author RonanLana
@@ -96,10 +96,10 @@ public abstract class CharacterFactory {
         if (!newCharacter.insertNewChar(recipe)) {
             return -2;
         }
-        c.sendPacket(PacketCreator.addNewCharEntry(newCharacter));
+        c.sendPacket(ChannelPacketCreator.getInstance().addNewCharEntry(newCharacter));
 
         Server.getInstance().createCharacterEntry(newCharacter);
-        Server.getInstance().broadcastGMMessage(c.getWorld(), PacketCreator.sendYellowTip("[New Char]: " + c.getAccountName() + " has created a new character with IGN " + name));
+        Server.getInstance().broadcastGMMessage(c.getWorld(), ChannelPacketCreator.getInstance().sendYellowTip("[New Char]: " + c.getAccountName() + " has created a new character with IGN " + name));
         log.info("Account {} created chr with name {}", c.getAccountName(), name);
 
         return 0;
