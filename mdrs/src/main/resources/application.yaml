@@ -1,28 +1,3 @@
-delfino:
-  world:
-    id: 0
-    name: 'Delfino'
-    flag: 0
-    messages:
-      event: 'Welcome!'
-      server: 'Welcome!'
-      recommended: 'Welcome!'
-    rates:
-      exp: 1
-      meso: 1
-      drop: 1
-      boss-drop: 1
-      quest: 1
-      fishing: 1
-      travel: 1
-    channels:
-      - id: 0
-        capacity: 1000
-      - id: 1
-        capacity: 1000
-      - id: 2
-        capacity: 1000
-
 server:
   port: ${SERVER_PORT:9990}
 

@@ -26,61 +26,72 @@ public class ByteBufOutPacket implements OutPacket {
     }
 
     @Override
-    public void writeByte(byte value) {
+    public OutPacket writeByte(byte value) {
         byteBuf.writeByte(value);
+        return this;
     }
 
     @Override
-    public void writeByte(int value) {
+    public OutPacket writeByte(int value) {
         writeByte((byte) value);
+        return this;
     }
 
     @Override
-    public void writeBytes(byte[] value) {
+    public OutPacket writeBytes(byte[] value) {
         byteBuf.writeBytes(value);
+        return this;
     }
 
     @Override
-    public void writeShort(int value) {
+    public OutPacket writeShort(int value) {
         byteBuf.writeShortLE(value);
+        return this;
     }
 
     @Override
-    public void writeInt(int value) {
+    public OutPacket writeInt(int value) {
         byteBuf.writeIntLE(value);
+        return this;
     }
 
     @Override
-    public void writeLong(long value) {
+    public OutPacket writeLong(long value) {
         byteBuf.writeLongLE(value);
+        return this;
     }
 
     @Override
-    public void writeBool(boolean value) {
+    public OutPacket writeBool(boolean value) {
         byteBuf.writeByte(value ? 1 : 0);
+        return this;
     }
 
     @Override
-    public void writeString(String value) {
+    public OutPacket writeString(String value) {
         byte[] bytes = value.getBytes();
         writeShort(bytes.length);
         writeBytes(bytes);
+        return this;
     }
 
     @Override
-    public void writeFixedString(String value) {
+    public OutPacket writeFixedString(String value) {
         writeBytes(value.getBytes());
+        return this;
     }
 
     @Override
-    public void writePos(Point value) {
+    public OutPacket writePos(Point value) {
         writeShort((short) value.getX());
         writeShort((short) value.getY());
+        return this;
     }
 
     @Override
-    public void skip(int numberOfBytes) {
+    public OutPacket skip(int numberOfBytes) {
         writeBytes(new byte[numberOfBytes]);
+        return this;
     }
 
     @Override

@@ -20,9 +20,9 @@
  */
 package dev.jaczerob.delfino.login.tools;
 
+import dev.jaczerob.delfino.common.config.DelfinoConfigurationProperties;
 import dev.jaczerob.delfino.grpc.proto.character.Character;
 import dev.jaczerob.delfino.login.client.LoginClient;
-import dev.jaczerob.delfino.login.config.DelfinoConfigurationProperties;
 import dev.jaczerob.delfino.network.opcodes.SendOpcode;
 import dev.jaczerob.delfino.network.packets.ByteBufOutPacket;
 import dev.jaczerob.delfino.network.packets.OutPacket;
@@ -41,11 +41,13 @@ public class LoginPacketCreator extends PacketCreator {
     private final static long ZERO_TIME = 94354848000000000L;//00 40 E0 FD 3B 37 4F 01
     private final static long PERMANENT = 150841440000000000L; // 00 C0 9B 90 7D E5 17 02
 
+    private final DelfinoConfigurationProperties delfinoConfigurationProperties;
 
     protected LoginPacketCreator(
             final DelfinoConfigurationProperties delfinoConfigurationProperties
     ) {
         super(delfinoConfigurationProperties.getServer().getVersion());
+        this.delfinoConfigurationProperties = delfinoConfigurationProperties;
     }
 
     public long getTime(long utcTimestamp) {
@@ -233,24 +235,24 @@ public class LoginPacketCreator extends PacketCreator {
         return p;
     }
 
-    public Packet getServerList(int serverId, String serverName, int flag, String eventmsg, List<dev.jaczerob.delfino.grpc.proto.Channel> channelLoad) {
+    public Packet getServerList() {
         final OutPacket p = OutPacket.create(SendOpcode.SERVERLIST);
-        p.writeByte(serverId);
-        p.writeString(serverName);
-        p.writeByte(flag);
-        p.writeString(eventmsg);
+        p.writeByte(this.delfinoConfigurationProperties.getWorld().getId());
+        p.writeString(this.delfinoConfigurationProperties.getWorld().getName());
+        p.writeByte(this.delfinoConfigurationProperties.getWorld().getFlag());
+        p.writeString(this.delfinoConfigurationProperties.getWorld().getEventMessage());
         p.writeByte(100); // rate modifier, don't ask O.O!
         p.writeByte(0); // event xp * 2.6 O.O!
         p.writeByte(100); // rate modifier, don't ask O.O!
         p.writeByte(0); // drop rate * 2.6
         p.writeByte(0);
-        p.writeByte(channelLoad.size());
-        for (final var ch : channelLoad) {
-            p.writeString(serverName + "-" + ch.getId());
+        p.writeByte(this.delfinoConfigurationProperties.getWorld().getChannels().size());
+        for (final var ch : this.delfinoConfigurationProperties.getWorld().getChannels()) {
+            p.writeString(this.delfinoConfigurationProperties.getWorld().getName() + "-" + ch.getId());
             p.writeInt(ch.getCapacity());
 
             // thanks GabrielSin for this channel packet structure part
-            p.writeByte(1);// nWorldID
+            p.writeByte(this.delfinoConfigurationProperties.getWorld().getId());// nWorldID
             p.writeByte(ch.getId() - 1);// nChannelID
             p.writeBool(false);// bAdultChannel
         }
@@ -259,15 +261,13 @@ public class LoginPacketCreator extends PacketCreator {
     }
 
     public Packet getEndOfServerList() {
-        OutPacket p = OutPacket.create(SendOpcode.SERVERLIST);
-        p.writeByte(0xFF);
-        return p;
+        return OutPacket.create(SendOpcode.SERVERLIST)
+                .writeByte(0xFF);
     }
 
     public Packet getServerStatus(int status) {
-        OutPacket p = OutPacket.create(SendOpcode.SERVERSTATUS);
-        p.writeShort(status);
-        return p;
+        return OutPacket.create(SendOpcode.SERVERSTATUS)
+                .writeShort(status);
     }
 
     public Packet getServerIP(InetAddress inetAddr, int port, int clientId) {

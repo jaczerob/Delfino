@@ -43,15 +43,7 @@ import dev.jaczerob.delfino.maplestory.net.server.coordinator.session.SessionCoo
 import dev.jaczerob.delfino.maplestory.net.server.guild.Alliance;
 import dev.jaczerob.delfino.maplestory.net.server.guild.Guild;
 import dev.jaczerob.delfino.maplestory.net.server.guild.GuildCharacter;
-import dev.jaczerob.delfino.maplestory.net.server.task.BossLogTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.CharacterDiseaseTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.CouponTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.DueyFredrickTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.EventRecallCoordinatorTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.InvitationTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.RankingCommandTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.RankingLoginTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.RespawnTask;
+import dev.jaczerob.delfino.maplestory.net.server.task.*;
 import dev.jaczerob.delfino.maplestory.net.server.world.World;
 import dev.jaczerob.delfino.maplestory.server.CashShop.CashItemFactory;
 import dev.jaczerob.delfino.maplestory.server.SkillbookInformationProvider;
@@ -75,16 +67,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -94,10 +77,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static java.util.concurrent.TimeUnit.DAYS;
-import static java.util.concurrent.TimeUnit.HOURS;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.*;
 
 @Component
 public class Server {
@@ -501,20 +481,25 @@ public class Server {
         int flag = YamlConfig.config.worlds.get(i).flag;
         String event_message = YamlConfig.config.worlds.get(i).event_message;
 
-        World world = new World(i,
+        final var world = new World(
+                i,
                 flag,
                 event_message,
-                exprate, droprate, bossdroprate, mesorate, questrate, travelrate, fishingrate);
+                exprate,
+                droprate,
+                bossdroprate,
+                mesorate,
+                questrate,
+                travelrate,
+                fishingrate
+        );
 
         Map<Integer, String> channelInfo = new HashMap<>();
         long bootTime = getCurrentTime();
-        for (int j = 1; j <= YamlConfig.config.worlds.get(i).channels; j++) {
-            int channelid = j;
-            Channel channel = new Channel(i, channelid, bootTime);
+        Channel channel = new Channel(i, 1, bootTime);
 
-            world.addChannel(channel);
-            channelInfo.put(channelid, channel.getIP());
-        }
+        world.addChannel(channel);
+        channelInfo.put(1, channel.getIP());
 
         boolean canDeploy;
 
@@ -811,9 +796,7 @@ public class Server {
         initializeTimelyTasks(channelDependencies);    // aggregated method for timely tasks thanks to lxconan
 
         try {
-            for (int i = 0; i < worldCount; i++) {
-                initWorld();
-            }
+            initWorld();
             initWorldPlayerRanking();
 
             loadPlayerNpcMapStepFromDb();

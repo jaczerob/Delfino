@@ -37,6 +37,7 @@
         <jdbi-version>3.49.5</jdbi-version>
         <netty.version>4.2.2.Final</netty.version>
         <protobuf-java.version>4.33.1</protobuf-java.version>
+        <rhino.version>1.9.0</rhino.version>
         <spring-grpc.version>1.0.0</spring-grpc.version>
         <yamlbeans.version>1.17</yamlbeans.version>
 
@@ -88,6 +89,11 @@
                 <groupId>net.jcip</groupId>
                 <artifactId>jcip-annotations</artifactId>
                 <version>${jcip-annotations.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mozilla</groupId>
+                <artifactId>rhino</artifactId>
+                <version>${rhino.version}</version>
             </dependency>
 
             <dependency>

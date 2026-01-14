@@ -5,27 +5,27 @@ import dev.jaczerob.delfino.network.opcodes.SendOpcode;
 import java.awt.*;
 
 public interface OutPacket extends Packet {
-    void writeByte(byte value);
+    OutPacket writeByte(byte value);
 
-    void writeByte(int value);
+    OutPacket writeByte(int value);
 
-    void writeBytes(byte[] value);
+    OutPacket writeBytes(byte[] value);
 
-    void writeShort(int value);
+    OutPacket writeShort(int value);
 
-    void writeInt(int value);
+    OutPacket writeInt(int value);
 
-    void writeLong(long value);
+    OutPacket writeLong(long value);
 
-    void writeBool(boolean value);
+    OutPacket writeBool(boolean value);
 
-    void writeString(String value);
+    OutPacket writeString(String value);
 
-    void writeFixedString(String value);
+    OutPacket writeFixedString(String value);
 
-    void writePos(Point value);
+    OutPacket writePos(Point value);
 
-    void skip(int numberOfBytes);
+    OutPacket skip(int numberOfBytes);
 
     static OutPacket create(SendOpcode opcode) {
         return new ByteBufOutPacket(opcode);
