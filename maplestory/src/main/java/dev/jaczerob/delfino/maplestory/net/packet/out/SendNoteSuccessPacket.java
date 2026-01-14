@@ -1,7 +1,7 @@
-package dev.jaczerob.delfino.maplestory.net.packet.out;
+package dev.jaczerob.delfino.network.packets.out;
 
 import dev.jaczerob.delfino.maplestory.net.opcodes.SendOpcode;
-import dev.jaczerob.delfino.maplestory.net.packet.ByteBufOutPacket;
+import dev.jaczerob.delfino.network.packets.ByteBufOutPacket;
 
 public final class SendNoteSuccessPacket extends ByteBufOutPacket {
 

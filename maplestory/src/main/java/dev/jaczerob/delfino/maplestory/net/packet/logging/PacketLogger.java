@@ -1,6 +1,6 @@
-package dev.jaczerob.delfino.maplestory.net.packet.logging;
+package dev.jaczerob.delfino.network.packets.logging;
 
-import dev.jaczerob.delfino.maplestory.net.packet.Packet;
+import dev.jaczerob.delfino.network.packets.Packet;
 
 public interface PacketLogger {
     void log(Packet packet);

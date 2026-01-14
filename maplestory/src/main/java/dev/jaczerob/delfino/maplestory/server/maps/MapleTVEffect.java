@@ -24,7 +24,7 @@ package dev.jaczerob.delfino.maplestory.server.maps;
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.server.TimerManager;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 import java.util.List;
 
@@ -51,8 +51,8 @@ public class MapleTVEffect {
         Server server = Server.getInstance();
         ACTIVE[userWorld] = activity;
         if (activity) {
-            server.broadcastMessage(userWorld, PacketCreator.enableTV());
-            server.broadcastMessage(userWorld, PacketCreator.sendTV(user, message, type <= 2 ? type : type - 3, partner));
+            server.broadcastMessage(userWorld, ChannelPacketCreator.getInstance().enableTV());
+            server.broadcastMessage(userWorld, ChannelPacketCreator.getInstance().sendTV(user, message, type <= 2 ? type : type - 3, partner));
             int delay = 15000;
             if (type == 4) {
                 delay = 30000;
@@ -61,7 +61,7 @@ public class MapleTVEffect {
             }
             TimerManager.getInstance().schedule(() -> broadcastTV(false, userWorld, null, null, -1, null), delay);
         } else {
-            server.broadcastMessage(userWorld, PacketCreator.removeTV());
+            server.broadcastMessage(userWorld, ChannelPacketCreator.getInstance().removeTV());
         }
     }
 }

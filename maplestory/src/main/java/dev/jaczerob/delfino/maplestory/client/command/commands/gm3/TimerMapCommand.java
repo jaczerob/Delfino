@@ -26,7 +26,7 @@ package dev.jaczerob.delfino.maplestory.client.command.commands.gm3;
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.client.command.Command;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 public class TimerMapCommand extends Command {
     {
@@ -43,13 +43,13 @@ public class TimerMapCommand extends Command {
 
         if (params[0].equalsIgnoreCase("remove")) {
             for (Character victim : player.getMap().getCharacters()) {
-                victim.sendPacket(PacketCreator.removeClock());
+                victim.sendPacket(ChannelPacketCreator.getInstance().removeClock());
             }
         } else {
             try {
                 int seconds = Integer.parseInt(params[0]);
                 for (Character victim : player.getMap().getCharacters()) {
-                    victim.sendPacket(PacketCreator.getClock(seconds));
+                    victim.sendPacket(ChannelPacketCreator.getInstance().getClock(seconds));
                 }
             } catch (NumberFormatException e) {
                 player.yellowMessage("Syntax: !timermap <seconds>|remove");

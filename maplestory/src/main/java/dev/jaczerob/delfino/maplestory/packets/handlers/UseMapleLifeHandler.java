@@ -1,0 +1,62 @@
+/*
+    This file is part of the HeavenMS MapleStory Server
+    Copyleft (L) 2016 - 2019 RonanLana
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as
+    published by the Free Software Foundation version 3 as published by
+    the Free Software Foundation. You may not use, modify or distribute
+    this program under any other version of the GNU Affero General Public
+    License.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+package dev.jaczerob.delfino.maplestory.packets.handlers;
+
+import dev.jaczerob.delfino.maplestory.client.Character;
+import dev.jaczerob.delfino.maplestory.client.Client;
+import dev.jaczerob.delfino.maplestory.packets.AbstractPacketHandler;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
+import dev.jaczerob.delfino.network.opcodes.RecvOpcode;
+import dev.jaczerob.delfino.network.packets.InPacket;
+import io.netty.channel.ChannelHandlerContext;
+import org.springframework.stereotype.Component;
+
+/**
+ * @author RonanLana
+ */
+@Component
+public class UseMapleLifeHandler extends AbstractPacketHandler {
+    @Override
+    public RecvOpcode getOpcode() {
+        return RecvOpcode.USE_MAPLELIFE;
+    }
+
+    @Override
+    public void handlePacket(final InPacket packet, final Client client, final ChannelHandlerContext context) {
+        Character player = client.getPlayer();
+        long timeNow = currentServerTime();
+
+        if (timeNow - player.getLastUsedCashItem() < 3000) {
+            player.dropMessage(5, "Please wait a moment before trying again.");
+            client.sendPacket(ChannelPacketCreator.getInstance().sendMapleLifeError(3));
+            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            return;
+        }
+        player.setLastUsedCashItem(timeNow);
+
+        String name = packet.readString();
+        if (Character.canCreateChar(name)) {
+            client.sendPacket(ChannelPacketCreator.getInstance().sendMapleLifeCharacterInfo());
+        } else {
+            client.sendPacket(ChannelPacketCreator.getInstance().sendMapleLifeNameError());
+        }
+        client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+    }
+}

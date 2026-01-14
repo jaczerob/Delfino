@@ -22,8 +22,8 @@ package dev.jaczerob.delfino.maplestory.client.newyear;
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.server.TimerManager;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -262,7 +262,7 @@ public class NewYearCardRecord {
 
             Character target = server.getWorld(world).getPlayerStorage().getCharacterById(receiverId);
             if (target != null && target.isLoggedinWorld()) {
-                target.sendPacket(PacketCreator.onNewYearCardRes(target, NewYearCardRecord.this, 0xC, 0));
+                target.sendPacket(ChannelPacketCreator.getInstance().onNewYearCardRes(target, NewYearCardRecord.this, 0xC, 0));
             }
         }, HOURS.toMillis(1));
     }
@@ -313,12 +313,12 @@ public class NewYearCardRecord {
                     chr.removeNewYearRecord(nyc);
                     deleteNewYearCard(nyc.id);
 
-                    chr.getMap().broadcastMessage(PacketCreator.onNewYearCardRes(chr, nyc, 0xE, 0));
+                    chr.getMap().broadcastMessage(ChannelPacketCreator.getInstance().onNewYearCardRes(chr, nyc, 0xE, 0));
 
                     Character other = chr.getClient().getWorldServer().getPlayerStorage().getCharacterById(nyc.getReceiverId());
                     if (other != null && other.isLoggedinWorld()) {
                         other.removeNewYearRecord(nyc);
-                        other.getMap().broadcastMessage(PacketCreator.onNewYearCardRes(other, nyc, 0xE, 0));
+                        other.getMap().broadcastMessage(ChannelPacketCreator.getInstance().onNewYearCardRes(other, nyc, 0xE, 0));
 
                         other.dropMessage(6, "[New Year] " + chr.getName() + " threw away the New Year card.");
                     }
@@ -331,12 +331,12 @@ public class NewYearCardRecord {
                     chr.removeNewYearRecord(nyc);
                     deleteNewYearCard(nyc.id);
 
-                    chr.getMap().broadcastMessage(PacketCreator.onNewYearCardRes(chr, nyc, 0xE, 0));
+                    chr.getMap().broadcastMessage(ChannelPacketCreator.getInstance().onNewYearCardRes(chr, nyc, 0xE, 0));
 
                     Character other = chr.getClient().getWorldServer().getPlayerStorage().getCharacterById(nyc.getSenderId());
                     if (other != null && other.isLoggedinWorld()) {
                         other.removeNewYearRecord(nyc);
-                        other.getMap().broadcastMessage(PacketCreator.onNewYearCardRes(other, nyc, 0xE, 0));
+                        other.getMap().broadcastMessage(ChannelPacketCreator.getInstance().onNewYearCardRes(other, nyc, 0xE, 0));
 
                         other.dropMessage(6, "[New Year] " + chr.getName() + " threw away the New Year card.");
                     }

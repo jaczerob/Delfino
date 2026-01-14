@@ -1,4 +1,4 @@
-package dev.jaczerob.delfino.maplestory.net.packet;
+package dev.jaczerob.delfino.network.packets;
 
 public interface Packet {
     byte[] getBytes();

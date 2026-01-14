@@ -24,21 +24,16 @@ package dev.jaczerob.delfino.maplestory.client.inventory.manipulator;
 import dev.jaczerob.delfino.maplestory.client.BuffStat;
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Client;
-import dev.jaczerob.delfino.maplestory.client.inventory.Equip;
-import dev.jaczerob.delfino.maplestory.client.inventory.Inventory;
-import dev.jaczerob.delfino.maplestory.client.inventory.InventoryType;
-import dev.jaczerob.delfino.maplestory.client.inventory.Item;
-import dev.jaczerob.delfino.maplestory.client.inventory.ModifyInventory;
-import dev.jaczerob.delfino.maplestory.client.inventory.Pet;
+import dev.jaczerob.delfino.maplestory.client.inventory.*;
 import dev.jaczerob.delfino.maplestory.client.newyear.NewYearCardRecord;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
 import dev.jaczerob.delfino.maplestory.constants.id.ItemId;
 import dev.jaczerob.delfino.maplestory.constants.inventory.ItemConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
 import dev.jaczerob.delfino.maplestory.server.maps.MapleMap;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -99,7 +94,7 @@ public class InventoryManipulator {
                                 quantity -= (newQ - oldQ);
                                 eItem.setQuantity(newQ);
                                 eItem.setExpiration(expiration);
-                                c.sendPacket(PacketCreator.modifyInventory(true, Collections.singletonList(new ModifyInventory(1, eItem))));
+                                c.sendPacket(ChannelPacketCreator.getInstance().modifyInventory(true, Collections.singletonList(new ModifyInventory(1, eItem))));
                             }
                         } else {
                             break;
@@ -116,19 +111,19 @@ public class InventoryManipulator {
                         nItem.setExpiration(expiration);
                         short newSlot = inv.addItem(nItem);
                         if (newSlot == -1) {
-                            c.sendPacket(PacketCreator.getInventoryFull());
-                            c.sendPacket(PacketCreator.getShowInventoryFull());
+                            c.sendPacket(ChannelPacketCreator.getInstance().getInventoryFull());
+                            c.sendPacket(ChannelPacketCreator.getInstance().getShowInventoryFull());
                             return false;
                         }
                         if (owner != null) {
                             nItem.setOwner(owner);
                         }
-                        c.sendPacket(PacketCreator.modifyInventory(true, Collections.singletonList(new ModifyInventory(0, nItem))));
+                        c.sendPacket(ChannelPacketCreator.getInstance().modifyInventory(true, Collections.singletonList(new ModifyInventory(0, nItem))));
                         if (sandboxItem) {
                             chr.setHasSandboxItem();
                         }
                     } else {
-                        c.sendPacket(PacketCreator.enableActions());
+                        c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                         return false;
                     }
                 }
@@ -138,11 +133,11 @@ public class InventoryManipulator {
                 nItem.setExpiration(expiration);
                 short newSlot = inv.addItem(nItem);
                 if (newSlot == -1) {
-                    c.sendPacket(PacketCreator.getInventoryFull());
-                    c.sendPacket(PacketCreator.getShowInventoryFull());
+                    c.sendPacket(ChannelPacketCreator.getInstance().getInventoryFull());
+                    c.sendPacket(ChannelPacketCreator.getInstance().getShowInventoryFull());
                     return false;
                 }
-                c.sendPacket(PacketCreator.modifyInventory(true, Collections.singletonList(new ModifyInventory(0, nItem))));
+                c.sendPacket(ChannelPacketCreator.getInstance().modifyInventory(true, Collections.singletonList(new ModifyInventory(0, nItem))));
                 if (InventoryManipulator.isSandboxItem(nItem)) {
                     chr.setHasSandboxItem();
                 }
@@ -156,11 +151,11 @@ public class InventoryManipulator {
             }
             short newSlot = inv.addItem(nEquip);
             if (newSlot == -1) {
-                c.sendPacket(PacketCreator.getInventoryFull());
-                c.sendPacket(PacketCreator.getShowInventoryFull());
+                c.sendPacket(ChannelPacketCreator.getInstance().getInventoryFull());
+                c.sendPacket(ChannelPacketCreator.getInstance().getShowInventoryFull());
                 return false;
             }
-            c.sendPacket(PacketCreator.modifyInventory(true, Collections.singletonList(new ModifyInventory(0, nEquip))));
+            c.sendPacket(ChannelPacketCreator.getInstance().modifyInventory(true, Collections.singletonList(new ModifyInventory(0, nEquip))));
             if (InventoryManipulator.isSandboxItem(nEquip)) {
                 chr.setHasSandboxItem();
             }
@@ -195,8 +190,8 @@ public class InventoryManipulator {
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
         int itemid = item.getItemId();
         if (ii.isPickupRestricted(itemid) && chr.haveItemWithId(itemid, true)) {
-            c.sendPacket(PacketCreator.getInventoryFull());
-            c.sendPacket(PacketCreator.showItemUnavailable());
+            c.sendPacket(ChannelPacketCreator.getInstance().getInventoryFull());
+            c.sendPacket(ChannelPacketCreator.getInstance().showItemUnavailable());
             return false;
         }
         short quantity = item.getQuantity();
@@ -216,7 +211,7 @@ public class InventoryManipulator {
                                 quantity -= (newQ - oldQ);
                                 eItem.setQuantity(newQ);
                                 item.setPosition(eItem.getPosition());
-                                c.sendPacket(PacketCreator.modifyInventory(true, Collections.singletonList(new ModifyInventory(1, eItem))));
+                                c.sendPacket(ChannelPacketCreator.getInstance().modifyInventory(true, Collections.singletonList(new ModifyInventory(1, eItem))));
                             }
                         } else {
                             break;
@@ -232,14 +227,14 @@ public class InventoryManipulator {
                     nItem.setFlag(item.getFlag());
                     short newSlot = inv.addItem(nItem);
                     if (newSlot == -1) {
-                        c.sendPacket(PacketCreator.getInventoryFull());
-                        c.sendPacket(PacketCreator.getShowInventoryFull());
+                        c.sendPacket(ChannelPacketCreator.getInstance().getInventoryFull());
+                        c.sendPacket(ChannelPacketCreator.getInstance().getShowInventoryFull());
                         item.setQuantity((short) (quantity + newQ));
                         return false;
                     }
                     nItem.setPosition(newSlot);
                     item.setPosition(newSlot);
-                    c.sendPacket(PacketCreator.modifyInventory(true, Collections.singletonList(new ModifyInventory(0, nItem))));
+                    c.sendPacket(ChannelPacketCreator.getInstance().modifyInventory(true, Collections.singletonList(new ModifyInventory(0, nItem))));
                     if (InventoryManipulator.isSandboxItem(nItem)) {
                         chr.setHasSandboxItem();
                     }
@@ -251,38 +246,38 @@ public class InventoryManipulator {
 
                 short newSlot = inv.addItem(nItem);
                 if (newSlot == -1) {
-                    c.sendPacket(PacketCreator.getInventoryFull());
-                    c.sendPacket(PacketCreator.getShowInventoryFull());
+                    c.sendPacket(ChannelPacketCreator.getInstance().getInventoryFull());
+                    c.sendPacket(ChannelPacketCreator.getInstance().getShowInventoryFull());
                     return false;
                 }
                 nItem.setPosition(newSlot);
                 item.setPosition(newSlot);
-                c.sendPacket(PacketCreator.modifyInventory(true, Collections.singletonList(new ModifyInventory(0, nItem))));
+                c.sendPacket(ChannelPacketCreator.getInstance().modifyInventory(true, Collections.singletonList(new ModifyInventory(0, nItem))));
                 if (InventoryManipulator.isSandboxItem(nItem)) {
                     chr.setHasSandboxItem();
                 }
-                c.sendPacket(PacketCreator.enableActions());
+                c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
             }
         } else if (quantity == 1) {
             short newSlot = inv.addItem(item);
             if (newSlot == -1) {
-                c.sendPacket(PacketCreator.getInventoryFull());
-                c.sendPacket(PacketCreator.getShowInventoryFull());
+                c.sendPacket(ChannelPacketCreator.getInstance().getInventoryFull());
+                c.sendPacket(ChannelPacketCreator.getInstance().getShowInventoryFull());
                 return false;
             }
             item.setPosition(newSlot);
-            c.sendPacket(PacketCreator.modifyInventory(true, Collections.singletonList(new ModifyInventory(0, item))));
+            c.sendPacket(ChannelPacketCreator.getInstance().modifyInventory(true, Collections.singletonList(new ModifyInventory(0, item))));
             if (InventoryManipulator.isSandboxItem(item)) {
                 chr.setHasSandboxItem();
             }
         } else {
             log.warn("Tried to pickup Equip id {} containing more than 1 quantity --> {}", itemid, quantity);
-            c.sendPacket(PacketCreator.getInventoryFull());
-            c.sendPacket(PacketCreator.showItemUnavailable());
+            c.sendPacket(ChannelPacketCreator.getInstance().getInventoryFull());
+            c.sendPacket(ChannelPacketCreator.getInstance().showItemUnavailable());
             return false;
         }
         if (show) {
-            c.sendPacket(PacketCreator.getShowItemGain(itemid, item.getQuantity()));
+            c.sendPacket(ChannelPacketCreator.getInstance().getShowItemGain(itemid, item.getQuantity()));
         }
         return true;
     }
@@ -448,9 +443,9 @@ public class InventoryManipulator {
 
     private static void announceModifyInventory(Client c, Item item, boolean fromDrop, boolean allowZero) {
         if (item.getQuantity() == 0 && !allowZero) {
-            c.sendPacket(PacketCreator.modifyInventory(fromDrop, Collections.singletonList(new ModifyInventory(3, item))));
+            c.sendPacket(ChannelPacketCreator.getInstance().modifyInventory(fromDrop, Collections.singletonList(new ModifyInventory(3, item))));
         } else {
-            c.sendPacket(PacketCreator.modifyInventory(fromDrop, Collections.singletonList(new ModifyInventory(1, item))));
+            c.sendPacket(ChannelPacketCreator.getInstance().modifyInventory(fromDrop, Collections.singletonList(new ModifyInventory(1, item))));
         }
     }
 
@@ -517,7 +512,7 @@ public class InventoryManipulator {
         } else {
             mods.add(new ModifyInventory(2, source, src));
         }
-        c.sendPacket(PacketCreator.modifyInventory(true, mods));
+        c.sendPacket(ChannelPacketCreator.getInstance().modifyInventory(true, mods));
     }
 
     public static void equip(Client c, short src, short dst) {
@@ -529,7 +524,7 @@ public class InventoryManipulator {
 
         Equip source = (Equip) eqpInv.getItem(src);
         if (source == null || !ii.canWearEquipment(chr, source, dst)) {
-            c.sendPacket(PacketCreator.enableActions());
+            c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
             return;
         } else if ((ItemId.isExplorerMount(source.getItemId()) && chr.isCygnus()) ||
                 ((ItemId.isCygnusMount(source.getItemId())) && !chr.isCygnus())) {// Adventurer taming equipment
@@ -544,55 +539,55 @@ public class InventoryManipulator {
             itemChanged = true;
         }
         switch (dst) {
-        case -6: // unequip the overall
-            Item top = eqpdInv.getItem((short) -5);
-            if (top != null && ItemConstants.isOverall(top.getItemId())) {
-                if (eqpInv.isFull()) {
-                    c.sendPacket(PacketCreator.getInventoryFull());
-                    c.sendPacket(PacketCreator.getShowInventoryFull());
-                    return;
+            case -6: // unequip the overall
+                Item top = eqpdInv.getItem((short) -5);
+                if (top != null && ItemConstants.isOverall(top.getItemId())) {
+                    if (eqpInv.isFull()) {
+                        c.sendPacket(ChannelPacketCreator.getInstance().getInventoryFull());
+                        c.sendPacket(ChannelPacketCreator.getInstance().getShowInventoryFull());
+                        return;
+                    }
+                    unequip(c, (byte) -5, eqpInv.getNextFreeSlot());
                 }
-                unequip(c, (byte) -5, eqpInv.getNextFreeSlot());
-            }
-            break;
-        case -5:
-            final Item bottom = eqpdInv.getItem((short) -6);
-            if (bottom != null && ItemConstants.isOverall(source.getItemId())) {
-                if (eqpInv.isFull()) {
-                    c.sendPacket(PacketCreator.getInventoryFull());
-                    c.sendPacket(PacketCreator.getShowInventoryFull());
-                    return;
+                break;
+            case -5:
+                final Item bottom = eqpdInv.getItem((short) -6);
+                if (bottom != null && ItemConstants.isOverall(source.getItemId())) {
+                    if (eqpInv.isFull()) {
+                        c.sendPacket(ChannelPacketCreator.getInstance().getInventoryFull());
+                        c.sendPacket(ChannelPacketCreator.getInstance().getShowInventoryFull());
+                        return;
+                    }
+                    unequip(c, (byte) -6, eqpInv.getNextFreeSlot());
                 }
-                unequip(c, (byte) -6, eqpInv.getNextFreeSlot());
-            }
-            break;
-        case -10: // check if weapon is two-handed
-            Item weapon = eqpdInv.getItem((short) -11);
-            if (weapon != null && ii.isTwoHanded(weapon.getItemId())) {
-                if (eqpInv.isFull()) {
-                    c.sendPacket(PacketCreator.getInventoryFull());
-                    c.sendPacket(PacketCreator.getShowInventoryFull());
-                    return;
+                break;
+            case -10: // check if weapon is two-handed
+                Item weapon = eqpdInv.getItem((short) -11);
+                if (weapon != null && ii.isTwoHanded(weapon.getItemId())) {
+                    if (eqpInv.isFull()) {
+                        c.sendPacket(ChannelPacketCreator.getInstance().getInventoryFull());
+                        c.sendPacket(ChannelPacketCreator.getInstance().getShowInventoryFull());
+                        return;
+                    }
+                    unequip(c, (byte) -11, eqpInv.getNextFreeSlot());
                 }
-                unequip(c, (byte) -11, eqpInv.getNextFreeSlot());
-            }
-            break;
-        case -11:
-            Item shield = eqpdInv.getItem((short) -10);
-            if (shield != null && ii.isTwoHanded(source.getItemId())) {
-                if (eqpInv.isFull()) {
-                    c.sendPacket(PacketCreator.getInventoryFull());
-                    c.sendPacket(PacketCreator.getShowInventoryFull());
-                    return;
+                break;
+            case -11:
+                Item shield = eqpdInv.getItem((short) -10);
+                if (shield != null && ii.isTwoHanded(source.getItemId())) {
+                    if (eqpInv.isFull()) {
+                        c.sendPacket(ChannelPacketCreator.getInstance().getInventoryFull());
+                        c.sendPacket(ChannelPacketCreator.getInstance().getShowInventoryFull());
+                        return;
+                    }
+                    unequip(c, (byte) -10, eqpInv.getNextFreeSlot());
                 }
-                unequip(c, (byte) -10, eqpInv.getNextFreeSlot());
-            }
-            break;
-        case -18:
-            if (chr.getMount() != null) {
-                chr.getMount().setItemId(source.getItemId());
-            }
-            break;
+                break;
+            case -18:
+                if (chr.getMount() != null) {
+                    chr.getMount().setItemId(source.getItemId());
+                }
+                break;
         }
 
         //1112413, 1112414, 1112405 (Lilin's Ring)
@@ -639,7 +634,7 @@ public class InventoryManipulator {
         }
 
         mods.add(new ModifyInventory(2, source, src));
-        c.sendPacket(PacketCreator.modifyInventory(true, mods));
+        c.sendPacket(ChannelPacketCreator.getInstance().modifyInventory(true, mods));
         chr.equipChanged();
     }
 
@@ -657,7 +652,7 @@ public class InventoryManipulator {
             return;
         }
         if (target != null && src <= 0) {
-            c.sendPacket(PacketCreator.getInventoryFull());
+            c.sendPacket(ChannelPacketCreator.getInstance().getInventoryFull());
             return;
         }
 
@@ -681,7 +676,7 @@ public class InventoryManipulator {
             target.setPosition(src);
             eqpdInv.addItemFromDB(target);
         }
-        c.sendPacket(PacketCreator.modifyInventory(true, Collections.singletonList(new ModifyInventory(2, source, src))));
+        c.sendPacket(ChannelPacketCreator.getInstance().modifyInventory(true, Collections.singletonList(new ModifyInventory(2, source, src))));
         chr.equipChanged();
     }
 
@@ -741,7 +736,7 @@ public class InventoryManipulator {
             Item target = source.copy();
             target.setQuantity(quantity);
             source.setQuantity((short) (source.getQuantity() - quantity));
-            c.sendPacket(PacketCreator.modifyInventory(true, Collections.singletonList(new ModifyInventory(1, source))));
+            c.sendPacket(ChannelPacketCreator.getInstance().modifyInventory(true, Collections.singletonList(new ModifyInventory(1, source))));
 
             if (ItemConstants.isNewYearCardEtc(itemId)) {
                 if (itemId == ItemId.NEW_YEARS_CARD_SEND) {
@@ -771,7 +766,7 @@ public class InventoryManipulator {
                 inv.removeSlot(src);
             }
 
-            c.sendPacket(PacketCreator.modifyInventory(true, Collections.singletonList(new ModifyInventory(3, source))));
+            c.sendPacket(ChannelPacketCreator.getInstance().modifyInventory(true, Collections.singletonList(new ModifyInventory(3, source))));
             if (src < 0) {
                 chr.equipChanged();
             } else if (ItemConstants.isNewYearCardEtc(itemId)) {
@@ -795,7 +790,7 @@ public class InventoryManipulator {
         if (itemId == chr.getItemEffect()) {
             if (quantityNow <= 0) {
                 chr.setItemEffect(0);
-                map.broadcastMessage(PacketCreator.itemEffect(chr.getId(), 0));
+                map.broadcastMessage(ChannelPacketCreator.getInstance().itemEffect(chr.getId(), 0));
             }
         } else if (itemId == ItemId.CHALKBOARD_1 || itemId == ItemId.CHALKBOARD_2) {
             if (source.getQuantity() <= 0) {

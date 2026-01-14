@@ -28,7 +28,7 @@ import dev.jaczerob.delfino.maplestory.constants.id.MapId;
 import dev.jaczerob.delfino.maplestory.net.server.world.Party;
 import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
 import dev.jaczerob.delfino.maplestory.server.TimerManager;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 import java.util.concurrent.ScheduledFuture;
 
@@ -167,8 +167,8 @@ public class Pyramid extends PartyQuest {
 
     public void broadcastInfo(String info, int amount) {
         for (Character chr : getParticipants()) {
-            chr.sendPacket(PacketCreator.getEnergy("massacre_" + info, amount));
-            chr.sendPacket(PacketCreator.pyramidGauge(count));
+            chr.sendPacket(ChannelPacketCreator.getInstance().getEnergy("massacre_" + info, amount));
+            chr.sendPacket(ChannelPacketCreator.getInstance().pyramidGauge(count));
         }
     }
 
@@ -196,7 +196,7 @@ public class Pyramid extends PartyQuest {
             skill++;
             ItemInformationProvider ii = ItemInformationProvider.getInstance();
             for (Character chr : getParticipants()) {
-                chr.sendPacket(PacketCreator.getEnergy("massacre_skill", skill));
+                chr.sendPacket(ChannelPacketCreator.getInstance().getEnergy("massacre_skill", skill));
                 ii.getItemEffect(ItemId.PHARAOHS_BLESSING_2).applyTo(chr);
             }
         } else if (buffcount == 2 && total >= 1000) {
@@ -204,7 +204,7 @@ public class Pyramid extends PartyQuest {
             skill++;
             ItemInformationProvider ii = ItemInformationProvider.getInstance();
             for (Character chr : getParticipants()) {
-                chr.sendPacket(PacketCreator.getEnergy("massacre_skill", skill));
+                chr.sendPacket(ChannelPacketCreator.getInstance().getEnergy("massacre_skill", skill));
                 ii.getItemEffect(ItemId.PHARAOHS_BLESSING_3).applyTo(chr);
             }
         } else if (buffcount == 3 && total >= 1500) {
@@ -215,7 +215,7 @@ public class Pyramid extends PartyQuest {
             skill++;
             ItemInformationProvider ii = ItemInformationProvider.getInstance();
             for (Character chr : getParticipants()) {
-                chr.sendPacket(PacketCreator.getEnergy("massacre_skill", skill));
+                chr.sendPacket(ChannelPacketCreator.getInstance().getEnergy("massacre_skill", skill));
                 ii.getItemEffect(ItemId.PHARAOHS_BLESSING_4).applyTo(chr);
             }
         } else if (buffcount == 5 && total >= 2500) {
@@ -262,7 +262,7 @@ public class Pyramid extends PartyQuest {
 
             exp += ((kill * 2) + (cool * 10));
         }
-        chr.sendPacket(PacketCreator.pyramidScore(rank, exp));
+        chr.sendPacket(ChannelPacketCreator.getInstance().pyramidScore(rank, exp));
         chr.gainExp(exp, true, true);
     }
 }

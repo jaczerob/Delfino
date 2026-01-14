@@ -28,7 +28,7 @@ import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.client.command.Command;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.server.events.gm.Event;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 public class StartEventCommand extends Command {
     {
@@ -43,14 +43,14 @@ public class StartEventCommand extends Command {
             players = Integer.parseInt(params[0]);
         }
         c.getChannelServer().setEvent(new Event(player.getMapId(), players));
-        Server.getInstance().broadcastMessage(c.getWorld(), PacketCreator.earnTitleMessage(
+        Server.getInstance().broadcastMessage(c.getWorld(), ChannelPacketCreator.getInstance().earnTitleMessage(
                 "[Event] An event has started on "
                         + player.getMap().getMapName()
                         + " and will allow "
                         + players
                         + " players to join. Type @joinevent to participate."));
         Server.getInstance().broadcastMessage(c.getWorld(),
-                PacketCreator.serverNotice(6, "[Event] An event has started on "
+                ChannelPacketCreator.getInstance().serverNotice(6, "[Event] An event has started on "
                         + player.getMap().getMapName()
                         + " and will allow "
                         + players

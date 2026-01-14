@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: Delfino
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_DATABASE:delfino}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:delfino}
+    driver-class-name: org.postgresql.Driver
+
+delfino:
+  server:
+    channel-load: 100
+    localhost: 127.0.0.1
+
+server:
+  port: ${SERVER_PORT:7575}
+
+logging:
+  level:
+    root: INFO
+    dev.jaczerob: DEBUG
+    com.zaxxer: ERROR
+    io.grpc: ERROR

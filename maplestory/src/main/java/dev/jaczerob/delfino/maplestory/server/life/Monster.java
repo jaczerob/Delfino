@@ -21,27 +21,14 @@
  */
 package dev.jaczerob.delfino.maplestory.server.life;
 
-import dev.jaczerob.delfino.maplestory.client.BuffStat;
+import dev.jaczerob.delfino.maplestory.client.*;
 import dev.jaczerob.delfino.maplestory.client.Character;
-import dev.jaczerob.delfino.maplestory.client.Client;
-import dev.jaczerob.delfino.maplestory.client.FamilyEntry;
-import dev.jaczerob.delfino.maplestory.client.Job;
-import dev.jaczerob.delfino.maplestory.client.Skill;
-import dev.jaczerob.delfino.maplestory.client.SkillFactory;
 import dev.jaczerob.delfino.maplestory.client.status.MonsterStatus;
 import dev.jaczerob.delfino.maplestory.client.status.MonsterStatusEffect;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
 import dev.jaczerob.delfino.maplestory.constants.id.MobId;
-import dev.jaczerob.delfino.maplestory.constants.skills.Crusader;
-import dev.jaczerob.delfino.maplestory.constants.skills.FPMage;
-import dev.jaczerob.delfino.maplestory.constants.skills.Hermit;
-import dev.jaczerob.delfino.maplestory.constants.skills.ILMage;
-import dev.jaczerob.delfino.maplestory.constants.skills.NightLord;
-import dev.jaczerob.delfino.maplestory.constants.skills.NightWalker;
-import dev.jaczerob.delfino.maplestory.constants.skills.Priest;
-import dev.jaczerob.delfino.maplestory.constants.skills.Shadower;
-import dev.jaczerob.delfino.maplestory.constants.skills.WhiteKnight;
-import dev.jaczerob.delfino.maplestory.net.packet.Packet;
+import dev.jaczerob.delfino.maplestory.constants.skills.*;
+import dev.jaczerob.delfino.network.packets.Packet;
 import dev.jaczerob.delfino.maplestory.net.server.channel.Channel;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.world.MonsterAggroCoordinator;
 import dev.jaczerob.delfino.maplestory.net.server.services.task.channel.MobAnimationService;
@@ -51,8 +38,6 @@ import dev.jaczerob.delfino.maplestory.net.server.services.task.channel.OverallS
 import dev.jaczerob.delfino.maplestory.net.server.services.type.ChannelServices;
 import dev.jaczerob.delfino.maplestory.net.server.world.Party;
 import dev.jaczerob.delfino.maplestory.net.server.world.PartyCharacter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import dev.jaczerob.delfino.maplestory.scripting.event.EventInstanceManager;
 import dev.jaczerob.delfino.maplestory.server.StatEffect;
 import dev.jaczerob.delfino.maplestory.server.TimerManager;
@@ -61,24 +46,18 @@ import dev.jaczerob.delfino.maplestory.server.maps.AbstractAnimatedMapObject;
 import dev.jaczerob.delfino.maplestory.server.maps.MapObjectType;
 import dev.jaczerob.delfino.maplestory.server.maps.MapleMap;
 import dev.jaczerob.delfino.maplestory.server.maps.Summon;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.IntervalBuilder;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.Pair;
 import dev.jaczerob.delfino.maplestory.tools.Randomizer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -389,7 +368,7 @@ public class Monster extends AbstractLoadedLife {
             from.getMap().broadcastBossHpMessage(this, this.hashCode(), makeBossHPBarPacket(), getPosition());
         } else if (!isBoss()) {
             int remainingHP = (int) Math.max(1, hp.get() * 100f / getMaxHp());
-            Packet packet = PacketCreator.showMonsterHP(getObjectId(), remainingHP);
+            Packet packet = ChannelPacketCreator.getInstance().showMonsterHP(getObjectId(), remainingHP);
             if (from.getParty() != null) {
                 for (PartyCharacter mpc : from.getParty().getMembers()) {
                     Character member = from.getMap().getCharacterById(mpc.getId()); // god bless
@@ -494,7 +473,7 @@ public class Monster extends AbstractLoadedLife {
         setMp(mp2Heal);
 
         if (hp > 0) {
-            getMap().broadcastMessage(PacketCreator.healMonster(getObjectId(), hp, getHp(), getMaxHp()));
+            getMap().broadcastMessage(ChannelPacketCreator.getInstance().healMonster(getObjectId(), hp, getHp(), getMaxHp()));
         }
 
         maxHpPlusHeal.addAndGet(hpHealed);
@@ -783,13 +762,13 @@ public class Monster extends AbstractLoadedLife {
         if (toSpawn != null) {
             final MapleMap reviveMap = map;
             if (toSpawn.contains(MobId.TRANSPARENT_ITEM) && reviveMap.getId() > 925000000 && reviveMap.getId() < 926000000) {
-                reviveMap.broadcastMessage(PacketCreator.playSound("Dojang/clear"));
-                reviveMap.broadcastMessage(PacketCreator.showEffect("dojang/end/clear"));
+                reviveMap.broadcastMessage(ChannelPacketCreator.getInstance().playSound("Dojang/clear"));
+                reviveMap.broadcastMessage(ChannelPacketCreator.getInstance().showEffect("dojang/end/clear"));
             }
             Pair<Integer, String> timeMob = reviveMap.getTimeMob();
             if (timeMob != null) {
                 if (toSpawn.contains(timeMob.getLeft())) {
-                    reviveMap.broadcastMessage(PacketCreator.serverNotice(6, timeMob.getRight()));
+                    reviveMap.broadcastMessage(ChannelPacketCreator.getInstance().serverNotice(6, timeMob.getRight()));
                 }
             }
 
@@ -1033,7 +1012,7 @@ public class Monster extends AbstractLoadedLife {
     }
 
     public Packet makeBossHPBarPacket() {
-        return PacketCreator.showBossHP(getId(), getHp(), getMaxHp(), getTagColor(), getTagBgColor());
+        return ChannelPacketCreator.getInstance().showBossHP(getId(), getHp(), getMaxHp(), getTagColor(), getTagBgColor());
     }
 
     public boolean hasBossHPBar() {
@@ -1046,9 +1025,9 @@ public class Monster extends AbstractLoadedLife {
             return;
         }
         if (fake) {
-            client.sendPacket(PacketCreator.spawnFakeMonster(this, 0));
+            client.sendPacket(ChannelPacketCreator.getInstance().spawnFakeMonster(this, 0));
         } else {
-            client.sendPacket(PacketCreator.spawnMonster(this, false));
+            client.sendPacket(ChannelPacketCreator.getInstance().spawnMonster(this, false));
         }
 
         if (hasBossHPBar()) {
@@ -1058,8 +1037,8 @@ public class Monster extends AbstractLoadedLife {
 
     @Override
     public void sendDestroyData(Client client) {
-        client.sendPacket(PacketCreator.killMonster(getObjectId(), false));
-        client.sendPacket(PacketCreator.killMonster(getObjectId(), true));
+        client.sendPacket(ChannelPacketCreator.getInstance().killMonster(getObjectId(), false));
+        client.sendPacket(ChannelPacketCreator.getInstance().killMonster(getObjectId(), true));
     }
 
     @Override
@@ -1124,7 +1103,7 @@ public class Monster extends AbstractLoadedLife {
 
     private int broadcastStatusEffect(final MonsterStatusEffect status) {
         int animationTime = status.getSkill().getAnimationTime();
-        Packet packet = PacketCreator.applyMonsterStatus(getObjectId(), status, null);
+        Packet packet = ChannelPacketCreator.getInstance().applyMonsterStatus(getObjectId(), status, null);
         broadcastMonsterStatusMessage(packet);
 
         return animationTime;
@@ -1199,7 +1178,7 @@ public class Monster extends AbstractLoadedLife {
 
         final Runnable cancelTask = () -> {
             if (isAlive()) {
-                Packet packet = PacketCreator.cancelMonsterStatus(getObjectId(), status.getStati());
+                Packet packet = ChannelPacketCreator.getInstance().cancelMonsterStatus(getObjectId(), status.getStati());
                 broadcastMonsterStatusMessage(packet);
             }
 
@@ -1311,7 +1290,7 @@ public class Monster extends AbstractLoadedLife {
     public void applyMonsterBuff(final Map<MonsterStatus, Integer> stats, final int x, long duration, MobSkill skill, final List<Integer> reflection) {
         final Runnable cancelTask = () -> {
             if (isAlive()) {
-                Packet packet = PacketCreator.cancelMonsterStatus(getObjectId(), stats);
+                Packet packet = ChannelPacketCreator.getInstance().cancelMonsterStatus(getObjectId(), stats);
                 broadcastMonsterStatusMessage(packet);
 
                 statiLock.lock();
@@ -1325,7 +1304,7 @@ public class Monster extends AbstractLoadedLife {
             }
         };
         final MonsterStatusEffect effect = new MonsterStatusEffect(stats, null, skill, true);
-        Packet packet = PacketCreator.applyMonsterStatus(getObjectId(), effect, reflection);
+        Packet packet = ChannelPacketCreator.getInstance().applyMonsterStatus(getObjectId(), effect, reflection);
         broadcastMonsterStatusMessage(packet);
 
         statiLock.lock();
@@ -1350,7 +1329,7 @@ public class Monster extends AbstractLoadedLife {
         aggroRemoveController();
 
         setPosition(newPoint);
-        map.broadcastMessage(PacketCreator.moveMonster(this.getObjectId(), false, -1, 0, 0, 0, this.getPosition(), this.getIdleMovement(), AbstractAnimatedMapObject.IDLE_MOVEMENT_PACKET_LENGTH));
+        map.broadcastMessage(ChannelPacketCreator.getInstance().moveMonster(this.getObjectId(), false, -1, 0, 0, 0, this.getPosition(), this.getIdleMovement(), AbstractAnimatedMapObject.IDLE_MOVEMENT_PACKET_LENGTH));
         map.moveMonster(this, this.getPosition());
 
         aggroUpdateController();
@@ -1366,7 +1345,7 @@ public class Monster extends AbstractLoadedLife {
         }
 
         if (oldEffect != null) {
-            Packet packet = PacketCreator.cancelMonsterStatus(getObjectId(), oldEffect.getStati());
+            Packet packet = ChannelPacketCreator.getInstance().cancelMonsterStatus(getObjectId(), oldEffect.getStati());
             broadcastMonsterStatusMessage(packet);
         }
     }
@@ -1650,10 +1629,10 @@ public class Monster extends AbstractLoadedLife {
                 }
 
                 if (type == 1) {
-                    map.broadcastMessage(PacketCreator.damageMonster(getObjectId(), damage), getPosition());
+                    map.broadcastMessage(ChannelPacketCreator.getInstance().damageMonster(getObjectId(), damage), getPosition());
                 } else if (type == 2) {
                     if (damage < dealDamage) {    // ninja ambush (type 2) is already displaying DOT to the caster
-                        map.broadcastMessage(PacketCreator.damageMonster(getObjectId(), damage), getPosition());
+                        map.broadcastMessage(ChannelPacketCreator.getInstance().damageMonster(getObjectId(), damage), getPosition());
                     }
                 }
             }
@@ -1891,7 +1870,7 @@ public class Monster extends AbstractLoadedLife {
 
         if (chrController != null) { // this can/should only happen when a hidden gm attacks the monster
             if (!this.isFake()) {
-                chrController.sendPacket(PacketCreator.stopControllingMonster(this.getObjectId()));
+                chrController.sendPacket(ChannelPacketCreator.getInstance().stopControllingMonster(this.getObjectId()));
             }
             chrController.stopControllingMonster(this);
         }
@@ -2100,7 +2079,7 @@ public class Monster extends AbstractLoadedLife {
     }
 
     private static void aggroMonsterControl(Client c, Monster mob, boolean immediateAggro) {
-        c.sendPacket(PacketCreator.controlMonster(mob, false, immediateAggro));
+        c.sendPacket(ChannelPacketCreator.getInstance().controlMonster(mob, false, immediateAggro));
     }
 
     private void aggroRefreshPuppetVisibility(Character chrController, Summon puppet) {
@@ -2114,15 +2093,15 @@ public class Monster extends AbstractLoadedLife {
         }
 
         for (Monster mob : puppetControlled) {
-            chrController.sendPacket(PacketCreator.stopControllingMonster(mob.getObjectId()));
+            chrController.sendPacket(ChannelPacketCreator.getInstance().stopControllingMonster(mob.getObjectId()));
         }
-        chrController.sendPacket(PacketCreator.removeSummon(puppet, false));
+        chrController.sendPacket(ChannelPacketCreator.getInstance().removeSummon(puppet, false));
 
         Client c = chrController.getClient();
         for (Monster mob : puppetControlled) { // thanks BHB for noticing puppets disrupting mobstatuses for bowmans
             aggroMonsterControl(c, mob, mob.isControllerKnowsAboutAggro());
         }
-        chrController.sendPacket(PacketCreator.spawnSummon(puppet, false));
+        chrController.sendPacket(ChannelPacketCreator.getInstance().spawnSummon(puppet, false));
     }
 
     public void aggroUpdatePuppetVisibility() {
@@ -2152,7 +2131,7 @@ public class Monster extends AbstractLoadedLife {
                 if (controllerHasPuppet) {
                     controllerHasPuppet = false;
 
-                    chrController.sendPacket(PacketCreator.stopControllingMonster(Monster.this.getObjectId()));
+                    chrController.sendPacket(ChannelPacketCreator.getInstance().stopControllingMonster(Monster.this.getObjectId()));
                     aggroMonsterControl(chrController.getClient(), Monster.this, Monster.this.isControllerHasAggro());
                 }
             } finally {

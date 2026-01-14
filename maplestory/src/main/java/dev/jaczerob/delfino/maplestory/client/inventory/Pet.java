@@ -1,24 +1,3 @@
-/*
-	This file is part of the OdinMS Maple Story Server
-    Copyright (C) 2008 Patrick Huy <patrick.huy@frz.cc>
-		       Matthias Butz <matze@odinms.de>
-		       Jan Christian Meyer <vimes@odinms.de>
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as
-    published by the Free Software Foundation version 3 as published by
-    the Free Software Foundation. You may not use, modify or distribute
-    this program under any other version of the GNU Affero General Public
-    License.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
-
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package dev.jaczerob.delfino.maplestory.client.inventory;
 
 import dev.jaczerob.delfino.maplestory.client.Character;
@@ -28,8 +7,8 @@ import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
 import dev.jaczerob.delfino.maplestory.server.movement.AbsoluteLifeMovement;
 import dev.jaczerob.delfino.maplestory.server.movement.LifeMovement;
 import dev.jaczerob.delfino.maplestory.server.movement.LifeMovementFragment;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.Pair;
 
 import java.awt.*;
@@ -210,8 +189,8 @@ public class Pet extends Item {
                 tameness = newTameness;
                 while (newTameness >= ExpTable.getTamenessNeededForLevel(level)) {
                     level += 1;
-                    owner.sendPacket(PacketCreator.showOwnPetLevelUp(slot));
-                    owner.getMap().broadcastMessage(PacketCreator.showPetLevelUp(owner, slot));
+                    owner.sendPacket(ChannelPacketCreator.getInstance().showOwnPetLevelUp(slot));
+                    owner.getMap().broadcastMessage(ChannelPacketCreator.getInstance().showPetLevelUp(owner, slot));
                 }
             }
 
@@ -230,7 +209,7 @@ public class Pet extends Item {
             enjoyed = false;
         }
 
-        owner.getMap().broadcastMessage(PacketCreator.petFoodResponse(owner.getId(), slot, enjoyed, false));
+        owner.getMap().broadcastMessage(ChannelPacketCreator.getInstance().petFoodResponse(owner.getId(), slot, enjoyed, false));
         saveToDb();
 
         Item petz = owner.getInventory(InventoryType.CASH).getItem(getPosition());

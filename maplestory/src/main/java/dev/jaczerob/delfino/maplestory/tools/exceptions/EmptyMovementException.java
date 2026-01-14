@@ -19,7 +19,8 @@
 */
 package dev.jaczerob.delfino.maplestory.tools.exceptions;
 
-import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
+import dev.jaczerob.delfino.network.packets.InPacket;
+import io.netty.channel.ChannelHandlerContext;
 
 
 /**

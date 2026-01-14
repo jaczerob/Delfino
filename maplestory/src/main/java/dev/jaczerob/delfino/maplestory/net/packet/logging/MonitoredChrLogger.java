@@ -18,7 +18,7 @@
  You should have received a copy of the GNU Affero General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package dev.jaczerob.delfino.maplestory.net.packet.logging;
+package dev.jaczerob.delfino.network.packets.logging;
 
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Client;

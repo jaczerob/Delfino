@@ -1,24 +1,3 @@
-/*
-	This file is part of the OdinMS Maple Story Server
-    Copyright (C) 2008 Patrick Huy <patrick.huy@frz.cc>
-		       Matthias Butz <matze@odinms.de>
-		       Jan Christian Meyer <vimes@odinms.de>
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as
-    published by the Free Software Foundation version 3 as published by
-    the Free Software Foundation. You may not use, modify or distribute
-    this program under any other version of the GNU Affero General Public
-    License.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
-
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package dev.jaczerob.delfino.maplestory.server.life;
 
 import dev.jaczerob.delfino.maplestory.client.Character;
@@ -31,32 +10,22 @@ import dev.jaczerob.delfino.maplestory.constants.id.NpcId;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.net.server.channel.Channel;
 import dev.jaczerob.delfino.maplestory.net.server.world.World;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import dev.jaczerob.delfino.maplestory.server.life.positioner.PlayerNPCPodium;
 import dev.jaczerob.delfino.maplestory.server.life.positioner.PlayerNPCPositioner;
 import dev.jaczerob.delfino.maplestory.server.maps.AbstractMapObject;
 import dev.jaczerob.delfino.maplestory.server.maps.MapObject;
 import dev.jaczerob.delfino.maplestory.server.maps.MapObjectType;
 import dev.jaczerob.delfino.maplestory.server.maps.MapleMap;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.*;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
+import java.sql.*;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -217,14 +186,14 @@ public class PlayerNPC extends AbstractMapObject {
 
     @Override
     public void sendSpawnData(Client client) {
-        client.sendPacket(PacketCreator.spawnPlayerNPC(this));
-        client.sendPacket(PacketCreator.getPlayerNPC(this));
+        client.sendPacket(ChannelPacketCreator.getInstance().spawnPlayerNPC(this));
+        client.sendPacket(ChannelPacketCreator.getInstance().getPlayerNPC(this));
     }
 
     @Override
     public void sendDestroyData(Client client) {
-        client.sendPacket(PacketCreator.removeNPCController(this.getObjectId()));
-        client.sendPacket(PacketCreator.removePlayerNPC(this.getObjectId()));
+        client.sendPacket(ChannelPacketCreator.getInstance().removeNPCController(this.getObjectId()));
+        client.sendPacket(ChannelPacketCreator.getInstance().removePlayerNPC(this.getObjectId()));
     }
 
     private static void getRunningOverallRanks(Connection con) throws SQLException {
@@ -548,8 +517,8 @@ public class PlayerNPC extends AbstractMapObject {
                 MapleMap m = channel.getMapFactory().getMap(mapid);
 
                 m.addPlayerNPCMapObject(pn);
-                m.broadcastMessage(PacketCreator.spawnPlayerNPC(pn));
-                m.broadcastMessage(PacketCreator.getPlayerNPC(pn));
+                m.broadcastMessage(ChannelPacketCreator.getInstance().spawnPlayerNPC(pn));
+                m.broadcastMessage(ChannelPacketCreator.getInstance().getPlayerNPC(pn));
             }
 
             return true;
@@ -587,8 +556,8 @@ public class PlayerNPC extends AbstractMapObject {
                     MapleMap m = channel.getMapFactory().getMap(mapid);
                     m.removeMapObject(pn);
 
-                    m.broadcastMessage(PacketCreator.removeNPCController(pn.getObjectId()));
-                    m.broadcastMessage(PacketCreator.removePlayerNPC(pn.getObjectId()));
+                    m.broadcastMessage(ChannelPacketCreator.getInstance().removeNPCController(pn.getObjectId()));
+                    m.broadcastMessage(ChannelPacketCreator.getInstance().removePlayerNPC(pn.getObjectId()));
                 }
             }
         }
@@ -627,8 +596,8 @@ public class PlayerNPC extends AbstractMapObject {
                     for (MapObject pnpcObj : m.getMapObjectsInRange(new Point(0, 0), Double.POSITIVE_INFINITY, Arrays.asList(MapObjectType.PLAYER_NPC))) {
                         PlayerNPC pn = (PlayerNPC) pnpcObj;
                         m.removeMapObject(pnpcObj);
-                        m.broadcastMessage(PacketCreator.removeNPCController(pn.getObjectId()));
-                        m.broadcastMessage(PacketCreator.removePlayerNPC(pn.getObjectId()));
+                        m.broadcastMessage(ChannelPacketCreator.getInstance().removeNPCController(pn.getObjectId()));
+                        m.broadcastMessage(ChannelPacketCreator.getInstance().removePlayerNPC(pn.getObjectId()));
                     }
                 }
             }

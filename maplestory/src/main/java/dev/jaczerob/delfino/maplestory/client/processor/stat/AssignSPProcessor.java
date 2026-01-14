@@ -30,9 +30,9 @@ import dev.jaczerob.delfino.maplestory.client.SkillFactory;
 import dev.jaczerob.delfino.maplestory.client.autoban.AutobanFactory;
 import dev.jaczerob.delfino.maplestory.constants.game.GameConstants;
 import dev.jaczerob.delfino.maplestory.constants.skills.Aran;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
 /**
  * @author RonanLana - synchronization of SP transaction modules
@@ -42,7 +42,7 @@ public class AssignSPProcessor {
 
     public static boolean canSPAssign(Client c, int skillid) {
         if (skillid == Aran.HIDDEN_FULL_DOUBLE || skillid == Aran.HIDDEN_FULL_TRIPLE || skillid == Aran.HIDDEN_OVER_DOUBLE || skillid == Aran.HIDDEN_OVER_TRIPLE) {
-            c.sendPacket(PacketCreator.enableActions());
+            c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
             return false;
         }
 
@@ -83,7 +83,7 @@ public class AssignSPProcessor {
                 if (!isBeginnerSkill) {
                     player.gainSp(-1, GameConstants.getSkillBook(skillid / 10000), false);
                 } else {
-                    player.sendPacket(PacketCreator.enableActions());
+                    player.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                 }
                 if (skill.getId() == Aran.FULL_SWING) {
                     player.changeSkillLevel(skill, (byte) (curLevel + 1), player.getMasterLevel(skill), player.getSkillExpiration(skill));

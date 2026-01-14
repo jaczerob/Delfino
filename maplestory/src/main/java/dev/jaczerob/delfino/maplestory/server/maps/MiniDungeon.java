@@ -21,7 +21,7 @@ package dev.jaczerob.delfino.maplestory.server.maps;
 
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.server.TimerManager;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,7 +54,7 @@ public class MiniDungeon {
     public boolean registerPlayer(Character chr) {
         int time = (int) ((expireTime - System.currentTimeMillis()) / 1000);
         if (time > 0) {
-            chr.sendPacket(PacketCreator.getClock(time));
+            chr.sendPacket(ChannelPacketCreator.getInstance().getClock(time));
         }
 
         lock.lock();
@@ -72,7 +72,7 @@ public class MiniDungeon {
     }
 
     public boolean unregisterPlayer(Character chr) {
-        chr.sendPacket(PacketCreator.removeClock());
+        chr.sendPacket(ChannelPacketCreator.getInstance().removeClock());
 
         lock.lock();
         try {

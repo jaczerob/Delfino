@@ -25,7 +25,7 @@ import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.constants.id.MapId;
 import dev.jaczerob.delfino.maplestory.server.TimerManager;
 import dev.jaczerob.delfino.maplestory.server.maps.MapleMap;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -61,8 +61,8 @@ public class Snowball {
 
         for (Character chr : characters) {
             if (chr != null) {
-                chr.sendPacket(PacketCreator.rollSnowBall(false, 1, map.getSnowball(0), map.getSnowball(1)));
-                chr.sendPacket(PacketCreator.getClock(600));
+                chr.sendPacket(ChannelPacketCreator.getInstance().rollSnowBall(false, 1, map.getSnowball(0), map.getSnowball(1)));
+                chr.sendPacket(ChannelPacketCreator.getInstance().getClock(600));
             }
         }
         hittable = true;
@@ -70,14 +70,14 @@ public class Snowball {
             if (map.getSnowball(team).getPosition() > map.getSnowball(team == 0 ? 1 : 0).getPosition()) {
                 for (Character chr : characters) {
                     if (chr != null) {
-                        chr.sendPacket(PacketCreator.rollSnowBall(false, 3, map.getSnowball(0), map.getSnowball(0)));
+                        chr.sendPacket(ChannelPacketCreator.getInstance().rollSnowBall(false, 3, map.getSnowball(0), map.getSnowball(0)));
                     }
                 }
                 winner = true;
             } else if (map.getSnowball(team == 0 ? 1 : 0).getPosition() > map.getSnowball(team).getPosition()) {
                 for (Character chr : characters) {
                     if (chr != null) {
-                        chr.sendPacket(PacketCreator.rollSnowBall(false, 4, map.getSnowball(0), map.getSnowball(0)));
+                        chr.sendPacket(ChannelPacketCreator.getInstance().rollSnowBall(false, 4, map.getSnowball(0), map.getSnowball(0)));
                     }
                 }
                 winner = true;
@@ -122,35 +122,35 @@ public class Snowball {
                 } else {
                     this.snowmanhp -= damage;
                 }
-                map.broadcastMessage(PacketCreator.rollSnowBall(false, 1, map.getSnowball(0), map.getSnowball(1)));
+                map.broadcastMessage(ChannelPacketCreator.getInstance().rollSnowBall(false, 1, map.getSnowball(0), map.getSnowball(1)));
             }
         }
 
         if (this.hits == 0) {
             this.position += 1;
             switch (this.position) {
-            case 45:
-                map.getSnowball(team == 0 ? 1 : 0).message(1);
-                break;
-            case 290:
-                map.getSnowball(team == 0 ? 1 : 0).message(2);
-                break;
-            case 560:
-                map.getSnowball(team == 0 ? 1 : 0).message(3);
-                break;
+                case 45:
+                    map.getSnowball(team == 0 ? 1 : 0).message(1);
+                    break;
+                case 290:
+                    map.getSnowball(team == 0 ? 1 : 0).message(2);
+                    break;
+                case 560:
+                    map.getSnowball(team == 0 ? 1 : 0).message(3);
+                    break;
             }
 
             this.hits = 3;
-            map.broadcastMessage(PacketCreator.rollSnowBall(false, 0, map.getSnowball(0), map.getSnowball(1)));
-            map.broadcastMessage(PacketCreator.rollSnowBall(false, 1, map.getSnowball(0), map.getSnowball(1)));
+            map.broadcastMessage(ChannelPacketCreator.getInstance().rollSnowBall(false, 0, map.getSnowball(0), map.getSnowball(1)));
+            map.broadcastMessage(ChannelPacketCreator.getInstance().rollSnowBall(false, 1, map.getSnowball(0), map.getSnowball(1)));
         }
-        map.broadcastMessage(PacketCreator.hitSnowBall(what, damage));
+        map.broadcastMessage(ChannelPacketCreator.getInstance().hitSnowBall(what, damage));
     }
 
     public void message(int message) {
         for (Character chr : characters) {
             if (chr != null) {
-                chr.sendPacket(PacketCreator.snowballMessage(team, message));
+                chr.sendPacket(ChannelPacketCreator.getInstance().snowballMessage(team, message));
             }
         }
     }

@@ -3,10 +3,10 @@ package dev.jaczerob.delfino.maplestory.net.server.guild;
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.net.opcodes.SendOpcode;
-import dev.jaczerob.delfino.maplestory.net.packet.OutPacket;
-import dev.jaczerob.delfino.maplestory.net.packet.Packet;
+import dev.jaczerob.delfino.network.packets.OutPacket;
+import dev.jaczerob.delfino.network.packets.Packet;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.Pair;
 import dev.jaczerob.delfino.maplestory.tools.StringUtil;
 
@@ -223,7 +223,7 @@ public class GuildPackets {
         p.writeInt(rs.getInt("localthreadid"));
         p.writeInt(rs.getInt("postercid"));
         p.writeString(rs.getString("name"));
-        p.writeLong(PacketCreator.getTime(rs.getLong("timestamp")));
+        p.writeLong(ChannelPacketCreator.getInstance().getTime(rs.getLong("timestamp")));
         p.writeInt(rs.getInt("icon"));
         p.writeInt(rs.getInt("replycount"));
     }
@@ -263,7 +263,7 @@ public class GuildPackets {
         p.writeByte(0x07);
         p.writeInt(localthreadid);
         p.writeInt(threadRS.getInt("postercid"));
-        p.writeLong(PacketCreator.getTime(threadRS.getLong("timestamp")));
+        p.writeLong(ChannelPacketCreator.getInstance().getTime(threadRS.getLong("timestamp")));
         p.writeString(threadRS.getString("name"));
         p.writeString(threadRS.getString("startpost"));
         p.writeInt(threadRS.getInt("icon"));
@@ -274,7 +274,7 @@ public class GuildPackets {
             for (i = 0; i < replyCount && repliesRS.next(); i++) {
                 p.writeInt(repliesRS.getInt("replyid"));
                 p.writeInt(repliesRS.getInt("postercid"));
-                p.writeLong(PacketCreator.getTime(repliesRS.getLong("timestamp")));
+                p.writeLong(ChannelPacketCreator.getInstance().getTime(repliesRS.getLong("timestamp")));
                 p.writeString(repliesRS.getString("content"));
             }
             if (i != replyCount || repliesRS.next()) {

@@ -10,7 +10,7 @@ import dev.jaczerob.delfino.maplestory.net.server.world.PartyCharacter;
 import dev.jaczerob.delfino.maplestory.server.TimerManager;
 import dev.jaczerob.delfino.maplestory.server.maps.MapleMap;
 import dev.jaczerob.delfino.maplestory.server.maps.Reactor;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 import java.util.concurrent.ScheduledFuture;
 
@@ -349,7 +349,7 @@ public class MonsterCarnival {
         }
         startTime = System.currentTimeMillis() + MINUTES.toMillis(3);
 
-        map.broadcastMessage(PacketCreator.getClock((int) MINUTES.toSeconds(3)));
+        map.broadcastMessage(ChannelPacketCreator.getInstance().getClock((int) MINUTES.toSeconds(3)));
 
         timer = TimerManager.getInstance().schedule(() -> timeUp(), SECONDS.toMillis(map.getTimeExpand()));
         effectTimer = TimerManager.getInstance().schedule(() -> complete(), SECONDS.toMillis(map.getTimeExpand() - 10)); // thanks Vcoc for noticing a time set issue here
@@ -377,12 +377,12 @@ public class MonsterCarnival {
             Character mc = mpc.getPlayer();
             if (mc != null) {
                 if (redWin) {
-                    mc.sendPacket(PacketCreator.showEffect("quest/carnival/win"));
-                    mc.sendPacket(PacketCreator.playSound("MobCarnival/Win"));
+                    mc.sendPacket(ChannelPacketCreator.getInstance().showEffect("quest/carnival/win"));
+                    mc.sendPacket(ChannelPacketCreator.getInstance().playSound("MobCarnival/Win"));
                     mc.dispelDebuffs();
                 } else {
-                    mc.sendPacket(PacketCreator.showEffect("quest/carnival/lose"));
-                    mc.sendPacket(PacketCreator.playSound("MobCarnival/Lose"));
+                    mc.sendPacket(ChannelPacketCreator.getInstance().showEffect("quest/carnival/lose"));
+                    mc.sendPacket(ChannelPacketCreator.getInstance().playSound("MobCarnival/Lose"));
                     mc.dispelDebuffs();
                 }
             }
@@ -391,12 +391,12 @@ public class MonsterCarnival {
             Character mc = mpc.getPlayer();
             if (mc != null) {
                 if (!redWin) {
-                    mc.sendPacket(PacketCreator.showEffect("quest/carnival/win"));
-                    mc.sendPacket(PacketCreator.playSound("MobCarnival/Win"));
+                    mc.sendPacket(ChannelPacketCreator.getInstance().showEffect("quest/carnival/win"));
+                    mc.sendPacket(ChannelPacketCreator.getInstance().playSound("MobCarnival/Win"));
                     mc.dispelDebuffs();
                 } else {
-                    mc.sendPacket(PacketCreator.showEffect("quest/carnival/lose"));
-                    mc.sendPacket(PacketCreator.playSound("MobCarnival/Lose"));
+                    mc.sendPacket(ChannelPacketCreator.getInstance().showEffect("quest/carnival/lose"));
+                    mc.sendPacket(ChannelPacketCreator.getInstance().playSound("MobCarnival/Lose"));
                     mc.dispelDebuffs();
                 }
             }

@@ -24,11 +24,11 @@ package dev.jaczerob.delfino.maplestory.scripting.npc;
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.net.server.world.PartyCharacter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import dev.jaczerob.delfino.maplestory.scripting.AbstractScriptManager;
 import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider.ScriptedItem;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
@@ -152,7 +152,7 @@ public class NPCScriptManager extends AbstractScriptManager {
                     }
                 }
             } else {
-                c.sendPacket(PacketCreator.enableActions());
+                c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
             }
             return true;
         } catch (Exception e) {

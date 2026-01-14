@@ -36,27 +36,14 @@ import dev.jaczerob.delfino.maplestory.constants.game.GameConstants;
 import dev.jaczerob.delfino.maplestory.constants.inventory.ItemConstants;
 import dev.jaczerob.delfino.maplestory.constants.net.OpcodeConstants;
 import dev.jaczerob.delfino.maplestory.constants.net.ServerConstants;
-import dev.jaczerob.delfino.maplestory.database.note.NoteDao;
 import dev.jaczerob.delfino.maplestory.net.ChannelDependencies;
-import dev.jaczerob.delfino.maplestory.net.PacketProcessor;
-import dev.jaczerob.delfino.maplestory.net.packet.Packet;
 import dev.jaczerob.delfino.maplestory.net.server.channel.Channel;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.session.IpAddresses;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.session.SessionCoordinator;
 import dev.jaczerob.delfino.maplestory.net.server.guild.Alliance;
 import dev.jaczerob.delfino.maplestory.net.server.guild.Guild;
 import dev.jaczerob.delfino.maplestory.net.server.guild.GuildCharacter;
-import dev.jaczerob.delfino.maplestory.net.server.task.BossLogTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.CharacterDiseaseTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.CouponTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.DueyFredrickTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.EventRecallCoordinatorTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.InvitationTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.LoginCoordinatorTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.LoginStorageTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.RankingCommandTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.RankingLoginTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.RespawnTask;
+import dev.jaczerob.delfino.maplestory.net.server.task.*;
 import dev.jaczerob.delfino.maplestory.net.server.world.World;
 import dev.jaczerob.delfino.maplestory.server.CashShop.CashItemFactory;
 import dev.jaczerob.delfino.maplestory.server.SkillbookInformationProvider;
@@ -68,6 +55,7 @@ import dev.jaczerob.delfino.maplestory.server.quest.Quest;
 import dev.jaczerob.delfino.maplestory.service.NoteService;
 import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
 import dev.jaczerob.delfino.maplestory.tools.Pair;
+import dev.jaczerob.delfino.network.packets.Packet;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,20 +67,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Properties;
-import java.util.Set;
-import java.util.SortedMap;
-import java.util.TimeZone;
-import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -102,10 +78,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static java.util.concurrent.TimeUnit.DAYS;
-import static java.util.concurrent.TimeUnit.HOURS;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.*;
 
 @Component
 public class Server {
@@ -158,8 +131,15 @@ public class Server {
 
     private final TimerManager timerManager;
     private final DatabaseConnection databaseConnection;
+    private final NoteService noteService;
+    private final FredrickProcessor fredrickProcessor;
 
-    public Server(final TimerManager timerManager, final DatabaseConnection databaseConnection) {
+    public Server(
+            final NoteService noteService,
+            final FredrickProcessor fredrickProcessor,
+            final TimerManager timerManager,
+            final DatabaseConnection databaseConnection
+    ) {
         ReadWriteLock worldLock = new ReentrantReadWriteLock(true);
         this.wldRLock = worldLock.readLock();
         this.wldWLock = worldLock.writeLock();
@@ -170,6 +150,8 @@ public class Server {
 
         this.timerManager = timerManager;
         this.databaseConnection = databaseConnection;
+        this.noteService = noteService;
+        this.fredrickProcessor = fredrickProcessor;
     }
 
     public int getCurrentTimestamp() {
@@ -942,13 +924,7 @@ public class Server {
     }
 
     private ChannelDependencies registerChannelDependencies() {
-        NoteService noteService = new NoteService(new NoteDao());
-        FredrickProcessor fredrickProcessor = new FredrickProcessor(noteService);
-        ChannelDependencies channelDependencies = new ChannelDependencies(noteService, fredrickProcessor);
-
-        PacketProcessor.registerGameHandlerDependencies(channelDependencies);
-
-        return channelDependencies;
+        return new ChannelDependencies(noteService, fredrickProcessor);
     }
 
     private static void setAllLoggedOut(Connection con) throws SQLException {
@@ -1912,25 +1888,6 @@ public class Server {
         for (World w : getWorlds()) {
             w.shutdown();
         }
-
-        /*for (World w : getWorlds()) {
-            while (w.getPlayerStorage().getAllCharacters().size() > 0) {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException ie) {
-                    System.err.println("FUCK MY LIFE");
-                }
-            }
-        }
-        for (Channel ch : getAllChannels()) {
-            while (ch.getConnectedClients() > 0) {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException ie) {
-                    System.err.println("FUCK MY LIFE");
-                }
-            }
-        }*/
 
         List<Channel> allChannels = getAllChannels();
 

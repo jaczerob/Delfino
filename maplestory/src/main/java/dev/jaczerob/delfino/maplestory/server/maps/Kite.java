@@ -2,8 +2,8 @@ package dev.jaczerob.delfino.maplestory.server.maps;
 
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Client;
-import dev.jaczerob.delfino.maplestory.net.packet.Packet;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.network.packets.Packet;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 import java.awt.*;
 
@@ -52,10 +52,10 @@ public class Kite extends AbstractMapObject {
     }
 
     public final Packet makeSpawnData() {
-        return PacketCreator.spawnKite(getObjectId(), itemid, owner.getName(), text, pos, ft);
+        return ChannelPacketCreator.getInstance().spawnKite(getObjectId(), itemid, owner.getName(), text, pos, ft);
     }
 
     public final Packet makeDestroyData() {
-        return PacketCreator.removeKite(getObjectId(), 0);
+        return ChannelPacketCreator.getInstance().removeKite(getObjectId(), 0);
     }
 }

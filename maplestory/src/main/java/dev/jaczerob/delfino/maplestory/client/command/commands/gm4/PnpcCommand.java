@@ -30,8 +30,8 @@ import dev.jaczerob.delfino.maplestory.net.server.channel.Channel;
 import dev.jaczerob.delfino.maplestory.server.life.LifeFactory;
 import dev.jaczerob.delfino.maplestory.server.life.NPC;
 import dev.jaczerob.delfino.maplestory.server.maps.MapleMap;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
 import java.awt.*;
 import java.sql.Connection;
@@ -94,7 +94,7 @@ public class PnpcCommand extends Command {
 
                     MapleMap map = ch.getMapFactory().getMap(mapId);
                     map.addMapObject(npc);
-                    map.broadcastMessage(PacketCreator.spawnNPC(npc));
+                    map.broadcastMessage(ChannelPacketCreator.getInstance().spawnNPC(npc));
                 }
 
                 player.yellowMessage("Pnpc created.");

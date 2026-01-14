@@ -30,17 +30,11 @@ import dev.jaczerob.delfino.maplestory.provider.Data;
 import dev.jaczerob.delfino.maplestory.provider.DataProviderFactory;
 import dev.jaczerob.delfino.maplestory.provider.DataTool;
 import dev.jaczerob.delfino.maplestory.provider.wz.WZFiles;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.Pair;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -302,7 +296,7 @@ public class PartySearchCoordinator {
 
         if (InviteCoordinator.createInvite(InviteType.PARTY, leader, partyid, chr.getId())) {
             chr.disablePartySearchInvite(leader.getId());
-            chr.sendPacket(PacketCreator.partySearchInvite(leader));
+            chr.sendPacket(ChannelPacketCreator.getInstance().partySearchInvite(leader));
             return true;
         } else {
             return false;

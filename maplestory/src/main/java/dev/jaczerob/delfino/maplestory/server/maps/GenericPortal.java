@@ -26,7 +26,7 @@ import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.constants.game.GameConstants;
 import dev.jaczerob.delfino.maplestory.constants.id.MapId;
 import dev.jaczerob.delfino.maplestory.scripting.portal.PortalScriptManager;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 import java.awt.*;
 import java.util.concurrent.locks.Lock;
@@ -155,7 +155,7 @@ public class GenericPortal implements Portal {
             }
         }
         if (!changed) {
-            c.sendPacket(PacketCreator.enableActions());
+            c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
         }
     }
 

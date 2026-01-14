@@ -1,31 +1,8 @@
-/*
-This file is part of the OdinMS Maple Story Server
-Copyright (C) 2008 Patrick Huy <patrick.huy@frz.cc>
-Matthias Butz <matze@odinms.de>
-Jan Christian Meyer <vimes@odinms.de>
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as
-published by the Free Software Foundation version 3 as published by
-the Free Software Foundation. You may not use, modify or distribute
-this program under any other version of the GNU Affero General Public
-License.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package dev.jaczerob.delfino.maplestory.net.server.channel;
 
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
 import dev.jaczerob.delfino.maplestory.constants.id.MapId;
-import dev.jaczerob.delfino.maplestory.net.netty.ChannelServer;
-import dev.jaczerob.delfino.maplestory.net.packet.Packet;
 import dev.jaczerob.delfino.maplestory.net.server.PlayerStorage;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.net.server.services.BaseService;
@@ -34,44 +11,30 @@ import dev.jaczerob.delfino.maplestory.net.server.services.type.ChannelServices;
 import dev.jaczerob.delfino.maplestory.net.server.world.Party;
 import dev.jaczerob.delfino.maplestory.net.server.world.PartyCharacter;
 import dev.jaczerob.delfino.maplestory.net.server.world.World;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import dev.jaczerob.delfino.maplestory.scripting.event.EventScriptManager;
 import dev.jaczerob.delfino.maplestory.server.TimerManager;
 import dev.jaczerob.delfino.maplestory.server.events.gm.Event;
 import dev.jaczerob.delfino.maplestory.server.expeditions.Expedition;
 import dev.jaczerob.delfino.maplestory.server.expeditions.ExpeditionType;
-import dev.jaczerob.delfino.maplestory.server.maps.HiredMerchant;
-import dev.jaczerob.delfino.maplestory.server.maps.MapManager;
-import dev.jaczerob.delfino.maplestory.server.maps.MapleMap;
-import dev.jaczerob.delfino.maplestory.server.maps.MiniDungeon;
-import dev.jaczerob.delfino.maplestory.server.maps.MiniDungeonInfo;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.server.maps.*;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.Pair;
+import dev.jaczerob.delfino.network.packets.Packet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.WeakHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static java.util.concurrent.TimeUnit.HOURS;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.*;
 
 public final class Channel {
     private static final Logger log = LoggerFactory.getLogger(Channel.class);
@@ -83,7 +46,6 @@ public final class Channel {
     private final int channel;
 
     private PlayerStorage players = new PlayerStorage();
-    private ChannelServer channelServer;
     private String serverMessage;
     private MapManager mapManager;
     private EventScriptManager eventSM;
@@ -118,7 +80,8 @@ public final class Channel {
     private Set<Integer> ongoingCathedralGuests = null;
     private long ongoingStartTime;
 
-    private final Lock lock = new ReentrantLock(true);;
+    private final Lock lock = new ReentrantLock(true);
+    ;
     private final Lock merchRlock;
     private final Lock merchWlock;
 
@@ -136,7 +99,6 @@ public final class Channel {
         this.merchWlock = rwLock.writeLock();
 
         try {
-            this.channelServer = initServer(port, world, channel);
             expedType.addAll(Arrays.asList(ExpeditionType.values()));
 
             if (Server.getInstance().isOnline()) {  // postpone event loading to improve boot time... thanks Riizade, daronhudson for noticing slow startup times
@@ -162,12 +124,6 @@ public final class Channel {
         } catch (Exception e) {
             log.warn("Error during channel initialization", e);
         }
-    }
-
-    private ChannelServer initServer(int port, int world, int channel) {
-        ChannelServer channelServer = new ChannelServer(port, world, channel);
-        channelServer.start();
-        return channelServer;
     }
 
     public synchronized void reloadEventScriptManager() {
@@ -200,8 +156,6 @@ public final class Channel {
 
             closeChannelSchedules();
             players = null;
-
-            channelServer.stop();
 
             finishedShutdown = true;
             log.info("Successfully shut down channel {} in world {}", channel, world);
@@ -268,7 +222,7 @@ public final class Channel {
 
     public void addPlayer(Character chr) {
         players.addPlayer(chr);
-        chr.sendPacket(PacketCreator.serverMessage(serverMessage));
+        chr.sendPacket(ChannelPacketCreator.getInstance().serverMessage(serverMessage));
     }
 
     public String getServerMessage() {
@@ -445,7 +399,7 @@ public final class Channel {
 
     public void setServerMessage(String message) {
         this.serverMessage = message;
-        broadcastPacket(PacketCreator.serverMessage(message));
+        broadcastPacket(ChannelPacketCreator.getInstance().serverMessage(message));
         getWorldServer().resetDisabledServerMessages();
     }
 

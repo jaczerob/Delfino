@@ -30,7 +30,7 @@ import dev.jaczerob.delfino.maplestory.client.inventory.manipulator.InventoryMan
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
 import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
 import dev.jaczerob.delfino.maplestory.server.StatEffect;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 import java.util.List;
 
@@ -82,7 +82,7 @@ public class PetAutopotProcessor {
             Client c = this.c;
             Character chr = c.getPlayer();
             if (!chr.isAlive()) {
-                c.sendPacket(PacketCreator.enableActions());
+                c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                 return;
             }
 
@@ -101,7 +101,7 @@ public class PetAutopotProcessor {
                 toUse = useInv.getItem(slot);
                 if (toUse != null) {
                     if (toUse.getItemId() != itemId) {
-                        c.sendPacket(PacketCreator.enableActions());
+                        c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                         return;
                     }
 
@@ -110,7 +110,7 @@ public class PetAutopotProcessor {
                     // from now on, toUse becomes the "cursor" for the current pot being used
                     if (toUse.getQuantity() <= 0) {
                         if (!cursorOnNextAvailablePot(chr)) {
-                            c.sendPacket(PacketCreator.enableActions());
+                            c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                             return;
                         }
                     }
@@ -182,7 +182,7 @@ public class PetAutopotProcessor {
                 }
             }
 
-            chr.sendPacket(PacketCreator.enableActions());
+            chr.sendPacket(ChannelPacketCreator.getInstance().enableActions());
         }
     }
 

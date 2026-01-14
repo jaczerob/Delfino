@@ -23,7 +23,7 @@ package dev.jaczerob.delfino.maplestory.server.maps;
 
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Client;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 
 public class Dragon extends AbstractAnimatedMapObject {
@@ -44,7 +44,7 @@ public class Dragon extends AbstractAnimatedMapObject {
 
     @Override
     public void sendSpawnData(Client client) {
-        client.sendPacket(PacketCreator.spawnDragon(this));
+        client.sendPacket(ChannelPacketCreator.getInstance().spawnDragon(this));
     }
 
     @Override
@@ -54,7 +54,7 @@ public class Dragon extends AbstractAnimatedMapObject {
 
     @Override
     public void sendDestroyData(Client c) {
-        c.sendPacket(PacketCreator.removeDragon(owner.getId()));
+        c.sendPacket(ChannelPacketCreator.getInstance().removeDragon(owner.getId()));
     }
 
     public Character getOwner() {

@@ -1,4 +1,4 @@
-package dev.jaczerob.delfino.maplestory.net.packet;
+package dev.jaczerob.delfino.network.packets;
 
 import dev.jaczerob.delfino.maplestory.constants.string.CharsetConstants;
 import io.netty.buffer.ByteBuf;
@@ -22,8 +22,11 @@ public class ByteBufInPacket implements InPacket {
     public byte readByte() {
         return byteBuf.readByte();
     }
+
     @Override
-    public short readUnsignedByte() { return byteBuf.readUnsignedByte(); }
+    public short readUnsignedByte() {
+        return byteBuf.readUnsignedByte();
+    }
 
     @Override
     public short readShort() {

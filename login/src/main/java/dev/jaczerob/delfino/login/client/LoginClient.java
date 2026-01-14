@@ -3,7 +3,7 @@ package dev.jaczerob.delfino.login.client;
 import dev.jaczerob.delfino.grpc.proto.account.Account;
 import dev.jaczerob.delfino.grpc.proto.character.Character;
 import dev.jaczerob.delfino.login.coordinators.SessionCoordinator;
-import dev.jaczerob.delfino.login.packets.PacketProcessor;
+import dev.jaczerob.delfino.login.packets.LoginPacketProcessor;
 import dev.jaczerob.delfino.login.tools.LoginPacketCreator;
 import dev.jaczerob.delfino.network.packets.InPacket;
 import dev.jaczerob.delfino.network.packets.InvalidPacketHeaderException;
@@ -24,7 +24,7 @@ import java.net.InetSocketAddress;
 public class LoginClient extends ChannelInboundHandlerAdapter {
     private static final Logger log = LoggerFactory.getLogger(LoginClient.class);
 
-    private final PacketProcessor packetProcessor;
+    private final LoginPacketProcessor loginPacketProcessor;
     private final LoginPacketCreator loginPacketCreator;
 
     private Account account;
@@ -34,11 +34,11 @@ public class LoginClient extends ChannelInboundHandlerAdapter {
 
     public LoginClient(
             final String remoteAddress,
-            final PacketProcessor packetProcessor,
+            final LoginPacketProcessor loginPacketProcessor,
             final LoginPacketCreator loginPacketCreator
     ) {
         this.remoteAddress = remoteAddress;
-        this.packetProcessor = packetProcessor;
+        this.loginPacketProcessor = loginPacketProcessor;
         this.loginPacketCreator = loginPacketCreator;
     }
 
@@ -67,7 +67,7 @@ public class LoginClient extends ChannelInboundHandlerAdapter {
 
         final var opcode = packet.readShort();
         log.info("Packet received from {}: Opcode 0x{}", this.remoteAddress, opcode);
-        final var handler = this.packetProcessor.getHandler(opcode);
+        final var handler = this.loginPacketProcessor.getHandler(opcode);
 
         if (handler == null || !handler.validateState(this)) {
             log.warn("No handler found or invalid state for opcode 0x{} from client {}", opcode, this.remoteAddress);

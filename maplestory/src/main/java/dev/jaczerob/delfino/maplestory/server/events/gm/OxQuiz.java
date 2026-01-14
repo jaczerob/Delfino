@@ -1,24 +1,3 @@
-/*
-	This file is part of the OdinMS Maple Story Server
-    Copyright (C) 2008 Patrick Huy <patrick.huy@frz.cc>
-		       Matthias Butz <matze@odinms.de>
-		       Jan Christian Meyer <vimes@odinms.de>
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as
-    published by the Free Software Foundation version 3 as published by
-    the Free Software Foundation. You may not use, modify or distribute
-    this program under any other version of the GNU Affero General Public
-    License.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
-
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package dev.jaczerob.delfino.maplestory.server.events.gm;
 
 import dev.jaczerob.delfino.maplestory.client.Character;
@@ -28,7 +7,7 @@ import dev.jaczerob.delfino.maplestory.provider.DataTool;
 import dev.jaczerob.delfino.maplestory.provider.wz.WZFiles;
 import dev.jaczerob.delfino.maplestory.server.TimerManager;
 import dev.jaczerob.delfino.maplestory.server.maps.MapleMap;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.Randomizer;
 
 import java.util.ArrayList;
@@ -68,9 +47,9 @@ public final class OxQuiz {
             }
         }
         final int number = gm;
-        map.broadcastMessage(PacketCreator.showOXQuiz(round, question, true));
+        map.broadcastMessage(ChannelPacketCreator.getInstance().showOXQuiz(round, question, true));
         TimerManager.getInstance().schedule(() -> {
-            map.broadcastMessage(PacketCreator.showOXQuiz(round, question, true));
+            map.broadcastMessage(ChannelPacketCreator.getInstance().showOXQuiz(round, question, true));
             List<Character> chars = new ArrayList<>(map.getCharacters());
 
             for (Character chr : chars) {
@@ -91,7 +70,7 @@ public final class OxQuiz {
             }
             //send question
             if (map.getCharacters().size() - number <= 2) {
-                map.broadcastMessage(PacketCreator.serverNotice(6, "The event has ended"));
+                map.broadcastMessage(ChannelPacketCreator.getInstance().serverNotice(6, "The event has ended"));
                 map.getPortal("join00").setPortalStatus(true);
                 map.setOx(null);
                 map.setOxQuiz(false);

@@ -28,7 +28,7 @@ import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.client.command.Command;
 import dev.jaczerob.delfino.maplestory.constants.game.GameConstants;
 import dev.jaczerob.delfino.maplestory.constants.id.NpcId;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 public class MusicCommand extends Command {
     {
@@ -54,14 +54,14 @@ public class MusicCommand extends Command {
             sendMsg += "Syntax: #r!music <song>#k\r\n\r\n";
             sendMsg += getSongList();
 
-            c.sendPacket(PacketCreator.getNPCTalk(NpcId.BILLY, (byte) 0, sendMsg, "00 00", (byte) 0));
+            c.sendPacket(ChannelPacketCreator.getInstance().getNPCTalk(NpcId.BILLY, (byte) 0, sendMsg, "00 00", (byte) 0));
             return;
         }
 
         String song = player.getLastCommandMessage();
         for (String s : GameConstants.GAME_SONGS) {
             if (s.equalsIgnoreCase(song)) {    // thanks Masterrulax for finding an issue here
-                player.getMap().broadcastMessage(PacketCreator.musicChange(s));
+                player.getMap().broadcastMessage(ChannelPacketCreator.getInstance().musicChange(s));
                 player.yellowMessage("Now playing song " + s + ".");
                 return;
             }
@@ -71,6 +71,6 @@ public class MusicCommand extends Command {
         sendMsg += "Song not found, please enter a song below.\r\n\r\n";
         sendMsg += getSongList();
 
-        c.sendPacket(PacketCreator.getNPCTalk(NpcId.BILLY, (byte) 0, sendMsg, "00 00", (byte) 0));
+        c.sendPacket(ChannelPacketCreator.getInstance().getNPCTalk(NpcId.BILLY, (byte) 0, sendMsg, "00 00", (byte) 0));
     }
 }

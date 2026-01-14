@@ -1,6 +1,6 @@
 package dev.jaczerob.delfino.maplestory.client.keybind;
 
-import dev.jaczerob.delfino.maplestory.net.packet.OutPacket;
+import dev.jaczerob.delfino.network.packets.OutPacket;
 
 import java.util.Arrays;
 

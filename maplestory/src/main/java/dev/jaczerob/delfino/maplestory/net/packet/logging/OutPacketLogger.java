@@ -1,12 +1,12 @@
-package dev.jaczerob.delfino.maplestory.net.packet.logging;
+package dev.jaczerob.delfino.network.packets.logging;
 
 import dev.jaczerob.delfino.maplestory.constants.net.OpcodeConstants;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
-import dev.jaczerob.delfino.maplestory.net.packet.OutPacket;
-import dev.jaczerob.delfino.maplestory.net.packet.Packet;
+import dev.jaczerob.delfino.network.packets.OutPacket;
+import dev.jaczerob.delfino.network.packets.Packet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import dev.jaczerob.delfino.maplestory.tools.HexTool;

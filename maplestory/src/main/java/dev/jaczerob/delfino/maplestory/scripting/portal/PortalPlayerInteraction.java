@@ -25,8 +25,8 @@ import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.scripting.AbstractPlayerInteraction;
 import dev.jaczerob.delfino.maplestory.scripting.map.MapScriptManager;
 import dev.jaczerob.delfino.maplestory.server.maps.Portal;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -78,6 +78,6 @@ public class PortalPlayerInteraction extends AbstractPlayerInteraction {
     }
 
     public void playPortalSound() {
-        c.sendPacket(PacketCreator.playPortalSound());
+        c.sendPacket(ChannelPacketCreator.getInstance().playPortalSound());
     }
 }

@@ -26,7 +26,7 @@ package dev.jaczerob.delfino.maplestory.client.command.commands.gm3;
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.client.command.Command;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 public class MaxEnergyCommand extends Command {
     {
@@ -37,6 +37,6 @@ public class MaxEnergyCommand extends Command {
     public void execute(Client c, String[] params) {
         Character player = c.getPlayer();
         c.getPlayer().setDojoEnergy(10000);
-        c.sendPacket(PacketCreator.getEnergy("energy", 10000));
+        c.sendPacket(ChannelPacketCreator.getInstance().getEnergy("energy", 10000));
     }
 }

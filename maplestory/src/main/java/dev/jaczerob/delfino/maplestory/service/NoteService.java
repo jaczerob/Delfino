@@ -4,15 +4,17 @@ import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.database.DaoException;
 import dev.jaczerob.delfino.maplestory.database.note.NoteDao;
 import dev.jaczerob.delfino.maplestory.model.Note;
-import dev.jaczerob.delfino.maplestory.net.packet.out.ShowNotesPacket;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
+import dev.jaczerob.delfino.network.packets.out.ShowNotesPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+@Component
 public class NoteService {
     private static final Logger log = LoggerFactory.getLogger(NoteService.class);
 

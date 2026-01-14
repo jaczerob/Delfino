@@ -2,17 +2,24 @@ package dev.jaczerob.delfino.maplestory.database.note;
 
 import dev.jaczerob.delfino.maplestory.database.DaoException;
 import dev.jaczerob.delfino.maplestory.model.Note;
+import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.JdbiException;
-import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
 
+@Component
 public class NoteDao {
+    private final DatabaseConnection databaseConnection;
+
+    public NoteDao(final DatabaseConnection databaseConnection) {
+        this.databaseConnection = databaseConnection;
+    }
 
     public void save(Note note) {
-        try (Handle handle = DatabaseConnection.getStaticHandle()) {
+        try (Handle handle = this.databaseConnection.getHandle()) {
             handle.createUpdate("""
                             INSERT INTO notes (`message`, `from`, `to`, `timestamp`, `fame`, `deleted`)
                             VALUES (?, ?, ?, ?, ?, ?)""")
@@ -29,7 +36,7 @@ public class NoteDao {
     }
 
     public List<Note> findAllByTo(String to) {
-        try (Handle handle = DatabaseConnection.getStaticHandle()) {
+        try (Handle handle = this.databaseConnection.getHandle()) {
             return handle.createQuery("""
                             SELECT * 
                             FROM notes
@@ -44,7 +51,7 @@ public class NoteDao {
     }
 
     public Optional<Note> delete(int id) {
-        try (Handle handle = DatabaseConnection.getStaticHandle()) {
+        try (Handle handle = this.databaseConnection.getHandle()) {
             Optional<Note> note = findById(handle, id);
             if (note.isEmpty()) {
                 return Optional.empty();

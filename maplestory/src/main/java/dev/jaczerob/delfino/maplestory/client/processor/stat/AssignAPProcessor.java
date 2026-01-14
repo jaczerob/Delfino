@@ -23,26 +23,18 @@
 */
 package dev.jaczerob.delfino.maplestory.client.processor.stat;
 
+import dev.jaczerob.delfino.maplestory.client.*;
 import dev.jaczerob.delfino.maplestory.client.Character;
-import dev.jaczerob.delfino.maplestory.client.Client;
-import dev.jaczerob.delfino.maplestory.client.Job;
-import dev.jaczerob.delfino.maplestory.client.Skill;
-import dev.jaczerob.delfino.maplestory.client.SkillFactory;
-import dev.jaczerob.delfino.maplestory.client.Stat;
 import dev.jaczerob.delfino.maplestory.client.autoban.AutobanFactory;
 import dev.jaczerob.delfino.maplestory.client.inventory.Equip;
 import dev.jaczerob.delfino.maplestory.client.inventory.InventoryType;
 import dev.jaczerob.delfino.maplestory.client.inventory.Item;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
-import dev.jaczerob.delfino.maplestory.constants.skills.BlazeWizard;
-import dev.jaczerob.delfino.maplestory.constants.skills.Brawler;
-import dev.jaczerob.delfino.maplestory.constants.skills.DawnWarrior;
-import dev.jaczerob.delfino.maplestory.constants.skills.Magician;
-import dev.jaczerob.delfino.maplestory.constants.skills.ThunderBreaker;
-import dev.jaczerob.delfino.maplestory.constants.skills.Warrior;
-import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.constants.skills.*;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.Randomizer;
+import dev.jaczerob.delfino.network.packets.InPacket;
+import io.netty.channel.ChannelHandlerContext;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -386,11 +378,11 @@ public class AssignAPProcessor {
                 }
 
                 chr.assignStrDexIntLuk(statGain[0], statGain[1], statGain[3], statGain[2]);
-                c.sendPacket(PacketCreator.enableActions());
+                c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
 
                 //----------------------------------------------------------------------------------------
 
-                c.sendPacket(PacketCreator.serverNotice(1, "Better AP applications detected:\r\nSTR: +" + statGain[0] + "\r\nDEX: +" + statGain[1] + "\r\nINT: +" + statGain[3] + "\r\nLUK: +" + statGain[2]));
+                c.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "Better AP applications detected:\r\nSTR: +" + statGain[0] + "\r\nDEX: +" + statGain[1] + "\r\nINT: +" + statGain[3] + "\r\nLUK: +" + statGain[2]));
             } else {
                 if (inPacket.available() < 16) {
                     AutobanFactory.PACKET_EDIT.alert(chr, "Didn't send full packet for Auto Assign.");
@@ -410,7 +402,7 @@ public class AssignAPProcessor {
                 }
 
                 chr.assignStrDexIntLuk(statGain[0], statGain[1], statGain[3], statGain[2]);
-                c.sendPacket(PacketCreator.enableActions());
+                c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
             }
         } finally {
             c.unlockClient();
@@ -428,46 +420,46 @@ public class AssignAPProcessor {
 
         int newVal = 0;
         switch (type) {
-        case STR:
-            newVal = statUpdate[0] + gain;
-            if (newVal > YamlConfig.config.server.MAX_AP) {
-                statGain[0] += (gain - (newVal - YamlConfig.config.server.MAX_AP));
-                statUpdate[0] = YamlConfig.config.server.MAX_AP;
-            } else {
-                statGain[0] += gain;
-                statUpdate[0] = newVal;
-            }
-            break;
-        case INT:
-            newVal = statUpdate[3] + gain;
-            if (newVal > YamlConfig.config.server.MAX_AP) {
-                statGain[3] += (gain - (newVal - YamlConfig.config.server.MAX_AP));
-                statUpdate[3] = YamlConfig.config.server.MAX_AP;
-            } else {
-                statGain[3] += gain;
-                statUpdate[3] = newVal;
-            }
-            break;
-        case LUK:
-            newVal = statUpdate[2] + gain;
-            if (newVal > YamlConfig.config.server.MAX_AP) {
-                statGain[2] += (gain - (newVal - YamlConfig.config.server.MAX_AP));
-                statUpdate[2] = YamlConfig.config.server.MAX_AP;
-            } else {
-                statGain[2] += gain;
-                statUpdate[2] = newVal;
-            }
-            break;
-        case DEX:
-            newVal = statUpdate[1] + gain;
-            if (newVal > YamlConfig.config.server.MAX_AP) {
-                statGain[1] += (gain - (newVal - YamlConfig.config.server.MAX_AP));
-                statUpdate[1] = YamlConfig.config.server.MAX_AP;
-            } else {
-                statGain[1] += gain;
-                statUpdate[1] = newVal;
-            }
-            break;
+            case STR:
+                newVal = statUpdate[0] + gain;
+                if (newVal > YamlConfig.config.server.MAX_AP) {
+                    statGain[0] += (gain - (newVal - YamlConfig.config.server.MAX_AP));
+                    statUpdate[0] = YamlConfig.config.server.MAX_AP;
+                } else {
+                    statGain[0] += gain;
+                    statUpdate[0] = newVal;
+                }
+                break;
+            case INT:
+                newVal = statUpdate[3] + gain;
+                if (newVal > YamlConfig.config.server.MAX_AP) {
+                    statGain[3] += (gain - (newVal - YamlConfig.config.server.MAX_AP));
+                    statUpdate[3] = YamlConfig.config.server.MAX_AP;
+                } else {
+                    statGain[3] += gain;
+                    statUpdate[3] = newVal;
+                }
+                break;
+            case LUK:
+                newVal = statUpdate[2] + gain;
+                if (newVal > YamlConfig.config.server.MAX_AP) {
+                    statGain[2] += (gain - (newVal - YamlConfig.config.server.MAX_AP));
+                    statUpdate[2] = YamlConfig.config.server.MAX_AP;
+                } else {
+                    statGain[2] += gain;
+                    statUpdate[2] = newVal;
+                }
+                break;
+            case DEX:
+                newVal = statUpdate[1] + gain;
+                if (newVal > YamlConfig.config.server.MAX_AP) {
+                    statGain[1] += (gain - (newVal - YamlConfig.config.server.MAX_AP));
+                    statUpdate[1] = YamlConfig.config.server.MAX_AP;
+                } else {
+                    statGain[1] += gain;
+                    statUpdate[1] = newVal;
+                }
+                break;
         }
 
         if (newVal > YamlConfig.config.server.MAX_AP) {
@@ -492,48 +484,48 @@ public class AssignAPProcessor {
                 case 64: // str
                     if (player.getStr() < 5) {
                         player.message("You don't have the minimum STR required to swap.");
-                        c.sendPacket(PacketCreator.enableActions());
+                        c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                         return false;
                     }
                     if (!player.assignStr(-1)) {
                         player.message("Couldn't execute AP reset operation.");
-                        c.sendPacket(PacketCreator.enableActions());
+                        c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                         return false;
                     }
                     break;
                 case 128: // dex
                     if (player.getDex() < 5) {
                         player.message("You don't have the minimum DEX required to swap.");
-                        c.sendPacket(PacketCreator.enableActions());
+                        c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                         return false;
                     }
                     if (!player.assignDex(-1)) {
                         player.message("Couldn't execute AP reset operation.");
-                        c.sendPacket(PacketCreator.enableActions());
+                        c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                         return false;
                     }
                     break;
                 case 256: // int
                     if (player.getInt() < 5) {
                         player.message("You don't have the minimum INT required to swap.");
-                        c.sendPacket(PacketCreator.enableActions());
+                        c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                         return false;
                     }
                     if (!player.assignInt(-1)) {
                         player.message("Couldn't execute AP reset operation.");
-                        c.sendPacket(PacketCreator.enableActions());
+                        c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                         return false;
                     }
                     break;
                 case 512: // luk
                     if (player.getLuk() < 5) {
                         player.message("You don't have the minimum LUK required to swap.");
-                        c.sendPacket(PacketCreator.enableActions());
+                        c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                         return false;
                     }
                     if (!player.assignLuk(-1)) {
                         player.message("Couldn't execute AP reset operation.");
-                        c.sendPacket(PacketCreator.enableActions());
+                        c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                         return false;
                     }
                     break;
@@ -541,21 +533,21 @@ public class AssignAPProcessor {
                     if (YamlConfig.config.server.USE_ENFORCE_HPMP_SWAP) {
                         if (APTo != 8192) {
                             player.message("You can only swap HP ability points to MP.");
-                            c.sendPacket(PacketCreator.enableActions());
+                            c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                             return false;
                         }
                     }
 
                     if (player.getHpMpApUsed() < 1) {
                         player.message("You don't have enough HPMP stat points to spend on AP Reset.");
-                        c.sendPacket(PacketCreator.enableActions());
+                        c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                         return false;
                     }
 
                     int hplose = -takeHp(player.getJob());
                     if (player.getMaxHp() + hplose < getMinHp(player.getJob(), player.getLevel())) {
                         player.message("You don't have the minimum HP pool required to swap.");
-                        c.sendPacket(PacketCreator.enableActions());
+                        c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                         return false;
                     }
 
@@ -570,21 +562,21 @@ public class AssignAPProcessor {
                     if (YamlConfig.config.server.USE_ENFORCE_HPMP_SWAP) {
                         if (APTo != 2048) {
                             player.message("You can only swap MP ability points to HP.");
-                            c.sendPacket(PacketCreator.enableActions());
+                            c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                             return false;
                         }
                     }
 
                     if (player.getHpMpApUsed() < 1) {
                         player.message("You don't have enough HPMP stat points to spend on AP Reset.");
-                        c.sendPacket(PacketCreator.enableActions());
+                        c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                         return false;
                     }
 
                     int mplose = -takeMp(player.getJob());
                     if (player.getMaxMp() + mplose < getMinMp(player.getJob(), player.getLevel())) {
                         player.message("You don't have the minimum MP pool required to swap.");
-                        c.sendPacket(PacketCreator.enableActions());
+                        c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                         return false;
                     }
 
@@ -595,7 +587,7 @@ public class AssignAPProcessor {
                     }
                     break;
                 default:
-                    c.sendPacket(PacketCreator.updatePlayerStats(PacketCreator.EMPTY_STATUPDATE, true, player));
+                    c.sendPacket(ChannelPacketCreator.getInstance().updatePlayerStats(ChannelPacketCreator.getInstance().EMPTY_STATUPDATE, true, player));
                     return false;
             }
 
@@ -620,47 +612,47 @@ public class AssignAPProcessor {
             case 64:
                 if (!chr.assignStr(1)) {
                     chr.message("Couldn't execute AP assign operation.");
-                    chr.sendPacket(PacketCreator.enableActions());
+                    chr.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                     return false;
                 }
                 break;
             case 128: // Dex
                 if (!chr.assignDex(1)) {
                     chr.message("Couldn't execute AP assign operation.");
-                    chr.sendPacket(PacketCreator.enableActions());
+                    chr.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                     return false;
                 }
                 break;
             case 256: // Int
                 if (!chr.assignInt(1)) {
                     chr.message("Couldn't execute AP assign operation.");
-                    chr.sendPacket(PacketCreator.enableActions());
+                    chr.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                     return false;
                 }
                 break;
             case 512: // Luk
                 if (!chr.assignLuk(1)) {
                     chr.message("Couldn't execute AP assign operation.");
-                    chr.sendPacket(PacketCreator.enableActions());
+                    chr.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                     return false;
                 }
                 break;
             case 2048:
                 if (!chr.assignHP(calcHpChange(chr, usedAPReset), 1)) {
                     chr.message("Couldn't execute AP assign operation.");
-                    chr.sendPacket(PacketCreator.enableActions());
+                    chr.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                     return false;
                 }
                 break;
             case 8192:
                 if (!chr.assignMP(calcMpChange(chr, usedAPReset), 1)) {
                     chr.message("Couldn't execute AP assign operation.");
-                    chr.sendPacket(PacketCreator.enableActions());
+                    chr.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                     return false;
                 }
                 break;
             default:
-                chr.sendPacket(PacketCreator.updatePlayerStats(PacketCreator.EMPTY_STATUPDATE, true, chr));
+                chr.sendPacket(ChannelPacketCreator.getInstance().updatePlayerStats(ChannelPacketCreator.getInstance().EMPTY_STATUPDATE, true, chr));
                 return false;
         }
         return true;
@@ -884,47 +876,55 @@ public class AssignAPProcessor {
         int offset = 0;
 
         if (job == Job.WARRIOR ||
-            job.isA(Job.PAGE) ||
-            job.isA(Job.SPEARMAN) ||
-            job == Job.DAWNWARRIOR1 ||
-            job == Job.ARAN1) {
-            multiplier = 24; offset = 118;
+                job.isA(Job.PAGE) ||
+                job.isA(Job.SPEARMAN) ||
+                job == Job.DAWNWARRIOR1 ||
+                job == Job.ARAN1) {
+            multiplier = 24;
+            offset = 118;
 
         } else if (job.isA(Job.FIGHTER) ||
-                   job.isA(Job.DAWNWARRIOR2) ||
-                   job.isA(Job.ARAN2)) {
-            multiplier = 24; offset = 418;
+                job.isA(Job.DAWNWARRIOR2) ||
+                job.isA(Job.ARAN2)) {
+            multiplier = 24;
+            offset = 418;
 
         } else if (job.isA(Job.MAGICIAN) ||
-                   job.isA(Job.BLAZEWIZARD1)) {
-            multiplier = 10; offset = 54;
+                job.isA(Job.BLAZEWIZARD1)) {
+            multiplier = 10;
+            offset = 54;
 
         } else if (job == Job.BOWMAN ||
-                   job == Job.THIEF ||
-                   job == Job.WINDARCHER1 ||
-                   job == Job.NIGHTWALKER1) {
-            multiplier = 20; offset = 58;
+                job == Job.THIEF ||
+                job == Job.WINDARCHER1 ||
+                job == Job.NIGHTWALKER1) {
+            multiplier = 20;
+            offset = 58;
 
         } else if (job.isA(Job.HUNTER) ||
-                   job.isA(Job.CROSSBOWMAN) ||
-                   job.isA(Job.ASSASSIN) ||
-                   job.isA(Job.BANDIT) ||
-                   job.isA(Job.WINDARCHER2) ||
-                   job.isA(Job.NIGHTWALKER2)) {
-            multiplier = 20; offset = 358;
+                job.isA(Job.CROSSBOWMAN) ||
+                job.isA(Job.ASSASSIN) ||
+                job.isA(Job.BANDIT) ||
+                job.isA(Job.WINDARCHER2) ||
+                job.isA(Job.NIGHTWALKER2)) {
+            multiplier = 20;
+            offset = 358;
 
         } else if (job == Job.PIRATE ||
-                   job == Job.THUNDERBREAKER1) {
-            multiplier = 22; offset = 38;
+                job == Job.THUNDERBREAKER1) {
+            multiplier = 22;
+            offset = 38;
 
         } else if (job.isA(Job.BRAWLER) ||
-                   job.isA(Job.GUNSLINGER) ||
-                   job.isA(Job.THUNDERBREAKER2)) {
-            multiplier = 22; offset = 338;
+                job.isA(Job.GUNSLINGER) ||
+                job.isA(Job.THUNDERBREAKER2)) {
+            multiplier = 22;
+            offset = 338;
 
         } else if (job == Job.BEGINNER ||
-                   job == Job.NOBLESSE) {
-            multiplier = 12; offset = 38;
+                job == Job.NOBLESSE) {
+            multiplier = 12;
+            offset = 38;
         }
 
         return (multiplier * level) + offset;
@@ -935,51 +935,60 @@ public class AssignAPProcessor {
         int offset = 0;
 
         if (job == Job.WARRIOR ||
-            job.isA(Job.FIGHTER) ||
-            job.isA(Job.DAWNWARRIOR1) ||
-            job.isA(Job.ARAN1)) {
-            multiplier = 4; offset = 55;
+                job.isA(Job.FIGHTER) ||
+                job.isA(Job.DAWNWARRIOR1) ||
+                job.isA(Job.ARAN1)) {
+            multiplier = 4;
+            offset = 55;
 
         } else if (job.isA(Job.PAGE) ||
-                   job.isA(Job.SPEARMAN)) {
-            multiplier = 4; offset = 155;
+                job.isA(Job.SPEARMAN)) {
+            multiplier = 4;
+            offset = 155;
 
         } else if (job == Job.MAGICIAN ||
-                   job == Job.BLAZEWIZARD1) {
-            multiplier = 22; offset = -1;
+                job == Job.BLAZEWIZARD1) {
+            multiplier = 22;
+            offset = -1;
 
         } else if (job.isA(Job.FP_WIZARD) ||
-                   job.isA(Job.IL_WIZARD) ||
-                   job.isA(Job.CLERIC) ||
-                   job.isA(Job.BLAZEWIZARD2)) {
-            multiplier = 22; offset = 449;
+                job.isA(Job.IL_WIZARD) ||
+                job.isA(Job.CLERIC) ||
+                job.isA(Job.BLAZEWIZARD2)) {
+            multiplier = 22;
+            offset = 449;
 
         } else if (job == Job.BOWMAN ||
-                   job == Job.THIEF ||
-                   job == Job.WINDARCHER1 ||
-                   job == Job.NIGHTWALKER1) {
-            multiplier = 14; offset = -15;
+                job == Job.THIEF ||
+                job == Job.WINDARCHER1 ||
+                job == Job.NIGHTWALKER1) {
+            multiplier = 14;
+            offset = -15;
 
         } else if (job.isA(Job.HUNTER) ||
-                   job.isA(Job.CROSSBOWMAN) ||
-                   job.isA(Job.ASSASSIN) ||
-                   job.isA(Job.BANDIT) ||
-                   job.isA(Job.WINDARCHER2) ||
-                   job.isA(Job.NIGHTWALKER2)) {
-            multiplier = 14; offset = 135;
+                job.isA(Job.CROSSBOWMAN) ||
+                job.isA(Job.ASSASSIN) ||
+                job.isA(Job.BANDIT) ||
+                job.isA(Job.WINDARCHER2) ||
+                job.isA(Job.NIGHTWALKER2)) {
+            multiplier = 14;
+            offset = 135;
 
         } else if (job == Job.PIRATE ||
-                   job == Job.THUNDERBREAKER1) {
-            multiplier = 18; offset = -55;
+                job == Job.THUNDERBREAKER1) {
+            multiplier = 18;
+            offset = -55;
 
         } else if (job.isA(Job.BRAWLER) ||
-                   job.isA(Job.GUNSLINGER) ||
-                   job.isA(Job.THUNDERBREAKER2)) {
-            multiplier = 18; offset = 95;
+                job.isA(Job.GUNSLINGER) ||
+                job.isA(Job.THUNDERBREAKER2)) {
+            multiplier = 18;
+            offset = 95;
 
         } else if (job == Job.BEGINNER ||
-                   job == Job.NOBLESSE) {
-            multiplier = 10; offset = -5;
+                job == Job.NOBLESSE) {
+            multiplier = 10;
+            offset = -5;
         }
 
         return (multiplier * level) + offset;

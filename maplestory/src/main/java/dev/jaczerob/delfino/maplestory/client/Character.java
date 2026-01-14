@@ -40,7 +40,6 @@ import dev.jaczerob.delfino.maplestory.constants.id.MapId;
 import dev.jaczerob.delfino.maplestory.constants.id.MobId;
 import dev.jaczerob.delfino.maplestory.constants.inventory.ItemConstants;
 import dev.jaczerob.delfino.maplestory.constants.skills.*;
-import dev.jaczerob.delfino.maplestory.net.packet.Packet;
 import dev.jaczerob.delfino.maplestory.net.server.PlayerBuffValueHolder;
 import dev.jaczerob.delfino.maplestory.net.server.PlayerCoolDownValueHolder;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
@@ -73,6 +72,7 @@ import dev.jaczerob.delfino.maplestory.server.partyquest.PartyQuest;
 import dev.jaczerob.delfino.maplestory.server.quest.Quest;
 import dev.jaczerob.delfino.maplestory.tools.*;
 import dev.jaczerob.delfino.maplestory.tools.packets.WeddingPackets;
+import dev.jaczerob.delfino.network.packets.Packet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -294,7 +294,7 @@ public class Character extends AbstractCharacterObject {
                     statup.add(new Pair<>(s.getKey(), s.getValue()));
                 }
 
-                sendPacket(PacketCreator.updatePlayerStats(statup, true, Character.this));
+                sendPacket(ChannelPacketCreator.getInstance().updatePlayerStats(statup, true, Character.this));
             }
         });
 
@@ -756,7 +756,7 @@ public class Character extends AbstractCharacterObject {
         }
         combocounter = (short) Math.min(30000, count);
         if (count > 0) {
-            sendPacket(PacketCreator.showCombo(combocounter));
+            sendPacket(ChannelPacketCreator.getInstance().showCombo(combocounter));
         }
     }
 
@@ -822,13 +822,13 @@ public class Character extends AbstractCharacterObject {
         if (isGM() && hide != this.hidden) {
             if (!hide) {
                 this.hidden = false;
-                sendPacket(PacketCreator.getGMEffect(0x10, (byte) 0));
+                sendPacket(ChannelPacketCreator.getInstance().getGMEffect(0x10, (byte) 0));
                 List<BuffStat> dsstat = Collections.singletonList(BuffStat.DARKSIGHT);
-                getMap().broadcastGMMessage(this, PacketCreator.cancelForeignBuff(id, dsstat), false);
+                getMap().broadcastGMMessage(this, ChannelPacketCreator.getInstance().cancelForeignBuff(id, dsstat), false);
                 getMap().broadcastSpawnPlayerMapObjectMessage(this, this, false);
 
                 for (Summon ms : this.getSummonsValues()) {
-                    getMap().broadcastNONGMMessage(this, PacketCreator.spawnSummon(ms, false), false);
+                    getMap().broadcastNONGMMessage(this, ChannelPacketCreator.getInstance().spawnSummon(ms, false), false);
                 }
 
                 for (MapObject mo : this.getMap().getMonsters()) {
@@ -837,15 +837,15 @@ public class Character extends AbstractCharacterObject {
                 }
             } else {
                 this.hidden = true;
-                sendPacket(PacketCreator.getGMEffect(0x10, (byte) 1));
+                sendPacket(ChannelPacketCreator.getInstance().getGMEffect(0x10, (byte) 1));
                 if (!login) {
-                    getMap().broadcastNONGMMessage(this, PacketCreator.removePlayerFromMap(getId()), false);
+                    getMap().broadcastNONGMMessage(this, ChannelPacketCreator.getInstance().removePlayerFromMap(getId()), false);
                 }
                 List<Pair<BuffStat, Integer>> ldsstat = Collections.singletonList(new Pair<BuffStat, Integer>(BuffStat.DARKSIGHT, 0));
-                getMap().broadcastGMMessage(this, PacketCreator.giveForeignBuff(id, ldsstat), false);
+                getMap().broadcastGMMessage(this, ChannelPacketCreator.getInstance().giveForeignBuff(id, ldsstat), false);
                 this.releaseControlledMonsters();
             }
-            sendPacket(PacketCreator.enableActions());
+            sendPacket(ChannelPacketCreator.getInstance().enableActions());
         }
     }
 
@@ -870,9 +870,9 @@ public class Character extends AbstractCharacterObject {
     private void cancelPlayerBuffs(List<BuffStat> buffstats) {
         if (client.getChannelServer().getPlayerStorage().getCharacterById(getId()) != null) {
             updateLocalStats();
-            sendPacket(PacketCreator.cancelBuff(buffstats));
+            sendPacket(ChannelPacketCreator.getInstance().cancelBuff(buffstats));
             if (buffstats.size() > 0) {
-                getMap().broadcastMessage(this, PacketCreator.cancelForeignBuff(getId(), buffstats), false);
+                getMap().broadcastMessage(this, ChannelPacketCreator.getInstance().cancelForeignBuff(getId(), buffstats), false);
             }
         }
     }
@@ -1033,7 +1033,7 @@ public class Character extends AbstractCharacterObject {
                 MapleMap map = thisChr.getMap();
 
                 if (map != null) {
-                    map.broadcastMessage(thisChr, PacketCreator.showForeignEffect(thisChr.getId(), 8), false);
+                    map.broadcastMessage(thisChr, ChannelPacketCreator.getInstance().showForeignEffect(thisChr.getId(), 8), false);
                 }
             }
         }, 777);
@@ -1136,7 +1136,7 @@ public class Character extends AbstractCharacterObject {
             statup.add(new Pair<>(Stat.AVAILABLEAP, remainingAp));
             statup.add(new Pair<>(Stat.AVAILABLESP, remainingSp[GameConstants.getSkillBook(job.getId())]));
             statup.add(new Pair<>(Stat.JOB, job.getId()));
-            sendPacket(PacketCreator.updatePlayerStats(statup, true, this));
+            sendPacket(ChannelPacketCreator.getInstance().updatePlayerStats(statup, true, this));
         } finally {
             statWlock.unlock();
             effLock.unlock();
@@ -1146,16 +1146,16 @@ public class Character extends AbstractCharacterObject {
         silentPartyUpdate();
 
         if (dragon != null) {
-            getMap().broadcastMessage(PacketCreator.removeDragon(dragon.getObjectId()));
+            getMap().broadcastMessage(ChannelPacketCreator.getInstance().removeDragon(dragon.getObjectId()));
             dragon = null;
         }
 
         if (this.guildid > 0) {
-            getGuild().broadcast(PacketCreator.jobMessage(0, job.getId(), name), this.getId());
+            getGuild().broadcast(ChannelPacketCreator.getInstance().jobMessage(0, job.getId(), name), this.getId());
         }
         Family family = getFamily();
         if (family != null) {
-            family.broadcast(PacketCreator.jobMessage(1, job.getId(), name), this.getId());
+            family.broadcast(ChannelPacketCreator.getInstance().jobMessage(1, job.getId(), name), this.getId());
         }
         setMasteries(this.job.getId());
         guildUpdate();
@@ -1177,7 +1177,7 @@ public class Character extends AbstractCharacterObject {
     }
 
     public void broadcastAcquaintances(int type, String message) {
-        broadcastAcquaintances(PacketCreator.serverNotice(type, message));
+        broadcastAcquaintances(ChannelPacketCreator.getInstance().serverNotice(type, message));
     }
 
     public void broadcastAcquaintances(Packet packet) {
@@ -1218,7 +1218,7 @@ public class Character extends AbstractCharacterObject {
     }
 
     public void broadcastStance() {
-        map.broadcastMessage(this, PacketCreator.movePlayer(id, this.getIdleMovement(), AbstractAnimatedMapObject.IDLE_MOVEMENT_PACKET_LENGTH), false);
+        map.broadcastMessage(this, ChannelPacketCreator.getInstance().movePlayer(id, this.getIdleMovement(), AbstractAnimatedMapObject.IDLE_MOVEMENT_PACKET_LENGTH), false);
     }
 
     public MapleMap getWarpMap(int map) {
@@ -1331,7 +1331,7 @@ public class Character extends AbstractCharacterObject {
         if (pto == null) {
             pto = to.getPortal(0);
         }
-        changeMapInternal(to, pto.getPosition(), PacketCreator.getWarpToMap(to, pto.getId(), this));
+        changeMapInternal(to, pto.getPosition(), ChannelPacketCreator.getInstance().getWarpToMap(to, pto.getId(), this));
         canWarpMap = false;
 
         canWarpCounter--;
@@ -1347,7 +1347,7 @@ public class Character extends AbstractCharacterObject {
 
         eventChangedMap(target.getId());
         MapleMap to = getWarpMap(target.getId());
-        changeMapInternal(to, pos, PacketCreator.getWarpToMap(to, 0x80, pos, this));
+        changeMapInternal(to, pos, ChannelPacketCreator.getInstance().getWarpToMap(to, 0x80, pos, this));
         canWarpMap = false;
 
         canWarpCounter--;
@@ -1382,7 +1382,7 @@ public class Character extends AbstractCharacterObject {
         if (pto == null) {
             pto = to.getPortal(0);
         }
-        changeMapInternal(to, pto.getPosition(), PacketCreator.getWarpToMap(to, pto.getId(), this));
+        changeMapInternal(to, pto.getPosition(), ChannelPacketCreator.getInstance().getWarpToMap(to, pto.getId(), this));
         canWarpMap = false;
 
         canWarpCounter--;
@@ -1626,7 +1626,7 @@ public class Character extends AbstractCharacterObject {
         if (partnerId > 0) {
             final Character partner = getWorldServer().getPlayerStorage().getCharacterById(partnerId);
             if (partner != null && !partner.isAwayFromWorld()) {
-                partner.sendPacket(WeddingPackets.OnNotifyWeddingPartnerTransfer(id, mapid));
+                partner.sendPacket(WeddingPackets.getInstance().OnNotifyWeddingPartnerTransfer(id, mapid));
             }
         }
     }
@@ -1664,7 +1664,7 @@ public class Character extends AbstractCharacterObject {
             try {
                 if (party != null) {
                     mpc.setMapId(to.getId());
-                    sendPacket(PacketCreator.updateParty(client.getChannel(), party, PartyOperation.SILENT_UPDATE, null));
+                    sendPacket(ChannelPacketCreator.getInstance().updateParty(client.getChannel(), party, PartyOperation.SILENT_UPDATE, null));
                     updatePartyMemberHPInternal();
                 }
             } finally {
@@ -1697,7 +1697,7 @@ public class Character extends AbstractCharacterObject {
             }
 
             // if this map has obstacle components moving, make it do so for this client
-            sendPacket(PacketCreator.environmentMoveList(map.getEnvironment().entrySet()));
+            sendPacket(ChannelPacketCreator.getInstance().environmentMoveList(map.getEnvironment().entrySet()));
         }
     }
 
@@ -1717,11 +1717,11 @@ public class Character extends AbstractCharacterObject {
         if (newLevel > -1) {
             skills.put(skill, new SkillEntry(newLevel, newMasterlevel, expiration));
             if (!GameConstants.isHiddenSkills(skill.getId())) {
-                sendPacket(PacketCreator.updateSkill(skill.getId(), newLevel, newMasterlevel, expiration));
+                sendPacket(ChannelPacketCreator.getInstance().updateSkill(skill.getId(), newLevel, newMasterlevel, expiration));
             }
         } else {
             skills.remove(skill);
-            sendPacket(PacketCreator.updateSkill(skill.getId(), newLevel, newMasterlevel, -1)); //Shouldn't use expiration anymore :)
+            sendPacket(ChannelPacketCreator.getInstance().updateSkill(skill.getId(), newLevel, newMasterlevel, -1)); //Shouldn't use expiration anymore :)
             try (Connection con = DatabaseConnection.getStaticConnection();
                  PreparedStatement ps = con.prepareStatement("DELETE FROM skills WHERE skillid = ? AND characterid = ?")) {
                 ps.setInt(1, skill.getId());
@@ -1758,11 +1758,11 @@ public class Character extends AbstractCharacterObject {
                             return;
                         }
 
-                        sendPacket(PacketCreator.showOwnBerserk(skilllevel, berserk));
+                        sendPacket(ChannelPacketCreator.getInstance().showOwnBerserk(skilllevel, berserk));
                         if (!isHidden) {
-                            getMap().broadcastMessage(Character.this, PacketCreator.showBerserk(getId(), skilllevel, berserk), false);
+                            getMap().broadcastMessage(Character.this, ChannelPacketCreator.getInstance().showBerserk(getId(), skilllevel, berserk), false);
                         } else {
-                            getMap().broadcastGMMessage(Character.this, PacketCreator.showBerserk(getId(), skilllevel, berserk), false);
+                            getMap().broadcastGMMessage(Character.this, ChannelPacketCreator.getInstance().showBerserk(getId(), skilllevel, berserk), false);
                         }
                     }
                 }, 5000, 3000);
@@ -1882,7 +1882,7 @@ public class Character extends AbstractCharacterObject {
 
         if (ob instanceof MapItem mapitem) {
             if (System.currentTimeMillis() - mapitem.getDropTime() < 400 || !mapitem.canBePickedBy(this)) {
-                sendPacket(PacketCreator.enableActions());
+                sendPacket(ChannelPacketCreator.getInstance().enableActions());
                 return;
             }
 
@@ -1895,13 +1895,13 @@ public class Character extends AbstractCharacterObject {
             mapitem.lockItem();
             try {
                 if (mapitem.isPickedUp()) {
-                    sendPacket(PacketCreator.showItemUnavailable());
-                    sendPacket(PacketCreator.enableActions());
+                    sendPacket(ChannelPacketCreator.getInstance().showItemUnavailable());
+                    sendPacket(ChannelPacketCreator.getInstance().enableActions());
                     return;
                 }
 
                 boolean isPet = petIndex > -1;
-                final Packet pickupPacket = PacketCreator.removeItemFromMap(mapitem.getObjectId(), (isPet) ? 5 : 2, this.getId(), isPet, petIndex);
+                final Packet pickupPacket = ChannelPacketCreator.getInstance().removeItemFromMap(mapitem.getObjectId(), (isPet) ? 5 : 2, this.getId(), isPet, petIndex);
 
                 Item mItem = mapitem.getItem();
                 boolean hasSpaceInventory = true;
@@ -1937,21 +1937,21 @@ public class Character extends AbstractCharacterObject {
                             } else if (InventoryManipulator.addFromDrop(client, mItem, true)) {
                                 this.getMap().pickItemDrop(pickupPacket, mapitem);
                             } else {
-                                sendPacket(PacketCreator.enableActions());
+                                sendPacket(ChannelPacketCreator.getInstance().enableActions());
                                 return;
                             }
                         } else {
-                            sendPacket(PacketCreator.showItemUnavailable());
-                            sendPacket(PacketCreator.enableActions());
+                            sendPacket(ChannelPacketCreator.getInstance().showItemUnavailable());
+                            sendPacket(ChannelPacketCreator.getInstance().enableActions());
                             return;
                         }
-                        sendPacket(PacketCreator.enableActions());
+                        sendPacket(ChannelPacketCreator.getInstance().enableActions());
                         return;
                     }
 
                     if (!this.needQuestItem(mapitem.getQuest(), mapitem.getItemId())) {
-                        sendPacket(PacketCreator.showItemUnavailable());
-                        sendPacket(PacketCreator.enableActions());
+                        sendPacket(ChannelPacketCreator.getInstance().showItemUnavailable());
+                        sendPacket(ChannelPacketCreator.getInstance().enableActions());
                         return;
                     }
 
@@ -1972,7 +1972,7 @@ public class Character extends AbstractCharacterObject {
                             itemScript = info;
                         } else {
                             if (!InventoryManipulator.addFromDrop(client, mItem, true)) {
-                                sendPacket(PacketCreator.enableActions());
+                                sendPacket(ChannelPacketCreator.getInstance().enableActions());
                                 return;
                             }
                         }
@@ -1990,14 +1990,14 @@ public class Character extends AbstractCharacterObject {
                             updateAriantScore();
                         }
                     } else {
-                        sendPacket(PacketCreator.enableActions());
+                        sendPacket(ChannelPacketCreator.getInstance().enableActions());
                         return;
                     }
 
                     this.getMap().pickItemDrop(pickupPacket, mapitem);
                 } else if (!hasSpaceInventory) {
-                    sendPacket(PacketCreator.getInventoryFull());
-                    sendPacket(PacketCreator.getShowInventoryFull());
+                    sendPacket(ChannelPacketCreator.getInstance().getInventoryFull());
+                    sendPacket(ChannelPacketCreator.getInstance().getShowInventoryFull());
                 }
             } finally {
                 mapitem.unlockItem();
@@ -2008,7 +2008,7 @@ public class Character extends AbstractCharacterObject {
                 ism.runItemScript(client, itemScript);
             }
         }
-        sendPacket(PacketCreator.enableActions());
+        sendPacket(ChannelPacketCreator.getInstance().enableActions());
     }
 
     public int countItem(int itemid) {
@@ -2040,7 +2040,7 @@ public class Character extends AbstractCharacterObject {
     }
 
     public void announceBattleshipHp() {
-        sendPacket(PacketCreator.skillCooldown(5221999, battleshipHp));
+        sendPacket(ChannelPacketCreator.getInstance().skillCooldown(5221999, battleshipHp));
     }
 
     public void decreaseBattleshipHp(int decrease) {
@@ -2048,7 +2048,7 @@ public class Character extends AbstractCharacterObject {
         if (battleshipHp <= 0) {
             Skill battleship = SkillFactory.getSkill(Corsair.BATTLE_SHIP);
             int cooldown = battleship.getEffect(getSkillLevel(battleship)).getCooldown();
-            sendPacket(PacketCreator.skillCooldown(Corsair.BATTLE_SHIP, cooldown));
+            sendPacket(ChannelPacketCreator.getInstance().skillCooldown(Corsair.BATTLE_SHIP, cooldown));
             addCooldown(Corsair.BATTLE_SHIP, Server.getInstance().getCurrentTime(), SECONDS.toMillis(cooldown));
             removeCooldown(5221999);
             cancelEffectFromBuffStat(BuffStat.MONSTER_RIDING);
@@ -2080,7 +2080,7 @@ public class Character extends AbstractCharacterObject {
     private void nextPendingRequest(Client c) {
         CharacterNameAndId pendingBuddyRequest = c.getPlayer().getBuddylist().pollPendingRequest();
         if (pendingBuddyRequest != null) {
-            c.sendPacket(PacketCreator.requestBuddylistAdd(pendingBuddyRequest.getId(), c.getPlayer().getId(), pendingBuddyRequest.getName()));
+            c.sendPacket(ChannelPacketCreator.getInstance().requestBuddylistAdd(pendingBuddyRequest.getId(), c.getPlayer().getId(), pendingBuddyRequest.getName()));
         }
     }
 
@@ -2098,7 +2098,7 @@ public class Character extends AbstractCharacterObject {
             notifyRemoteChannel(client, getWorldServer().find(otherCid), otherCid, BuddyList.BuddyOperation.DELETED);
         }
         bl.remove(otherCid);
-        sendPacket(PacketCreator.updateBuddylist(getBuddylist().getBuddies()));
+        sendPacket(ChannelPacketCreator.getInstance().updateBuddylist(getBuddylist().getBuddies()));
         nextPendingRequest(client);
     }
 
@@ -2423,8 +2423,8 @@ public class Character extends AbstractCharacterObject {
                     if (Character.this.getHp() < localmaxhp) {
                         byte recHP = (byte) (healHP / YamlConfig.config.server.CHAIR_EXTRA_HEAL_MULTIPLIER);
 
-                        sendPacket(PacketCreator.showOwnRecovery(recHP));
-                        getMap().broadcastMessage(Character.this, PacketCreator.showRecovery(id, recHP), false);
+                        sendPacket(ChannelPacketCreator.getInstance().showOwnRecovery(recHP));
+                        getMap().broadcastMessage(Character.this, ChannelPacketCreator.getInstance().showRecovery(id, recHP), false);
                     } else if (Character.this.getMp() >= localmaxmp) {
                         stopChairTask();    // optimizing schedule management when player is already with full pool.
                     }
@@ -2471,8 +2471,8 @@ public class Character extends AbstractCharacterObject {
 
                 if (Character.this.getHp() < localmaxhp) {
                     if (healHP > 0) {
-                        sendPacket(PacketCreator.showOwnRecovery(healHP));
-                        getMap().broadcastMessage(Character.this, PacketCreator.showRecovery(id, healHP), false);
+                        sendPacket(ChannelPacketCreator.getInstance().showOwnRecovery(healHP));
+                        getMap().broadcastMessage(Character.this, ChannelPacketCreator.getInstance().showRecovery(id, healHP), false);
                     }
                 }
 
@@ -2579,9 +2579,9 @@ public class Character extends AbstractCharacterObject {
             final List<Pair<Disease, Integer>> debuff = Collections.singletonList(new Pair<>(disease, Integer.valueOf(skill.getX())));
 
             if (disease != Disease.SLOW) {
-                map.broadcastMessage(PacketCreator.giveForeignDebuff(id, debuff, skill));
+                map.broadcastMessage(ChannelPacketCreator.getInstance().giveForeignDebuff(id, debuff, skill));
             } else {
-                map.broadcastMessage(PacketCreator.giveForeignSlowDebuff(id, debuff, skill));
+                map.broadcastMessage(ChannelPacketCreator.getInstance().giveForeignSlowDebuff(id, debuff, skill));
             }
         }
     }
@@ -2596,9 +2596,9 @@ public class Character extends AbstractCharacterObject {
                 final List<Pair<Disease, Integer>> debuff = Collections.singletonList(new Pair<>(disease, Integer.valueOf(skill.getX())));
 
                 if (disease != Disease.SLOW) {
-                    this.sendPacket(PacketCreator.giveForeignDebuff(cid, debuff, skill));
+                    this.sendPacket(ChannelPacketCreator.getInstance().giveForeignDebuff(cid, debuff, skill));
                 } else {
-                    this.sendPacket(PacketCreator.giveForeignSlowDebuff(cid, debuff, skill));
+                    this.sendPacket(ChannelPacketCreator.getInstance().giveForeignSlowDebuff(cid, debuff, skill));
                 }
             }
         }
@@ -2626,12 +2626,12 @@ public class Character extends AbstractCharacterObject {
             }
 
             final List<Pair<Disease, Integer>> debuff = Collections.singletonList(new Pair<>(disease, Integer.valueOf(skill.getX())));
-            sendPacket(PacketCreator.giveDebuff(debuff, skill));
+            sendPacket(ChannelPacketCreator.getInstance().giveDebuff(debuff, skill));
 
             if (disease != Disease.SLOW) {
-                map.broadcastMessage(this, PacketCreator.giveForeignDebuff(id, debuff, skill), false);
+                map.broadcastMessage(this, ChannelPacketCreator.getInstance().giveForeignDebuff(id, debuff, skill), false);
             } else {
-                map.broadcastMessage(this, PacketCreator.giveForeignSlowDebuff(id, debuff, skill), false);
+                map.broadcastMessage(this, ChannelPacketCreator.getInstance().giveForeignSlowDebuff(id, debuff, skill), false);
             }
         }
     }
@@ -2639,12 +2639,12 @@ public class Character extends AbstractCharacterObject {
     public void dispelDebuff(Disease debuff) {
         if (hasDisease(debuff)) {
             long mask = debuff.getValue();
-            sendPacket(PacketCreator.cancelDebuff(mask));
+            sendPacket(ChannelPacketCreator.getInstance().cancelDebuff(mask));
 
             if (debuff != Disease.SLOW) {
-                map.broadcastMessage(this, PacketCreator.cancelForeignDebuff(id, mask), false);
+                map.broadcastMessage(this, ChannelPacketCreator.getInstance().cancelForeignDebuff(id, mask), false);
             } else {
-                map.broadcastMessage(this, PacketCreator.cancelForeignSlowDebuff(id), false);
+                map.broadcastMessage(this, ChannelPacketCreator.getInstance().cancelForeignSlowDebuff(id), false);
             }
 
             chrLock.lock();
@@ -2719,7 +2719,7 @@ public class Character extends AbstractCharacterObject {
         // Client allows changing every 2 seconds. Give it a little bit of overhead for packet delays.
         if (timeNow - lastExpression > 1500) {
             lastExpression = timeNow;
-            getMap().broadcastMessage(this, PacketCreator.facialExpression(this, emote), false);
+            getMap().broadcastMessage(this, ChannelPacketCreator.getInstance().facialExpression(this, emote), false);
         }
     }
 
@@ -2734,7 +2734,7 @@ public class Character extends AbstractCharacterObject {
     }
 
     public void dropMessage(int type, String message) {
-        sendPacket(PacketCreator.serverNotice(type, message));
+        sendPacket(ChannelPacketCreator.getInstance().serverNotice(type, message));
     }
 
     public void enteredScript(String script, int mapid) {
@@ -2854,7 +2854,7 @@ public class Character extends AbstractCharacterObject {
                         CooldownValueHolder mcdvh = bel.getValue();
                         if (curTime >= mcdvh.startTime + mcdvh.length) {
                             removeCooldown(mcdvh.skillId);
-                            sendPacket(PacketCreator.skillCooldown(mcdvh.skillId, 0));
+                            sendPacket(ChannelPacketCreator.getInstance().skillCooldown(mcdvh.skillId, 0));
                         }
                     }
                 }
@@ -2899,7 +2899,7 @@ public class Character extends AbstractCharacterObject {
                                 forceUpdateItem(item);   //TEST :3
                             } else if (expiration != -1 && expiration < currenttime) {
                                 if (!ItemConstants.isPet(item.getItemId())) {
-                                    sendPacket(PacketCreator.itemExpired(item.getItemId()));
+                                    sendPacket(ChannelPacketCreator.getInstance().itemExpired(item.getItemId()));
                                     toberemove.add(item);
                                     if (ItemConstants.isRateCoupon(item.getItemId())) {
                                         deletedCoupon = true;
@@ -2911,7 +2911,7 @@ public class Character extends AbstractCharacterObject {
                                     }
 
                                     if (ItemConstants.isExpirablePet(item.getItemId())) {
-                                        sendPacket(PacketCreator.itemExpired(item.getItemId()));
+                                        sendPacket(ChannelPacketCreator.getInstance().itemExpired(item.getItemId()));
                                         toberemove.add(item);
                                     } else {
                                         item.setExpiration(-1);
@@ -2962,7 +2962,7 @@ public class Character extends AbstractCharacterObject {
         final List<ModifyInventory> mods = new LinkedList<>();
         mods.add(new ModifyInventory(3, item));
         mods.add(new ModifyInventory(0, item));
-        sendPacket(PacketCreator.modifyInventory(true, mods));
+        sendPacket(ChannelPacketCreator.getInstance().modifyInventory(true, mods));
     }
 
     public void gainGachaExp() {
@@ -3039,7 +3039,7 @@ public class Character extends AbstractCharacterObject {
             white = false;
         }
 
-        sendPacket(PacketCreator.getShowExpGain((int) gain, equip, party, inChat, white));
+        sendPacket(ChannelPacketCreator.getInstance().getShowExpGain((int) gain, equip, party, inChat, white));
     }
 
     private synchronized void gainExpInternal(long gain, int equip, int party, boolean show, boolean inChat, boolean white) {   // need of method synchonization here detected thanks to MedicOP
@@ -3118,10 +3118,10 @@ public class Character extends AbstractCharacterObject {
             updateSingleStat(Stat.FAME, thisFame);
 
             if (fromPlayer != null) {
-                fromPlayer.sendPacket(PacketCreator.giveFameResponse(mode, getName(), thisFame));
-                sendPacket(PacketCreator.receiveFame(mode, fromPlayer.getName()));
+                fromPlayer.sendPacket(ChannelPacketCreator.getInstance().giveFameResponse(mode, getName(), thisFame));
+                sendPacket(ChannelPacketCreator.getInstance().receiveFame(mode, fromPlayer.getName()));
             } else {
-                sendPacket(PacketCreator.getShowFameGain(delta));
+                sendPacket(ChannelPacketCreator.getInstance().getShowFameGain(delta));
             }
 
             return true;
@@ -3161,10 +3161,10 @@ public class Character extends AbstractCharacterObject {
         if (gain != 0) {
             updateSingleStat(Stat.MESO, (int) nextMeso, enableActions);
             if (show) {
-                sendPacket(PacketCreator.getShowMesoGain(gain, inChat));
+                sendPacket(ChannelPacketCreator.getInstance().getShowMesoGain(gain, inChat));
             }
         } else {
-            sendPacket(PacketCreator.enableActions());
+            sendPacket(ChannelPacketCreator.getInstance().enableActions());
         }
     }
 
@@ -3672,7 +3672,7 @@ public class Character extends AbstractCharacterObject {
 
                         Summon summon = summons.get(summonId);
                         if (summon != null) {
-                            getMap().broadcastMessage(PacketCreator.removeSummon(summon, true), summon.getPosition());
+                            getMap().broadcastMessage(ChannelPacketCreator.getInstance().removeSummon(summon, true), summon.getPosition());
                             getMap().removeMapObject(summon);
                             removeVisibleMapObject(summon);
 
@@ -3995,8 +3995,8 @@ public class Character extends AbstractCharacterObject {
         }
 
         if (!inactiveStats.isEmpty()) {
-            sendPacket(PacketCreator.cancelBuff(inactiveStats));
-            getMap().broadcastMessage(this, PacketCreator.cancelForeignBuff(getId(), inactiveStats), false);
+            sendPacket(ChannelPacketCreator.getInstance().cancelBuff(inactiveStats));
+            getMap().broadcastMessage(this, ChannelPacketCreator.getInstance().cancelForeignBuff(getId(), inactiveStats), false);
         }
     }
 
@@ -4272,7 +4272,7 @@ public class Character extends AbstractCharacterObject {
         if (this.isRidingBattleship()) {
             List<Pair<BuffStat, Integer>> statups = new ArrayList<>(1);
             statups.add(new Pair<>(BuffStat.MONSTER_RIDING, 0));
-            this.sendPacket(PacketCreator.giveBuff(ItemId.BATTLESHIP, 5221006, statups));
+            this.sendPacket(ChannelPacketCreator.getInstance().giveBuff(ItemId.BATTLESHIP, 5221006, statups));
             this.announceBattleshipHp();
         }
     }
@@ -4366,9 +4366,9 @@ public class Character extends AbstractCharacterObject {
                         }
 
                         addHP(healEffect.getHp());
-                        sendPacket(PacketCreator.showOwnBuffEffect(beholder, 2));
-                        getMap().broadcastMessage(Character.this, PacketCreator.summonSkill(getId(), beholder, 5), true);
-                        getMap().broadcastMessage(Character.this, PacketCreator.showOwnBuffEffect(beholder, 2), false);
+                        sendPacket(ChannelPacketCreator.getInstance().showOwnBuffEffect(beholder, 2));
+                        getMap().broadcastMessage(Character.this, ChannelPacketCreator.getInstance().summonSkill(getId(), beholder, 5), true);
+                        getMap().broadcastMessage(Character.this, ChannelPacketCreator.getInstance().showOwnBuffEffect(beholder, 2), false);
                     }
                 }, healInterval, healInterval);
             }
@@ -4384,9 +4384,9 @@ public class Character extends AbstractCharacterObject {
                         }
 
                         buffEffect.applyTo(Character.this);
-                        sendPacket(PacketCreator.showOwnBuffEffect(beholder, 2));
-                        getMap().broadcastMessage(Character.this, PacketCreator.summonSkill(getId(), beholder, (int) (Math.random() * 3) + 6), true);
-                        getMap().broadcastMessage(Character.this, PacketCreator.showBuffEffect(getId(), beholder, 2), false);
+                        sendPacket(ChannelPacketCreator.getInstance().showOwnBuffEffect(beholder, 2));
+                        getMap().broadcastMessage(Character.this, ChannelPacketCreator.getInstance().summonSkill(getId(), beholder, (int) (Math.random() * 3) + 6), true);
+                        getMap().broadcastMessage(Character.this, ChannelPacketCreator.getInstance().showBuffEffect(getId(), beholder, 2), false);
                     }
                 }, buffInterval, buffInterval);
             }
@@ -4418,8 +4418,8 @@ public class Character extends AbstractCharacterObject {
                         }
 
                         addHP(heal);
-                        sendPacket(PacketCreator.showOwnRecovery(heal));
-                        getMap().broadcastMessage(Character.this, PacketCreator.showRecovery(id, heal), false);
+                        sendPacket(ChannelPacketCreator.getInstance().showOwnRecovery(heal));
+                        getMap().broadcastMessage(Character.this, ChannelPacketCreator.getInstance().showRecovery(id, heal), false);
                     }
                 }, healInterval, healInterval);
             } finally {
@@ -4776,7 +4776,7 @@ public class Character extends AbstractCharacterObject {
 
             Set<Integer> exclItems = pe.getValue();
             if (!exclItems.isEmpty()) {
-                sendPacket(PacketCreator.loadExceptionList(this.getId(), pe.getKey(), petIndex, new ArrayList<>(exclItems)));
+                sendPacket(ChannelPacketCreator.getInstance().loadExceptionList(this.getId(), pe.getKey(), petIndex, new ArrayList<>(exclItems)));
 
                 chrLock.lock();
                 try {
@@ -4800,7 +4800,7 @@ public class Character extends AbstractCharacterObject {
 
             Set<Integer> exclItems = pe.getValue();
             if (!exclItems.isEmpty()) {
-                c.sendPacket(PacketCreator.loadExceptionList(this.getId(), pe.getKey(), petIndex, new ArrayList<>(exclItems)));
+                c.sendPacket(ChannelPacketCreator.getInstance().loadExceptionList(this.getId(), pe.getKey(), petIndex, new ArrayList<>(exclItems)));
             }
         }
     }
@@ -5922,10 +5922,10 @@ public class Character extends AbstractCharacterObject {
             }
             List<Pair<BuffStat, Integer>> stat = Collections.singletonList(new Pair<>(BuffStat.ENERGY_CHARGE, energybar));
             setBuffedValue(BuffStat.ENERGY_CHARGE, energybar);
-            sendPacket(PacketCreator.giveBuff(energybar, 0, stat));
-            sendPacket(PacketCreator.showOwnBuffEffect(energycharge.getId(), 2));
-            getMap().broadcastPacket(this, PacketCreator.showBuffEffect(id, energycharge.getId(), 2));
-            getMap().broadcastPacket(this, PacketCreator.giveForeignPirateBuff(id, energycharge.getId(),
+            sendPacket(ChannelPacketCreator.getInstance().giveBuff(energybar, 0, stat));
+            sendPacket(ChannelPacketCreator.getInstance().showOwnBuffEffect(energycharge.getId(), 2));
+            getMap().broadcastPacket(this, ChannelPacketCreator.getInstance().showBuffEffect(id, energycharge.getId(), 2));
+            getMap().broadcastPacket(this, ChannelPacketCreator.getInstance().giveForeignPirateBuff(id, energycharge.getId(),
                     ceffect.getDuration(), stat));
         }
         if (energybar >= 10000 && energybar < 11000) {
@@ -5937,8 +5937,8 @@ public class Character extends AbstractCharacterObject {
                     energybar = 0;
                     List<Pair<BuffStat, Integer>> stat = Collections.singletonList(new Pair<>(BuffStat.ENERGY_CHARGE, energybar));
                     setBuffedValue(BuffStat.ENERGY_CHARGE, energybar);
-                    sendPacket(PacketCreator.giveBuff(energybar, 0, stat));
-                    getMap().broadcastPacket(chr, PacketCreator.cancelForeignFirstDebuff(id, ((long) 1) << 50));
+                    sendPacket(ChannelPacketCreator.getInstance().giveBuff(energybar, 0, stat));
+                    getMap().broadcastPacket(chr, ChannelPacketCreator.getInstance().cancelForeignFirstDebuff(id, ((long) 1) << 50));
                 }
             }, ceffect.getDuration());
         }
@@ -5949,8 +5949,8 @@ public class Character extends AbstractCharacterObject {
         Skill combo = SkillFactory.getSkill(skillid);
         List<Pair<BuffStat, Integer>> stat = Collections.singletonList(new Pair<>(BuffStat.COMBO, 1));
         setBuffedValue(BuffStat.COMBO, 1);
-        sendPacket(PacketCreator.giveBuff(skillid, combo.getEffect(getSkillLevel(combo)).getDuration() + (int) ((getBuffedStarttime(BuffStat.COMBO) - System.currentTimeMillis())), stat));
-        getMap().broadcastMessage(this, PacketCreator.giveForeignBuff(getId(), stat), false);
+        sendPacket(ChannelPacketCreator.getInstance().giveBuff(skillid, combo.getEffect(getSkillLevel(combo)).getDuration() + (int) ((getBuffedStarttime(BuffStat.COMBO) - System.currentTimeMillis())), stat));
+        getMap().broadcastMessage(this, ChannelPacketCreator.getInstance().giveForeignBuff(getId(), stat), false);
     }
 
     public boolean hasEntered(String script) {
@@ -6297,7 +6297,7 @@ public class Character extends AbstractCharacterObject {
                     }
 
                     final String names = (getMedalText() + name);
-                    getWorldServer().broadcastPacket(PacketCreator.serverNotice(6, String.format(LEVEL_200, names, maxClassLevel, names)));
+                    getWorldServer().broadcastPacket(ChannelPacketCreator.getInstance().serverNotice(6, String.format(LEVEL_200, names, maxClassLevel, names)));
                 }
             }
 
@@ -6324,18 +6324,18 @@ public class Character extends AbstractCharacterObject {
             statup.add(new Pair<>(Stat.STR, str));
             statup.add(new Pair<>(Stat.DEX, dex));
 
-            sendPacket(PacketCreator.updatePlayerStats(statup, true, this));
+            sendPacket(ChannelPacketCreator.getInstance().updatePlayerStats(statup, true, this));
         } finally {
             statWlock.unlock();
             effLock.unlock();
         }
 
-        getMap().broadcastMessage(this, PacketCreator.showForeignEffect(getId(), 0), false);
+        getMap().broadcastMessage(this, ChannelPacketCreator.getInstance().showForeignEffect(getId(), 0), false);
         setMPC(new PartyCharacter(this));
         silentPartyUpdate();
 
         if (this.guildid > 0) {
-            getGuild().broadcast(PacketCreator.levelUpMessage(2, level, name), this.getId());
+            getGuild().broadcast(ChannelPacketCreator.getInstance().levelUpMessage(2, level, name), this.getId());
         }
 
         if (level % 20 == 0) {
@@ -6382,7 +6382,7 @@ public class Character extends AbstractCharacterObject {
             if (senior != null) { //only send the message to direct senior
                 Character seniorChr = senior.getChr();
                 if (seniorChr != null) {
-                    seniorChr.sendPacket(PacketCreator.levelUpMessage(1, level, getName()));
+                    seniorChr.sendPacket(ChannelPacketCreator.getInstance().levelUpMessage(1, level, getName()));
                 }
             }
         }
@@ -7305,7 +7305,7 @@ public class Character extends AbstractCharacterObject {
     }
 
     public void yellowMessage(String m) {
-        sendPacket(PacketCreator.sendYellowTip(m));
+        sendPacket(ChannelPacketCreator.getInstance().sendYellowTip(m));
     }
 
     public void raiseQuestMobCount(int id) {
@@ -7354,7 +7354,7 @@ public class Character extends AbstractCharacterObject {
             if (getCP() < losing) {
                 losing = getCP();
             }
-            getMap().broadcastMessage(PacketCreator.playerDiedMessage(getName(), losing, getTeam()));
+            getMap().broadcastMessage(ChannelPacketCreator.getInstance().playerDiedMessage(getName(), losing, getTeam()));
             gainCP(-losing);
             return;
         }
@@ -7413,7 +7413,7 @@ public class Character extends AbstractCharacterObject {
         }
 
         unsitChairInternal();
-        sendPacket(PacketCreator.enableActions());
+        sendPacket(ChannelPacketCreator.getInstance().enableActions());
     }
 
     private void unsitChairInternal() {
@@ -7425,13 +7425,13 @@ public class Character extends AbstractCharacterObject {
 
             setChair(-1);
             if (unregisterChairBuff()) {
-                getMap().broadcastMessage(this, PacketCreator.cancelForeignChairSkillEffect(this.getId()), false);
+                getMap().broadcastMessage(this, ChannelPacketCreator.getInstance().cancelForeignChairSkillEffect(this.getId()), false);
             }
 
-            getMap().broadcastMessage(this, PacketCreator.showChair(this.getId(), 0), false);
+            getMap().broadcastMessage(this, ChannelPacketCreator.getInstance().showChair(this.getId(), 0), false);
         }
 
-        sendPacket(PacketCreator.cancelChair(-1));
+        sendPacket(ChannelPacketCreator.getInstance().cancelChair(-1));
     }
 
     public void sitChair(int itemId) {
@@ -7439,16 +7439,16 @@ public class Character extends AbstractCharacterObject {
             if (itemId >= 1000000) {    // sit on item chair
                 if (chair.get() < 0) {
                     setChair(itemId);
-                    getMap().broadcastMessage(this, PacketCreator.showChair(this.getId(), itemId), false);
+                    getMap().broadcastMessage(this, ChannelPacketCreator.getInstance().showChair(this.getId(), itemId), false);
                 }
-                sendPacket(PacketCreator.enableActions());
+                sendPacket(ChannelPacketCreator.getInstance().enableActions());
             } else if (itemId >= 0) {    // sit on map chair
                 if (chair.get() < 0) {
                     setChair(itemId);
                     if (registerChairBuff()) {
-                        getMap().broadcastMessage(this, PacketCreator.giveForeignChairSkillEffect(this.getId()), false);
+                        getMap().broadcastMessage(this, ChannelPacketCreator.getInstance().giveForeignChairSkillEffect(this.getId()), false);
                     }
-                    sendPacket(PacketCreator.cancelChair(itemId));
+                    sendPacket(ChannelPacketCreator.getInstance().cancelChair(itemId));
                 }
             } else {    // stand up
                 unsitChairInternal();
@@ -7493,8 +7493,8 @@ public class Character extends AbstractCharacterObject {
                 }
 
                 addHP(-bloodEffect.getX());
-                sendPacket(PacketCreator.showOwnBuffEffect(bloodEffect.getSourceId(), 5));
-                getMap().broadcastMessage(Character.this, PacketCreator.showBuffEffect(getId(), bloodEffect.getSourceId(), 5), false);
+                sendPacket(ChannelPacketCreator.getInstance().showOwnBuffEffect(bloodEffect.getSourceId(), 5));
+                getMap().broadcastMessage(Character.this, ChannelPacketCreator.getInstance().showBuffEffect(getId(), bloodEffect.getSourceId(), 5), false);
             }
         }, 4000, 4000);
     }
@@ -7719,7 +7719,7 @@ public class Character extends AbstractCharacterObject {
             enforceMaxHpMp();
 
             if (!hpmpupdate.isEmpty()) {
-                sendPacket(PacketCreator.updatePlayerStats(hpmpupdate, true, this));
+                sendPacket(ChannelPacketCreator.getInstance().updatePlayerStats(hpmpupdate, true, this));
             }
 
             if (oldmaxhp != localmaxhp) {   // thanks Wh1SK3Y (Suwaidy) for pointing out a deadlock occuring related to party members HP
@@ -7737,7 +7737,7 @@ public class Character extends AbstractCharacterObject {
         try {
             if (party != null) {
                 for (Character partychar : this.getPartyMembersOnSameMap()) {
-                    sendPacket(PacketCreator.updatePartyMemberHP(partychar.getId(), partychar.getHp(), partychar.getCurrentMaxHp()));
+                    sendPacket(ChannelPacketCreator.getInstance().updatePartyMemberHP(partychar.getId(), partychar.getHp(), partychar.getCurrentMaxHp()));
                 }
             }
         } finally {
@@ -7754,7 +7754,7 @@ public class Character extends AbstractCharacterObject {
                 if (mcvh.skillId != id) {
                     coolDowns.remove(mcvh.skillId);
                     if (packet) {
-                        sendPacket(PacketCreator.skillCooldown(mcvh.skillId, 0));
+                        sendPacket(ChannelPacketCreator.getInstance().skillCooldown(mcvh.skillId, 0));
                     }
                 }
             }
@@ -8547,7 +8547,7 @@ public class Character extends AbstractCharacterObject {
     }
 
     public void sendPolice(int greason, String reason, int duration) {
-        sendPacket(PacketCreator.sendPolice(String.format("You have been blocked by the#b %s Police for %s.#k", "Cosmic", reason)));
+        sendPacket(ChannelPacketCreator.getInstance().sendPolice(String.format("You have been blocked by the#b %s Police for %s.#k", "Cosmic", reason)));
         this.isbanned = true;
         TimerManager.getInstance().schedule(new Runnable() {
             @Override
@@ -8560,7 +8560,7 @@ public class Character extends AbstractCharacterObject {
     public void sendPolice(String text) {
         final String message = getName() + " received this - " + text;
         if (Server.getInstance().isGmOnline(this.getWorld())) { //Alert and log if a GM is online
-            Server.getInstance().broadcastGMMessage(this.getWorld(), PacketCreator.sendYellowTip(message));
+            Server.getInstance().broadcastGMMessage(this.getWorld(), ChannelPacketCreator.getInstance().sendYellowTip(message));
         } else { //Auto DC and log if no GM is online
             client.disconnect(false, false);
         }
@@ -8577,7 +8577,7 @@ public class Character extends AbstractCharacterObject {
     }
 
     public void sendKeymap() {
-        sendPacket(PacketCreator.getKeymap(keymap));
+        sendPacket(ChannelPacketCreator.getInstance().getKeymap(keymap));
     }
 
     public void sendQuickmap() {
@@ -8588,12 +8588,12 @@ public class Character extends AbstractCharacterObject {
             pQuickslotKeyMapped = new QuickslotBinding(QuickslotBinding.DEFAULT_QUICKSLOTS);
         }
 
-        this.sendPacket(PacketCreator.QuickslotMappedInit(pQuickslotKeyMapped));
+        this.sendPacket(ChannelPacketCreator.getInstance().QuickslotMappedInit(pQuickslotKeyMapped));
     }
 
     public void sendMacros() {
         // Always send the macro packet to fix a client side bug when switching characters.
-        sendPacket(PacketCreator.getMacros(skillMacros));
+        sendPacket(ChannelPacketCreator.getInstance().getMacros(skillMacros));
     }
 
     public SkillMacro[] getMacros() {
@@ -8614,7 +8614,7 @@ public class Character extends AbstractCharacterObject {
 
     public void setBuddyCapacity(int capacity) {
         buddylist.setCapacity(capacity);
-        sendPacket(PacketCreator.updateBuddyCapacity(capacity));
+        sendPacket(ChannelPacketCreator.getInstance().updateBuddyCapacity(capacity));
     }
 
     public void setBuffedValue(BuffStat effect, int value) {
@@ -9070,7 +9070,7 @@ public class Character extends AbstractCharacterObject {
         if (newLimit != -1) {
             this.saveCharToDB();
             if (update) {
-                sendPacket(PacketCreator.updateInventorySlotLimit(type, newLimit));
+                sendPacket(ChannelPacketCreator.getInstance().updateInventorySlotLimit(type, newLimit));
             }
             return true;
         } else {
@@ -9136,7 +9136,7 @@ public class Character extends AbstractCharacterObject {
 
     public void showDojoClock() {
         if (GameConstants.isDojoBossArea(map.getId())) {
-            sendPacket(PacketCreator.getClock((int) (getDojoTimeLeft() / 1000)));
+            sendPacket(ChannelPacketCreator.getInstance().getClock((int) (getDojoTimeLeft() / 1000)));
         }
     }
 
@@ -9166,7 +9166,7 @@ public class Character extends AbstractCharacterObject {
             strLines.add("");
             strLines.add(this.getClient().getChannelServer().getServerMessage().isEmpty() ? 0 : 1, "Get off my lawn!!");
 
-            this.sendPacket(PacketCreator.getAvatarMega(mapOwner, medal, this.getClient().getChannel(), ItemId.ROARING_TIGER_MESSENGER, strLines, true));
+            this.sendPacket(ChannelPacketCreator.getInstance().getAvatarMega(mapOwner, medal, this.getClient().getChannel(), ItemId.ROARING_TIGER_MESSENGER, strLines, true));
         }
     }
 
@@ -9250,7 +9250,7 @@ public class Character extends AbstractCharacterObject {
         if (maplemount != null) {
             int tiredness = maplemount.incrementAndGetTiredness();
 
-            this.getMap().broadcastMessage(PacketCreator.updateMount(this.getId(), maplemount, false));
+            this.getMap().broadcastMessage(ChannelPacketCreator.getInstance().updateMount(this.getId(), maplemount, false));
             if (tiredness > 99) {
                 maplemount.setTiredness(99);
                 this.dispelSkill(this.getJobType() * 10000000 + 1004);
@@ -9300,13 +9300,13 @@ public class Character extends AbstractCharacterObject {
         }
 
         this.getClient().getWorldServer().unregisterPetHunger(this, petIdx);
-        getMap().broadcastMessage(this, PacketCreator.showPet(this, pet, true, hunger), true);
+        getMap().broadcastMessage(this, ChannelPacketCreator.getInstance().showPet(this, pet, true, hunger), true);
 
         removePet(pet, shift_left);
         commitExcludedItems();
 
-        sendPacket(PacketCreator.petStatUpdate(this));
-        sendPacket(PacketCreator.enableActions());
+        sendPacket(ChannelPacketCreator.getInstance().petStatUpdate(this));
+        sendPacket(ChannelPacketCreator.getInstance().enableActions());
     }
 
     public void updateMacros(int position, SkillMacro updateMacro) {
@@ -9327,7 +9327,7 @@ public class Character extends AbstractCharacterObject {
             int curmaxhp = getCurrentMaxHp();
             int curhp = getHp();
             for (Character partychar : this.getPartyMembersOnSameMap()) {
-                partychar.sendPacket(PacketCreator.updatePartyMemberHP(getId(), curhp, curmaxhp));
+                partychar.sendPacket(ChannelPacketCreator.getInstance().updatePartyMemberHP(getId(), curhp, curmaxhp));
             }
         }
     }
@@ -9377,20 +9377,20 @@ public class Character extends AbstractCharacterObject {
 
         switch (questUpdate.getLeft()) {
             case UPDATE:
-                sendPacket(PacketCreator.updateQuest(chr, (QuestStatus) objs[0], (Boolean) objs[1]));
+                sendPacket(ChannelPacketCreator.getInstance().updateQuest(chr, (QuestStatus) objs[0], (Boolean) objs[1]));
                 break;
 
             case FORFEIT:
-                sendPacket(PacketCreator.forfeitQuest((Short) objs[0]));
+                sendPacket(ChannelPacketCreator.getInstance().forfeitQuest((Short) objs[0]));
                 break;
 
             case COMPLETE:
-                sendPacket(PacketCreator.completeQuest((Short) objs[0], (Long) objs[1]));
+                sendPacket(ChannelPacketCreator.getInstance().completeQuest((Short) objs[0], (Long) objs[1]));
                 break;
 
             case INFO:
                 QuestStatus qs = (QuestStatus) objs[0];
-                sendPacket(PacketCreator.updateQuestInfo(qs.getQuest().getId(), qs.getNpc()));
+                sendPacket(ChannelPacketCreator.getInstance().updateQuestInfo(qs.getQuest().getId(), qs.getNpc()));
                 break;
         }
     }
@@ -9451,7 +9451,7 @@ public class Character extends AbstractCharacterObject {
 
     private void expireQuest(Quest quest) {
         if (quest.forfeit(this)) {
-            sendPacket(PacketCreator.questExpire(quest.getId()));
+            sendPacket(ChannelPacketCreator.getInstance().questExpire(quest.getId()));
         }
     }
 
@@ -9546,7 +9546,7 @@ public class Character extends AbstractCharacterObject {
 
     public void questTimeLimit(final Quest quest, int seconds) {
         registerQuestExpire(quest, SECONDS.toMillis(seconds));
-        sendPacket(PacketCreator.addQuestTimeLimit(quest.getId(), (int) SECONDS.toMillis(seconds)));
+        sendPacket(ChannelPacketCreator.getInstance().addQuestTimeLimit(quest.getId(), (int) SECONDS.toMillis(seconds)));
     }
 
     public void questTimeLimit2(final Quest quest, long expires) {
@@ -9564,7 +9564,7 @@ public class Character extends AbstractCharacterObject {
     }
 
     private void updateSingleStat(Stat stat, int newval, boolean itemReaction) {
-        sendPacket(PacketCreator.updatePlayerStats(Collections.singletonList(new Pair<>(stat, Integer.valueOf(newval))), itemReaction, this));
+        sendPacket(ChannelPacketCreator.getInstance().updatePlayerStats(Collections.singletonList(new Pair<>(stat, Integer.valueOf(newval))), itemReaction, this));
     }
 
     public void sendPacket(Packet packet) {
@@ -9583,22 +9583,22 @@ public class Character extends AbstractCharacterObject {
 
     @Override
     public void sendDestroyData(Client client) {
-        client.sendPacket(PacketCreator.removePlayerFromMap(this.getObjectId()));
+        client.sendPacket(ChannelPacketCreator.getInstance().removePlayerFromMap(this.getObjectId()));
     }
 
     @Override
     public void sendSpawnData(Client client) {
         if (!this.isHidden() || client.getPlayer().gmLevel() > 1) {
-            client.sendPacket(PacketCreator.spawnPlayerMapObject(client, this, false));
+            client.sendPacket(ChannelPacketCreator.getInstance().spawnPlayerMapObject(client, this, false));
 
             if (buffEffects.containsKey(getJobMapChair(job))) { // mustn't effLock, chrLock sendSpawnData
-                client.sendPacket(PacketCreator.giveForeignChairSkillEffect(id));
+                client.sendPacket(ChannelPacketCreator.getInstance().giveForeignChairSkillEffect(id));
             }
         }
 
         if (this.isHidden()) {
             List<Pair<BuffStat, Integer>> dsstat = Collections.singletonList(new Pair<>(BuffStat.DARKSIGHT, 0));
-            getMap().broadcastGMMessage(this, PacketCreator.giveForeignBuff(getId(), dsstat), false);
+            getMap().broadcastGMMessage(this, ChannelPacketCreator.getInstance().giveForeignBuff(getId(), dsstat), false);
         }
     }
 
@@ -9668,7 +9668,7 @@ public class Character extends AbstractCharacterObject {
     public void blockPortal(String scriptName) {
         if (!blockedPortals.contains(scriptName) && scriptName != null) {
             blockedPortals.add(scriptName);
-            sendPacket(PacketCreator.enableActions());
+            sendPacket(ChannelPacketCreator.getInstance().enableActions());
         }
     }
 
@@ -9692,7 +9692,7 @@ public class Character extends AbstractCharacterObject {
 
     public void updateAreaInfo(int area, String info) {
         area_info.put(Short.valueOf((short) area), info);
-        sendPacket(PacketCreator.updateAreaInfo(area, info));
+        sendPacket(ChannelPacketCreator.getInstance().updateAreaInfo(area, info));
     }
 
     public String getAreaInfo(int area) {
@@ -9709,7 +9709,7 @@ public class Character extends AbstractCharacterObject {
         }
 
         this.ban(reason);
-        sendPacket(PacketCreator.sendPolice(String.format("You have been blocked by the#b %s Police for HACK reason.#k", "Cosmic")));
+        sendPacket(ChannelPacketCreator.getInstance().sendPolice(String.format("You have been blocked by the#b %s Police for HACK reason.#k", "Cosmic")));
         TimerManager.getInstance().schedule(new Runnable() {
             @Override
             public void run() {
@@ -9717,7 +9717,7 @@ public class Character extends AbstractCharacterObject {
             }
         }, 5000);
 
-        Server.getInstance().broadcastGMMessage(this.getWorld(), PacketCreator.serverNotice(6, Character.makeMapleReadable(this.name) + " was autobanned for " + reason));
+        Server.getInstance().broadcastGMMessage(this.getWorld(), ChannelPacketCreator.getInstance().serverNotice(6, Character.makeMapleReadable(this.name) + " was autobanned for " + reason));
     }
 
     public void block(int reason, int days, String desc) {
@@ -9932,12 +9932,12 @@ public class Character extends AbstractCharacterObject {
     public void broadcastMarriageMessage() {
         Guild guild = this.getGuild();
         if (guild != null) {
-            guild.broadcast(PacketCreator.marriageMessage(0, name));
+            guild.broadcast(ChannelPacketCreator.getInstance().marriageMessage(0, name));
         }
 
         Family family = this.getFamily();
         if (family != null) {
-            family.broadcast(PacketCreator.marriageMessage(1, name));
+            family.broadcast(ChannelPacketCreator.getInstance().marriageMessage(1, name));
         }
     }
 
@@ -10714,9 +10714,9 @@ public class Character extends AbstractCharacterObject {
             if (this.getCP() > this.getTotalCP()) {
                 this.setTotalCP(this.getCP());
             }
-            sendPacket(PacketCreator.CPUpdate(false, this.getCP(), this.getTotalCP(), getTeam()));
+            sendPacket(ChannelPacketCreator.getInstance().CPUpdate(false, this.getCP(), this.getTotalCP(), getTeam()));
             if (this.getParty() != null && getTeam() != -1) {
-                this.getMap().broadcastMessage(PacketCreator.CPUpdate(true, this.getMonsterCarnival().getCP(team), this.getMonsterCarnival().getTotalCP(team), getTeam()));
+                this.getMap().broadcastMessage(ChannelPacketCreator.getInstance().CPUpdate(true, this.getMonsterCarnival().getCP(team), this.getMonsterCarnival().getTotalCP(team), getTeam()));
             } else {
             }
         }

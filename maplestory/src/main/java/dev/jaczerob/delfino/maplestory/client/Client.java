@@ -25,13 +25,10 @@ import dev.jaczerob.delfino.maplestory.client.inventory.InventoryType;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
 import dev.jaczerob.delfino.maplestory.constants.game.GameConstants;
 import dev.jaczerob.delfino.maplestory.constants.id.MapId;
-import dev.jaczerob.delfino.maplestory.net.PacketHandler;
-import dev.jaczerob.delfino.maplestory.net.PacketProcessor;
 import dev.jaczerob.delfino.maplestory.net.netty.InvalidPacketHeaderException;
-import dev.jaczerob.delfino.maplestory.net.packet.InPacket;
-import dev.jaczerob.delfino.maplestory.net.packet.Packet;
-import dev.jaczerob.delfino.maplestory.net.packet.logging.LoggingUtil;
-import dev.jaczerob.delfino.maplestory.net.packet.logging.MonitoredChrLogger;
+import dev.jaczerob.delfino.network.packets.Packet;
+import dev.jaczerob.delfino.network.packets.logging.LoggingUtil;
+import dev.jaczerob.delfino.network.packets.logging.MonitoredChrLogger;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.net.server.channel.Channel;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.login.LoginBypassCoordinator;
@@ -41,11 +38,8 @@ import dev.jaczerob.delfino.maplestory.net.server.coordinator.session.SessionCoo
 import dev.jaczerob.delfino.maplestory.net.server.guild.Guild;
 import dev.jaczerob.delfino.maplestory.net.server.guild.GuildCharacter;
 import dev.jaczerob.delfino.maplestory.net.server.guild.GuildPackets;
-import dev.jaczerob.delfino.maplestory.net.server.world.MessengerCharacter;
-import dev.jaczerob.delfino.maplestory.net.server.world.Party;
-import dev.jaczerob.delfino.maplestory.net.server.world.PartyCharacter;
-import dev.jaczerob.delfino.maplestory.net.server.world.PartyOperation;
-import dev.jaczerob.delfino.maplestory.net.server.world.World;
+import dev.jaczerob.delfino.maplestory.net.server.world.*;
+import dev.jaczerob.delfino.maplestory.packets.ChannelPacketProcessor;
 import dev.jaczerob.delfino.maplestory.scripting.AbstractPlayerInteraction;
 import dev.jaczerob.delfino.maplestory.scripting.event.EventInstanceManager;
 import dev.jaczerob.delfino.maplestory.scripting.event.EventManager;
@@ -61,9 +55,10 @@ import dev.jaczerob.delfino.maplestory.server.maps.FieldLimit;
 import dev.jaczerob.delfino.maplestory.server.maps.MapleMap;
 import dev.jaczerob.delfino.maplestory.server.maps.MiniDungeonInfo;
 import dev.jaczerob.delfino.maplestory.tools.BCrypt;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
 import dev.jaczerob.delfino.maplestory.tools.HexTool;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.network.packets.InPacket;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.timeout.IdleStateEvent;
@@ -77,23 +72,9 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collections;
+import java.sql.*;
+import java.util.*;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -109,7 +90,7 @@ public class Client extends ChannelInboundHandlerAdapter {
 
     private final Type type;
     private final long sessionId;
-    private final PacketProcessor packetProcessor;
+    private final ChannelPacketProcessor packetProcessor;
 
     private Hwid hwid;
     private String remoteAddress;
@@ -155,7 +136,7 @@ public class Client extends ChannelInboundHandlerAdapter {
         CHANNEL
     }
 
-    public Client(Type type, long sessionId, String remoteAddress, PacketProcessor packetProcessor, int world, int channel) {
+    public Client(Type type, long sessionId, String remoteAddress, ChannelPacketProcessor packetProcessor, int world, int channel) {
         this.type = type;
         this.sessionId = sessionId;
         this.remoteAddress = remoteAddress;
@@ -164,7 +145,7 @@ public class Client extends ChannelInboundHandlerAdapter {
         this.channel = channel;
     }
 
-    public static Client createChannelClient(long sessionId, String remoteAddress, PacketProcessor packetProcessor,
+    public static Client createChannelClient(long sessionId, String remoteAddress, ChannelPacketProcessor packetProcessor,
                                              int world, int channel) {
         return new Client(Type.CHANNEL, sessionId, remoteAddress, packetProcessor, world, channel);
     }
@@ -204,7 +185,7 @@ public class Client extends ChannelInboundHandlerAdapter {
         }
 
         short opcode = packet.readShort();
-        final PacketHandler handler = packetProcessor.getHandler(opcode);
+        final var handler = packetProcessor.getHandler(opcode);
 
         if (YamlConfig.config.server.USE_DEBUG_SHOW_RCVD_PACKET && !LoggingUtil.isIgnoredRecvPacket(opcode)) {
             log.debug("Received packet id {}", opcode);
@@ -213,7 +194,7 @@ public class Client extends ChannelInboundHandlerAdapter {
         if (handler != null && handler.validateState(this)) {
             try {
                 MonitoredChrLogger.logPacketIfMonitored(this, opcode, packet.getBytes());
-                handler.handlePacket(packet, this);
+                handler.handlePacket(packet, this, ctx);
             } catch (final Throwable t) {
                 final String chrInfo = player != null ? player.getName() + " on map " + player.getMapId() : "?";
                 log.warn("Error in packet handler {}. Chr {}, account {}. Packet: {}", handler.getClass().getSimpleName(),
@@ -317,7 +298,7 @@ public class Client extends ChannelInboundHandlerAdapter {
     }
 
     public void sendCharList(int server) {
-        this.sendPacket(PacketCreator.getCharList(this, server, 0));
+        this.sendPacket(ChannelPacketCreator.getInstance().getCharList(this, server, 0));
     }
 
     public List<Character> loadCharacters(int serverId) {
@@ -1158,7 +1139,7 @@ public class Client extends ChannelInboundHandlerAdapter {
 
     public void checkIfIdle(final IdleStateEvent event) {
         final long pingedAt = System.currentTimeMillis();
-        sendPacket(PacketCreator.getPing());
+        sendPacket(ChannelPacketCreator.getInstance().getPing());
         TimerManager.getInstance().schedule(() -> {
             try {
                 if (lastPong < pingedAt) {
@@ -1428,12 +1409,12 @@ public class Client extends ChannelInboundHandlerAdapter {
 
     private void announceDisableServerMessage() {
         if (!this.getWorldServer().registerDisabledServerMessage(player.getId())) {
-            sendPacket(PacketCreator.serverMessage(""));
+            sendPacket(ChannelPacketCreator.getInstance().serverMessage(""));
         }
     }
 
     public void announceServerMessage() {
-        sendPacket(PacketCreator.serverMessage(this.getChannelServer().getServerMessage()));
+        sendPacket(ChannelPacketCreator.getInstance().serverMessage(this.getChannelServer().getServerMessage()));
     }
 
     public synchronized void announceBossHpBar(Monster mm, final int mobHash, Packet packet) {
@@ -1467,8 +1448,8 @@ public class Client extends ChannelInboundHandlerAdapter {
     }
 
     public void announceHint(String msg, int length) {
-        sendPacket(PacketCreator.sendHint(msg, length, 10));
-        sendPacket(PacketCreator.enableActions());
+        sendPacket(ChannelPacketCreator.getInstance().sendHint(msg, length, 10));
+        sendPacket(ChannelPacketCreator.getInstance().enableActions());
     }
 
     public void changeChannel(int channel) {
@@ -1478,18 +1459,18 @@ public class Client extends ChannelInboundHandlerAdapter {
             return;
         }
         if (!player.isAlive() || FieldLimit.CANNOTMIGRATE.check(player.getMap().getFieldLimit())) {
-            sendPacket(PacketCreator.enableActions());
+            sendPacket(ChannelPacketCreator.getInstance().enableActions());
             return;
         } else if (MiniDungeonInfo.isDungeonMap(player.getMapId())) {
-            sendPacket(PacketCreator.serverNotice(5, "Changing channels or entering Cash Shop or MTS are disabled when inside a Mini-Dungeon."));
-            sendPacket(PacketCreator.enableActions());
+            sendPacket(ChannelPacketCreator.getInstance().serverNotice(5, "Changing channels or entering Cash Shop or MTS are disabled when inside a Mini-Dungeon."));
+            sendPacket(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
 
         String[] socket = Server.getInstance().getInetSocket(this, getWorld(), channel);
         if (socket == null) {
-            sendPacket(PacketCreator.serverNotice(1, "Channel " + channel + " is currently disabled. Try another channel."));
-            sendPacket(PacketCreator.enableActions());
+            sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "Channel " + channel + " is currently disabled. Try another channel."));
+            sendPacket(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
 
@@ -1519,7 +1500,7 @@ public class Client extends ChannelInboundHandlerAdapter {
 
         player.setSessionTransitionState();
         try {
-            sendPacket(PacketCreator.getChannelChange(InetAddress.getByName(socket[0]), Integer.parseInt(socket[1])));
+            sendPacket(ChannelPacketCreator.getInstance().getChannelChange(InetAddress.getByName(socket[0]), Integer.parseInt(socket[1])));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -1575,7 +1556,7 @@ public class Client extends ChannelInboundHandlerAdapter {
     }
 
     public void enableCSActions() {
-        sendPacket(PacketCreator.enableCSUse(player));
+        sendPacket(ChannelPacketCreator.getInstance().enableCSUse(player));
     }
 
     public boolean canBypassPin() {

@@ -30,7 +30,7 @@ import dev.jaczerob.delfino.maplestory.provider.DataProvider;
 import dev.jaczerob.delfino.maplestory.provider.DataProviderFactory;
 import dev.jaczerob.delfino.maplestory.provider.DataTool;
 import dev.jaczerob.delfino.maplestory.provider.wz.WZFiles;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 import java.awt.*;
 
@@ -53,7 +53,7 @@ public class SpawnPetProcessor {
                 if (petid == ItemId.DRAGON_PET || petid == ItemId.ROBO_PET) {
                     if (chr.haveItem(petid + 1)) {
                         chr.dropMessage(5, "You can't hatch your " + (petid == ItemId.DRAGON_PET ? "Dragon egg" : "Robo egg") + " if you already have a Baby " + (petid == ItemId.DRAGON_PET ? "Dragon." : "Robo."));
-                        c.sendPacket(PacketCreator.enableActions());
+                        c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                         return;
                     } else {
                         int evolveid = DataTool.getInt("info/evol1", dataRoot.getData("Pet/" + petid + ".img"));
@@ -65,7 +65,7 @@ public class SpawnPetProcessor {
                         InventoryManipulator.removeById(c, InventoryType.CASH, petid, (short) 1, false, false);
                         InventoryManipulator.addById(c, evolveid, (short) 1, null, petId, expiration);
 
-                        c.sendPacket(PacketCreator.enableActions());
+                        c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
                         return;
                     }
                 }
@@ -86,9 +86,9 @@ public class SpawnPetProcessor {
                     pet.setSummoned(true);
                     pet.saveToDb();
                     chr.addPet(pet);
-                    chr.getMap().broadcastMessage(c.getPlayer(), PacketCreator.showPet(c.getPlayer(), pet, false, false), true);
-                    c.sendPacket(PacketCreator.petStatUpdate(c.getPlayer()));
-                    c.sendPacket(PacketCreator.enableActions());
+                    chr.getMap().broadcastMessage(c.getPlayer(), ChannelPacketCreator.getInstance().showPet(c.getPlayer(), pet, false, false), true);
+                    c.sendPacket(ChannelPacketCreator.getInstance().petStatUpdate(c.getPlayer()));
+                    c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
 
                     chr.commitExcludedItems();
                     chr.getClient().getWorldServer().registerPetHunger(chr, chr.getPetIndex(pet));

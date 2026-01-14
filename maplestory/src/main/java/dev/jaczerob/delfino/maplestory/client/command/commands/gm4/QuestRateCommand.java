@@ -26,7 +26,7 @@ package dev.jaczerob.delfino.maplestory.client.command.commands.gm4;
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.client.command.Command;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 public class QuestRateCommand extends Command {
     {
@@ -43,7 +43,7 @@ public class QuestRateCommand extends Command {
 
         int questrate = Math.max(Integer.parseInt(params[0]), 1);
         c.getWorldServer().setQuestRate(questrate);
-        c.getWorldServer().broadcastPacket(PacketCreator.serverNotice(6, "[Rate] Quest Rate has been changed to " + questrate + "x."));
+        c.getWorldServer().broadcastPacket(ChannelPacketCreator.getInstance().serverNotice(6, "[Rate] Quest Rate has been changed to " + questrate + "x."));
 
     }
 }

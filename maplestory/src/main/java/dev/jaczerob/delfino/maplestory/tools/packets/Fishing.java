@@ -24,10 +24,10 @@ import dev.jaczerob.delfino.maplestory.config.YamlConfig;
 import dev.jaczerob.delfino.maplestory.constants.id.ItemId;
 import dev.jaczerob.delfino.maplestory.constants.id.MapId;
 import dev.jaczerob.delfino.maplestory.constants.inventory.ItemConstants;
+import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
 import java.util.Calendar;
 
@@ -122,8 +122,8 @@ public class Fishing {
             chr.getMap().dropMessage(6, chr.getName() + " found " + rewardStr);
         }
 
-        chr.sendPacket(PacketCreator.showInfo(fishingEffect));
-        chr.getMap().broadcastMessage(chr, PacketCreator.showForeignInfo(chr.getId(), fishingEffect), false);
+        chr.sendPacket(ChannelPacketCreator.getInstance().showInfo(fishingEffect));
+        chr.getMap().broadcastMessage(chr, ChannelPacketCreator.getInstance().showForeignInfo(chr.getId(), fishingEffect), false);
     }
 
     public static int getRandomItem() {

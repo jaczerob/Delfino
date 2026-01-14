@@ -32,7 +32,7 @@ import dev.jaczerob.delfino.maplestory.constants.id.ItemId;
 import dev.jaczerob.delfino.maplestory.server.maps.MapItem;
 import dev.jaczerob.delfino.maplestory.server.maps.MapObject;
 import dev.jaczerob.delfino.maplestory.server.maps.MapObjectType;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
 import java.util.Arrays;
 import java.util.List;
@@ -73,7 +73,7 @@ public class ForceVacCommand extends Command {
                     }
                 }
 
-                player.getMap().pickItemDrop(PacketCreator.removeItemFromMap(mapItem.getObjectId(), 2, player.getId()), mapItem);
+                player.getMap().pickItemDrop(ChannelPacketCreator.getInstance().removeItemFromMap(mapItem.getObjectId(), 2, player.getId()), mapItem);
             } finally {
                 mapItem.unlockItem();
             }

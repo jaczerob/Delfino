@@ -3,7 +3,7 @@ package dev.jaczerob.delfino.maplestory.net.encryption;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
-import dev.jaczerob.delfino.maplestory.net.packet.Packet;
+import dev.jaczerob.delfino.network.packets.Packet;
 
 public class PacketEncoder extends MessageToByteEncoder<Packet> {
     private final MapleAESOFB sendCypher;

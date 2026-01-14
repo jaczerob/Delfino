@@ -1,24 +1,3 @@
-/*
-	This file is part of the OdinMS Maple Story Server
-    Copyright (C) 2008 Patrick Huy <patrick.huy@frz.cc>
-		       Matthias Butz <matze@odinms.de>
-		       Jan Christian Meyer <vimes@odinms.de>
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as
-    published by the Free Software Foundation version 3 as published by
-    the Free Software Foundation. You may not use, modify or distribute
-    this program under any other version of the GNU Affero General Public
-    License.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
-
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package dev.jaczerob.delfino.maplestory.server;
 
 import dev.jaczerob.delfino.maplestory.client.Character;
@@ -33,10 +12,10 @@ import dev.jaczerob.delfino.maplestory.net.server.coordinator.world.InviteCoordi
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.world.InviteCoordinator.InviteResult;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.world.InviteCoordinator.InviteResultType;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.world.InviteCoordinator.InviteType;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
-import dev.jaczerob.delfino.maplestory.tools.Pair;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -106,7 +85,7 @@ public class Trade {
 
     private void lockTrade() {
         locked.set(true);
-        partner.getChr().sendPacket(PacketCreator.getTradeConfirmation());
+        partner.getChr().sendPacket(ChannelPacketCreator.getInstance().getTradeConfirmation());
     }
 
     private void fetchExchangedItems() {
@@ -145,7 +124,7 @@ public class Trade {
             exchangeItems.clear();
         }
 
-        chr.sendPacket(PacketCreator.getTradeResult(number, result));
+        chr.sendPacket(ChannelPacketCreator.getInstance().getTradeResult(number, result));
     }
 
     private void cancel(byte result) {
@@ -166,7 +145,7 @@ public class Trade {
             exchangeItems.clear();
         }
 
-        chr.sendPacket(PacketCreator.getTradeResult(number, result));
+        chr.sendPacket(ChannelPacketCreator.getInstance().getTradeResult(number, result));
     }
 
     private boolean isLocked() {
@@ -188,9 +167,9 @@ public class Trade {
         if (chr.getMeso() >= meso) {
             chr.gainMeso(-meso, false, true, false);
             this.meso += meso;
-            chr.sendPacket(PacketCreator.getTradeMesoSet((byte) 0, this.meso));
+            chr.sendPacket(ChannelPacketCreator.getInstance().getTradeMesoSet((byte) 0, this.meso));
             if (partner != null) {
-                partner.getChr().sendPacket(PacketCreator.getTradeMesoSet((byte) 1, this.meso));
+                partner.getChr().sendPacket(ChannelPacketCreator.getInstance().getTradeMesoSet((byte) 1, this.meso));
             }
         } else {
         }
@@ -214,9 +193,9 @@ public class Trade {
     }
 
     public void chat(String message) {
-        chr.sendPacket(PacketCreator.getTradeChat(chr, message, true));
+        chr.sendPacket(ChannelPacketCreator.getInstance().getTradeChat(chr, message, true));
         if (partner != null) {
-            partner.getChr().sendPacket(PacketCreator.getTradeChat(chr, message, false));
+            partner.getChr().sendPacket(ChannelPacketCreator.getInstance().getTradeChat(chr, message, false));
         }
     }
 
@@ -336,7 +315,7 @@ public class Trade {
             if (local.getChr().getLevel() < 15) {
                 if (local.getChr().getMesosTraded() + local.exchangeMeso > 1000000) {
                     cancelTrade(local.getChr(), TradeResult.NO_RESPONSE);
-                    local.getChr().sendPacket(PacketCreator.serverNotice(1, "Characters under level 15 may not trade more than 1 million mesos per day."));
+                    local.getChr().sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "Characters under level 15 may not trade more than 1 million mesos per day."));
                     return;
                 } else {
                     local.getChr().addMesosTraded(local.exchangeMeso);
@@ -344,7 +323,7 @@ public class Trade {
             } else if (partner.getChr().getLevel() < 15) {
                 if (partner.getChr().getMesosTraded() + partner.exchangeMeso > 1000000) {
                     cancelTrade(partner.getChr(), TradeResult.NO_RESPONSE);
-                    partner.getChr().sendPacket(PacketCreator.serverNotice(1, "Characters under level 15 may not trade more than 1 million mesos per day."));
+                    partner.getChr().sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "Characters under level 15 may not trade more than 1 million mesos per day."));
                     return;
                 } else {
                     partner.getChr().addMesosTraded(partner.exchangeMeso);
@@ -481,8 +460,8 @@ public class Trade {
                 c2.getTrade().setPartner(c1.getTrade());
                 c1.getTrade().setPartner(c2.getTrade());
 
-                c1.sendPacket(PacketCreator.getTradeStart(c1.getClient(), c1.getTrade(), (byte) 0));
-                c2.sendPacket(PacketCreator.tradeInvite(c1));
+                c1.sendPacket(ChannelPacketCreator.getInstance().getTradeStart(c1.getClient(), c1.getTrade(), (byte) 0));
+                c2.sendPacket(ChannelPacketCreator.getInstance().tradeInvite(c1));
             } else {
                 c1.message("The other player is already trading with someone else.");
                 cancelTrade(c1, TradeResult.NO_RESPONSE);
@@ -500,8 +479,8 @@ public class Trade {
         InviteResultType res = inviteRes.result;
         if (res == InviteResultType.ACCEPTED) {
             if (c1.getTrade() != null && c1.getTrade().getPartner() == c2.getTrade() && c2.getTrade() != null && c2.getTrade().getPartner() == c1.getTrade()) {
-                c2.sendPacket(PacketCreator.getTradePartnerAdd(c1));
-                c1.sendPacket(PacketCreator.getTradeStart(c1.getClient(), c1.getTrade(), (byte) 1));
+                c2.sendPacket(ChannelPacketCreator.getInstance().getTradePartnerAdd(c1));
+                c1.sendPacket(ChannelPacketCreator.getInstance().getTradeStart(c1.getClient(), c1.getTrade(), (byte) 1));
                 c1.getTrade().setFullTrade(true);
                 c2.getTrade().setFullTrade(true);
             } else {

@@ -1,24 +1,3 @@
-/*
-	This file is part of the OdinMS Maple Story Server
-    Copyright (C) 2008 Patrick Huy <patrick.huy@frz.cc>
-		       Matthias Butz <matze@odinms.de>
-		       Jan Christian Meyer <vimes@odinms.de>
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as
-    published by the Free Software Foundation version 3 as published by
-    the Free Software Foundation. You may not use, modify or distribute
-    this program under any other version of the GNU Affero General Public
-    License.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
-
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package dev.jaczerob.delfino.maplestory.server;
 
 import dev.jaczerob.delfino.maplestory.client.Client;
@@ -28,10 +7,10 @@ import dev.jaczerob.delfino.maplestory.client.inventory.Pet;
 import dev.jaczerob.delfino.maplestory.client.inventory.manipulator.InventoryManipulator;
 import dev.jaczerob.delfino.maplestory.constants.id.ItemId;
 import dev.jaczerob.delfino.maplestory.constants.inventory.ItemConstants;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
-import dev.jaczerob.delfino.maplestory.tools.PacketCreator;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -80,7 +59,7 @@ public class Shop {
 
     public void sendShop(Client c) {
         c.getPlayer().setShop(this);
-        c.sendPacket(PacketCreator.getNPCShop(c, getNpcId(), items));
+        c.sendPacket(ChannelPacketCreator.getInstance().getNPCShop(c, getNpcId(), items));
     }
 
     public void buy(Client c, short slot, int itemId, short quantity) {
@@ -107,13 +86,13 @@ public class Shop {
                         InventoryManipulator.addById(c, itemId, quantity, "", -1);
                         c.getPlayer().gainMeso(-item.getPrice(), false);
                     }
-                    c.sendPacket(PacketCreator.shopTransaction((byte) 0));
+                    c.sendPacket(ChannelPacketCreator.getInstance().shopTransaction((byte) 0));
                 } else {
-                    c.sendPacket(PacketCreator.shopTransaction((byte) 3));
+                    c.sendPacket(ChannelPacketCreator.getInstance().shopTransaction((byte) 3));
                 }
 
             } else {
-                c.sendPacket(PacketCreator.shopTransaction((byte) 2));
+                c.sendPacket(ChannelPacketCreator.getInstance().shopTransaction((byte) 2));
             }
 
         } else if (item.getPitch() > 0) {
@@ -130,9 +109,9 @@ public class Shop {
                         InventoryManipulator.addById(c, itemId, quantity, "", -1);
                         InventoryManipulator.removeById(c, InventoryType.ETC, ItemId.PERFECT_PITCH, amount, false, false);
                     }
-                    c.sendPacket(PacketCreator.shopTransaction((byte) 0));
+                    c.sendPacket(ChannelPacketCreator.getInstance().shopTransaction((byte) 0));
                 } else {
-                    c.sendPacket(PacketCreator.shopTransaction((byte) 3));
+                    c.sendPacket(ChannelPacketCreator.getInstance().shopTransaction((byte) 3));
                 }
             }
 
@@ -152,11 +131,11 @@ public class Shop {
                     }
                     c.getPlayer().gainMeso(diff, false);
                 } else {
-                    c.sendPacket(PacketCreator.shopTransaction((byte) 3));
+                    c.sendPacket(ChannelPacketCreator.getInstance().shopTransaction((byte) 3));
                 }
-                c.sendPacket(PacketCreator.shopTransaction((byte) 0));
+                c.sendPacket(ChannelPacketCreator.getInstance().shopTransaction((byte) 0));
             } else {
-                c.sendPacket(PacketCreator.shopTransaction((byte) 2));
+                c.sendPacket(ChannelPacketCreator.getInstance().shopTransaction((byte) 2));
             }
         }
     }
@@ -208,9 +187,9 @@ public class Shop {
             if (recvMesos > 0) {
                 c.getPlayer().gainMeso(recvMesos, false);
             }
-            c.sendPacket(PacketCreator.shopTransaction((byte) 0x8));
+            c.sendPacket(ChannelPacketCreator.getInstance().shopTransaction((byte) 0x8));
         } else {
-            c.sendPacket(PacketCreator.shopTransaction((byte) 0x5));
+            c.sendPacket(ChannelPacketCreator.getInstance().shopTransaction((byte) 0x5));
         }
     }
 
@@ -230,9 +209,9 @@ public class Shop {
                 item.setQuantity(slotMax);
                 c.getPlayer().forceUpdateItem(item);
                 c.getPlayer().gainMeso(-price, false, true, false);
-                c.sendPacket(PacketCreator.shopTransaction((byte) 0x8));
+                c.sendPacket(ChannelPacketCreator.getInstance().shopTransaction((byte) 0x8));
             } else {
-                c.sendPacket(PacketCreator.shopTransaction((byte) 0x2));
+                c.sendPacket(ChannelPacketCreator.getInstance().shopTransaction((byte) 0x2));
             }
         }
     }
