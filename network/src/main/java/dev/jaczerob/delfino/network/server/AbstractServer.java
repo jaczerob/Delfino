@@ -24,14 +24,6 @@ public abstract class AbstractServer {
         this.serverChannelInitializer = serverChannelInitializer;
     }
 
-    protected ServerChannelInitializer getServerChannelInitializer() {
-        return this.serverChannelInitializer;
-    }
-
-    protected int getPort() {
-        return this.port;
-    }
-
     protected void startServer() {
         final var parentGroup = new MultiThreadIoEventLoopGroup(Runtime.getRuntime().availableProcessors(), Thread.ofVirtual().factory(), NioIoHandler.newFactory());
         final var childGroup = new MultiThreadIoEventLoopGroup(Runtime.getRuntime().availableProcessors(), Thread.ofVirtual().factory(), NioIoHandler.newFactory());

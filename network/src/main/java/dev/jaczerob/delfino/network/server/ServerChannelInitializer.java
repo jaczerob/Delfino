@@ -3,13 +3,10 @@ package dev.jaczerob.delfino.network.server;
 import dev.jaczerob.delfino.network.encryption.ClientCyphers;
 import dev.jaczerob.delfino.network.encryption.InitializationVector;
 import dev.jaczerob.delfino.network.encryption.PacketCodec;
-import dev.jaczerob.delfino.network.tools.PacketCreator;
+import dev.jaczerob.delfino.network.packets.ByteBufOutPacket;
+import dev.jaczerob.delfino.network.packets.Packet;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelPipeline;
+import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
 import org.slf4j.Logger;
@@ -24,7 +21,6 @@ public abstract class ServerChannelInitializer extends ChannelInitializer<Socket
     private final ChannelHandler receivePacketLogger;
     private final int idleTimeSeconds;
     private final boolean logPackets;
-    private final PacketCreator packetCreator;
     private final short mapleVersion;
 
     protected ServerChannelInitializer(
@@ -32,26 +28,29 @@ public abstract class ServerChannelInitializer extends ChannelInitializer<Socket
             final ChannelHandler receivePacketLogger,
             final int idleTimeSeconds,
             final boolean logPackets,
-            final PacketCreator packetCreator,
             final short mapleVersion
     ) {
         this.sendPacketLogger = sendPacketLogger;
         this.receivePacketLogger = receivePacketLogger;
         this.idleTimeSeconds = idleTimeSeconds;
         this.logPackets = logPackets;
-        this.packetCreator = packetCreator;
         this.mapleVersion = mapleVersion;
     }
 
-    protected String getRemoteAddress(final Channel channel) {
-        String remoteAddress = "null";
-        try {
-            remoteAddress = ((InetSocketAddress) channel.remoteAddress()).getAddress().getHostAddress();
-        } catch (NullPointerException npe) {
-            log.warn("Unable to get remote address from netty Channel: {}", channel, npe);
-        }
+    @Override
+    protected void initChannel(final SocketChannel socketChannel) throws Exception {
+        final var client = this.initClient();
+        this.initPipeline(socketChannel, client);
+    }
 
-        return remoteAddress;
+    protected abstract ChannelInboundHandlerAdapter initClient();
+
+    protected String getRemoteAddress(final Channel channel) {
+        try {
+            return ((InetSocketAddress) channel.remoteAddress()).getAddress().getHostAddress();
+        } catch (final Exception exc) {
+            return null;
+        }
     }
 
     protected void initPipeline(final SocketChannel socketChannel, final ChannelInboundHandlerAdapter client) {
@@ -66,7 +65,19 @@ public abstract class ServerChannelInitializer extends ChannelInitializer<Socket
             final InitializationVector sendIv,
             final InitializationVector recvIv
     ) {
-        socketChannel.writeAndFlush(Unpooled.wrappedBuffer(this.packetCreator.getHello(sendIv, recvIv).getBytes()));
+        socketChannel.writeAndFlush(Unpooled.wrappedBuffer(this.getHello(sendIv, recvIv).getBytes()));
+    }
+
+    private Packet getHello(final InitializationVector sendIv, final InitializationVector recvIv) {
+        return new ByteBufOutPacket()
+                .writeShort(0x0E)
+                .writeShort(this.mapleVersion)
+                .writeShort(1)
+                .writeByte(49)
+                .writeBytes(recvIv.getBytes())
+                .writeBytes(sendIv.getBytes())
+                .writeByte(8);
+
     }
 
     private void setUpHandlers(

@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: Delfino
+  main:
+    banner-mode: off
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_DATABASE:delfino}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:delfino}
+    driver-class-name: org.postgresql.Driver
+  data:
+    redis:
+      database: 0
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: ${REDIS_TIMEOUT:60000}
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+
+delfino:
+  server:
+    channel-load: 100
+    localhost: 127.0.0.1
+  mdrs:
+    url: ${MDRS_HOST:0.0.0.0}:${MDRS_PORT:9090}
+
+server:
+  port: ${SERVER_PORT:8484}
+
+logging:
+  level:
+    root: INFO
+    dev.jaczerob: DEBUG
+    com.zaxxer: ERROR
+    io.grpc: ERROR
+  structured:
+    json:
+      exclude:
+        - process.pid
+        - ecs
+        - service
+        - tags

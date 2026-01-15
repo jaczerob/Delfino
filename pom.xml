@@ -20,7 +20,7 @@
         <module>grpc-proto</module>
         <module>mdrs</module>
         <module>maplestory</module>
-        <module>login</module>
+        <module>elm</module>
     </modules>
 
     <properties>

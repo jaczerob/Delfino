@@ -29,15 +29,13 @@ public class LoginClient extends ChannelInboundHandlerAdapter {
 
     private Account account;
     private Character selectedCharacter;
-    private String remoteAddress;
+    private String remoteAddress = "null";
     private Channel ioChannel;
 
     public LoginClient(
-            final String remoteAddress,
             final LoginPacketProcessor loginPacketProcessor,
             final LoginPacketCreator loginPacketCreator
     ) {
-        this.remoteAddress = remoteAddress;
         this.loginPacketProcessor = loginPacketProcessor;
         this.loginPacketCreator = loginPacketCreator;
     }

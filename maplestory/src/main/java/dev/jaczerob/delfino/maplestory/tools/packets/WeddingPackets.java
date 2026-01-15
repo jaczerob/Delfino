@@ -6,9 +6,9 @@
 
 package dev.jaczerob.delfino.maplestory.tools.packets;
 
+import dev.jaczerob.delfino.common.config.DelfinoConfigurationProperties;
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.inventory.Item;
-import dev.jaczerob.delfino.maplestory.config.DelfinoConfigurationProperties;
 import dev.jaczerob.delfino.maplestory.constants.id.ItemId;
 import dev.jaczerob.delfino.maplestory.constants.id.MapId;
 import dev.jaczerob.delfino.maplestory.net.opcodes.SendOpcode;

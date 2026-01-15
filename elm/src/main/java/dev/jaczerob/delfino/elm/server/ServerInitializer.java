@@ -1,26 +1,23 @@
-package dev.jaczerob.delfino.maplestory.net.netty;
+package dev.jaczerob.delfino.elm.server;
 
 import dev.jaczerob.delfino.common.config.DelfinoConfigurationProperties;
-import dev.jaczerob.delfino.maplestory.client.Client;
-import dev.jaczerob.delfino.maplestory.packets.ChannelPacketProcessor;
-import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
+import dev.jaczerob.delfino.elm.client.Client;
 import dev.jaczerob.delfino.network.packets.logging.InPacketLogger;
 import dev.jaczerob.delfino.network.packets.logging.OutPacketLogger;
 import dev.jaczerob.delfino.network.server.ServerChannelInitializer;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 @Component
-public class ChannelServerInitializer extends ServerChannelInitializer {
-    private final AtomicLong sessionId = new AtomicLong(7777);
+public class ServerInitializer extends ServerChannelInitializer {
+    private final ApplicationEventPublisher applicationEventPublisher;
 
-    public ChannelServerInitializer(
+    public ServerInitializer(
             final OutPacketLogger sendPacketLogger,
             final InPacketLogger receivePacketLogger,
             final DelfinoConfigurationProperties delfinoConfigurationProperties,
-            final ChannelPacketCreator channelPacketCreator
+            final ApplicationEventPublisher applicationEventPublisher
     ) {
         super(
                 sendPacketLogger,
@@ -29,12 +26,12 @@ public class ChannelServerInitializer extends ServerChannelInitializer {
                 delfinoConfigurationProperties.getNetty().isLogPackets(),
                 delfinoConfigurationProperties.getServer().getVersion()
         );
+
+        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     @Override
     protected ChannelInboundHandlerAdapter initClient() {
-        final var packetProcessor = ChannelPacketProcessor.getInstance();
-        final var clientSessionId = sessionId.getAndIncrement();
-        return Client.createChannelClient(clientSessionId, packetProcessor, 0, 0);
+        return new Client(this.applicationEventPublisher);
     }
 }

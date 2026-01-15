@@ -33,11 +33,7 @@ import dev.jaczerob.delfino.maplestory.net.server.coordinator.session.SessionCoo
 import dev.jaczerob.delfino.maplestory.net.server.guild.Guild;
 import dev.jaczerob.delfino.maplestory.net.server.guild.GuildCharacter;
 import dev.jaczerob.delfino.maplestory.net.server.guild.GuildPackets;
-import dev.jaczerob.delfino.maplestory.net.server.world.MessengerCharacter;
-import dev.jaczerob.delfino.maplestory.net.server.world.Party;
-import dev.jaczerob.delfino.maplestory.net.server.world.PartyCharacter;
-import dev.jaczerob.delfino.maplestory.net.server.world.PartyOperation;
-import dev.jaczerob.delfino.maplestory.net.server.world.World;
+import dev.jaczerob.delfino.maplestory.net.server.world.*;
 import dev.jaczerob.delfino.maplestory.packets.ChannelPacketProcessor;
 import dev.jaczerob.delfino.maplestory.scripting.AbstractPlayerInteraction;
 import dev.jaczerob.delfino.maplestory.scripting.event.EventInstanceManager;
@@ -73,20 +69,8 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.sql.*;
+import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -105,7 +89,7 @@ public class Client extends ChannelInboundHandlerAdapter {
     private final Lock lock = new ReentrantLock(true);
     private final Lock announcerLock = new ReentrantLock(true);
     private Hwid hwid;
-    private String remoteAddress;
+    private String remoteAddress = "null";
     private volatile boolean inTransition;
     private io.netty.channel.Channel ioChannel;
     private Character player;
@@ -130,22 +114,21 @@ public class Client extends ChannelInboundHandlerAdapter {
     private long lastPacket = System.currentTimeMillis();
     private int lang = 0;
 
-    public Client(Type type, long sessionId, String remoteAddress, ChannelPacketProcessor packetProcessor, int world, int channel) {
+    public Client(Type type, long sessionId, ChannelPacketProcessor packetProcessor, int world, int channel) {
         this.type = type;
         this.sessionId = sessionId;
-        this.remoteAddress = remoteAddress;
         this.packetProcessor = packetProcessor;
         this.world = world;
         this.channel = channel;
     }
 
-    public static Client createChannelClient(long sessionId, String remoteAddress, ChannelPacketProcessor packetProcessor,
+    public static Client createChannelClient(long sessionId, ChannelPacketProcessor packetProcessor,
                                              int world, int channel) {
-        return new Client(Type.CHANNEL, sessionId, remoteAddress, packetProcessor, world, channel);
+        return new Client(Type.CHANNEL, sessionId, packetProcessor, world, channel);
     }
 
     public static Client createMock() {
-        return new Client(null, -1, null, null, -123, -123);
+        return new Client(null, -1, null, -123, -123);
     }
 
     private static String getRemoteAddress(io.netty.channel.Channel channel) {

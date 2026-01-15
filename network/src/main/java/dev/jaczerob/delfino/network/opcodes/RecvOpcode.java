@@ -204,13 +204,27 @@ public enum RecvOpcode {
     USE_MAPLELIFE(0x100),
     USE_HAMMER(0x104);
 
-    private int code = -2;
+    private final int code;
 
-    RecvOpcode(int code) {
+    RecvOpcode(final int code) {
         this.code = code;
     }
 
     public int getValue() {
         return code;
+    }
+
+    public String toHex() {
+        return Integer.toHexString(this.code);
+    }
+
+    public static RecvOpcode getByValue(final int value) {
+        for (final var recvOpcode : values()) {
+            if (recvOpcode.getValue() == value) {
+                return recvOpcode;
+            }
+        }
+
+        return null;
     }
 }
