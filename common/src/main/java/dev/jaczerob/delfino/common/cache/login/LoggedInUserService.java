@@ -1,8 +1,10 @@
 package dev.jaczerob.delfino.common.cache.login;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 @Service
+@ConditionalOnProperty(name = "delfino.cache.login", havingValue = "true")
 public class LoggedInUserService {
     private final LoggedInUserRepository repository;
 

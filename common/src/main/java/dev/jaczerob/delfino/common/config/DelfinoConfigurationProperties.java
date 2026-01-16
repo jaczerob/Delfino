@@ -13,22 +13,53 @@ public class DelfinoConfigurationProperties {
     private Netty netty = new Netty();
     private Mdrs mdrs = new Mdrs();
     private World world = new World();
+    private Cache cache = new Cache();
+
+    @Getter
+    @Setter
+    public static class Cache {
+        private boolean login = false;
+    }
+
+    @Getter
+    @Setter
+    public static class Rates {
+        private int exp = 1;
+        private int meso = 1;
+        private int drop = 1;
+        private int bossDrop = 1;
+        private int quest = 1;
+        private int fishing = 1;
+        private int travel = 1;
+    }
+
+    @Getter
+    @Setter
+    public static class Messages {
+        private String event = "Welcome!";
+        private String recommended = "Welcome!";
+        private String server = "Welcome!";
+    }
 
     @Getter
     @Setter
     public static class World {
+        private String url = "";
         private String name = "";
         private int id = 1;
         private int flag = 0;
-        private String eventMessage = "Welcome!";
+        private Messages messages = new Messages();
+        private Rates rates = new Rates();
         private List<Channel> channels = new ArrayList<>();
     }
 
     @Getter
     @Setter
     public static class Channel {
-        private int id = 1;
-        private int capacity = 0;
+        private int port = 7575;
+        private String ip = "127.0.0.1";
+        private int capacity = 1000;
+        private boolean enabled = true;
     }
 
     @Getter

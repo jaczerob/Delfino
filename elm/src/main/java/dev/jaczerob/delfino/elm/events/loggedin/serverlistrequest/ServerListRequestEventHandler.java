@@ -1,52 +1,62 @@
 package dev.jaczerob.delfino.elm.events.loggedin.serverlistrequest;
 
-import dev.jaczerob.delfino.common.config.DelfinoConfigurationProperties;
+import com.google.protobuf.Empty;
 import dev.jaczerob.delfino.elm.coordinators.SessionCoordinator;
 import dev.jaczerob.delfino.elm.events.loggedin.AbstractLoggedInEventHandler;
+import dev.jaczerob.delfino.grpc.proto.world.WorldServiceGrpc;
 import dev.jaczerob.delfino.network.opcodes.SendOpcode;
 import dev.jaczerob.delfino.network.packets.OutPacket;
 import dev.jaczerob.delfino.network.packets.Packet;
+import io.grpc.StatusException;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ServerListRequestEventHandler extends AbstractLoggedInEventHandler<Object, ServerListRequestEvent> {
-    private final DelfinoConfigurationProperties delfinoConfigurationProperties;
+    private final WorldServiceGrpc.WorldServiceBlockingV2Stub worldService;
 
     public ServerListRequestEventHandler(
             final SessionCoordinator sessionCoordinator,
-            final DelfinoConfigurationProperties delfinoConfigurationProperties
+            final WorldServiceGrpc.WorldServiceBlockingV2Stub worldService
     ) {
         super(sessionCoordinator);
-        this.delfinoConfigurationProperties = delfinoConfigurationProperties;
+        this.worldService = worldService;
     }
 
     @Override
     protected void handleEventInternal(final ServerListRequestEvent event) {
-        event.getContext().writeAndFlush(this.getServerList());
-        event.getContext().writeAndFlush(this.getEndOfServerList());
-        event.getContext().writeAndFlush(this.selectWorld(0));
-        event.getContext().writeAndFlush(this.sendRecommended());
+        try {
+            event.getContext().writeAndFlush(this.getServerList());
+            event.getContext().writeAndFlush(this.getEndOfServerList());
+            event.getContext().writeAndFlush(this.selectWorld(0));
+            event.getContext().writeAndFlush(this.sendRecommended());
+        } catch (final Exception exc) {
+            this.getLogger().error("Failed to handle server list request event", exc);
+        }
     }
 
-    public Packet getServerList() {
-        final var packet = OutPacket.create(SendOpcode.SERVERLIST)
-                .writeByte(this.delfinoConfigurationProperties.getWorld().getId())
-                .writeString(this.delfinoConfigurationProperties.getWorld().getName())
-                .writeByte(this.delfinoConfigurationProperties.getWorld().getFlag())
-                .writeString(this.delfinoConfigurationProperties.getWorld().getEventMessage())
-                .writeByte(100)
-                .writeByte(0)
-                .writeByte(100)
-                .writeByte(0)
-                .writeByte(0)
-                .writeByte(this.delfinoConfigurationProperties.getWorld().getChannels().size());
+    public Packet getServerList() throws StatusException {
+        final var world = this.worldService.getWorld(Empty.newBuilder().build());
 
-        for (final var ch : this.delfinoConfigurationProperties.getWorld().getChannels())
-            packet.writeString(this.delfinoConfigurationProperties.getWorld().getName() + "-" + ch.getId())
-                    .writeInt(ch.getCapacity())
-                    .writeByte(this.delfinoConfigurationProperties.getWorld().getId())
-                    .writeByte(ch.getId() - 1)
+        final var packet = OutPacket.create(SendOpcode.SERVERLIST)
+                .writeByte(world.getId())
+                .writeString(world.getName())
+                .writeByte(world.getFlag())
+                .writeString(world.getMessages().getEvent())
+                .writeByte(100)
+                .writeByte(0)
+                .writeByte(100)
+                .writeByte(0)
+                .writeByte(0)
+                .writeByte(world.getChannelsCount());
+
+        for (var i = 0; i < world.getChannelsCount(); i++) {
+            final var channel = world.getChannels(i);
+            packet.writeString("%s-%d".formatted(world.getName(), i + 1))
+                    .writeInt(channel.getCapacity())
+                    .writeByte(world.getId())
+                    .writeByte(i)
                     .writeBool(false);
+        }
 
         return packet.writeShort(0);
     }

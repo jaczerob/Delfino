@@ -1,29 +1,7 @@
-/*
-	This file is part of the OdinMS Maple Story Server
-    Copyright (C) 2008 Patrick Huy <patrick.huy@frz.cc>
-		       Matthias Butz <matze@odinms.de>
-		       Jan Christian Meyer <vimes@odinms.de>
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as
-    published by the Free Software Foundation version 3 as published by
-    the Free Software Foundation. You may not use, modify or distribute
-    this program under any other version of the GNU Affero General Public
-    License.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
-
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package dev.jaczerob.delfino.network.opcodes;
 
 public enum RecvOpcode {
-    CUSTOM_PACKET(0x3713),//13 37 lol
-
+    CUSTOM_PACKET(0x3713),
     CLIENT_HELLO(0x23),
     LOGIN_PASSWORD(0x01),
     GUEST_LOGIN(0x02),
@@ -80,8 +58,8 @@ public enum RecvOpcode {
     HIRED_MERCHANT_REQUEST(0x3F),
     FREDRICK_ACTION(0x40),
     DUEY_ACTION(0x41),
-    OWL_ACTION(0x42),   //sends most searched info to client
-    OWL_WARP(0x43),     //handles player warp to store
+    OWL_ACTION(0x42),
+    OWL_WARP(0x43),
     ADMIN_SHOP(0x44),
     ITEM_SORT(0x45),
     ITEM_SORT2(0x46),
@@ -93,7 +71,6 @@ public enum RecvOpcode {
     USE_MOUNT_FOOD(0x4D),
     SCRIPTED_ITEM(0x4E),
     USE_CASH_ITEM(0x4F),
-    //USE_OWL_ITEM(0x50), ... no idea
     USE_CATCH_ITEM(0x51),
     USE_SKILL_BOOK(0x52),
     USE_TELEPORT_ROCK(0x54),
@@ -116,7 +93,6 @@ public enum RecvOpcode {
     TROCK_ADD_MAP(0x66),
     REPORT(0x6A),
     QUEST_ACTION(0x6B),
-    //USER_CALC_DAMAGE_STAT_SET_REQUEST(0x6C),
     GRENADE_EFFECT(0x6D),
     SKILL_MACRO(0x6E),
     USE_ITEM_REWARD(0x70),
@@ -174,7 +150,7 @@ public enum RecvOpcode {
     DAMAGE_SUMMON(0xB1),
     BEHOLDER(0xB2),
     MOVE_DRAGON(0xB5),
-    CHANGE_QUICKSLOT(0xB7),//CP_QuickslotKeyMappedModified
+    CHANGE_QUICKSLOT(0xB7),
     MOVE_LIFE(0xBC),
     AUTO_AGGRO(0xBD),
     FIELD_DAMAGE_MOB(0xBF),
@@ -186,11 +162,11 @@ public enum RecvOpcode {
     DAMAGE_REACTOR(0xCD),
     TOUCHING_REACTOR(0xCE),
     PLAYER_MAP_TRANSFER(0xCF),
-    MAPLETV(0xFFFE),//Don't know
+    MAPLETV(0xFFFE),
     SNOWBALL(0xD3),
     LEFT_KNOCKBACK(0xD4),
     COCONUT(0xD5),
-    MATCH_TABLE(0xD6),//Would be cool if I ever get it to work :)
+    MATCH_TABLE(0xD6),
     MONSTER_CARNIVAL(0xDA),
     PARTY_SEARCH_REGISTER(0xDC),
     PARTY_SEARCH_START(0xDE),
@@ -223,9 +199,5 @@ public enum RecvOpcode {
 
     public int getValue() {
         return code;
-    }
-
-    public String toHex() {
-        return Integer.toHexString(this.code);
     }
 }

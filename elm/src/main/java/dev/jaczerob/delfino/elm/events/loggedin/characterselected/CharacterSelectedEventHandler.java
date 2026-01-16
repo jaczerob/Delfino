@@ -18,11 +18,6 @@ public class CharacterSelectedEventHandler extends AbstractLoggedInEventHandler<
 
     @Override
     protected void handleEventInternal(final CharacterSelectedEvent event) {
-        event.getClient().getAccount().getCharactersList().stream()
-                .filter(chr -> chr.getId() == event.getPayload().characterId())
-                .findFirst()
-                .ifPresent(event.getClient()::setSelectedCharacter);
-
         try {
             event.getContext().writeAndFlush(this.getServerIP(InetAddress.getByName("127.0.0.1"), 7575, event.getPayload().characterId()));
         } catch (final UnknownHostException exc) {

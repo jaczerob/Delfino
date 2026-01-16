@@ -1,0 +1,53 @@
+import "google/protobuf/empty.proto";
+
+option java_multiple_files = true;
+option java_package = "dev.jaczerob.delfino.grpc.proto.world";
+option java_outer_classname = "WorldProto";
+
+enum WorldStatus {
+  ONLINE = 0;
+  OFFLINE = 1;
+  BUSY = 2;
+  FULL = 3;
+}
+
+message Channel {
+  required int32 capacity = 1;
+  required int32 amountPlayers = 2;
+  required WorldStatus status = 3;
+  optional string ip = 4;
+  optional int32 port = 5;
+}
+
+message Rates {
+  required int32 exp = 1;
+  required int32 meso = 2;
+  required int32 drop = 3;
+  required int32 bossDrop = 4;
+  required int32 quest = 5;
+  required int32 fishing = 6;
+  required int32 travel = 7;
+}
+
+message Messages {
+  required string event = 1;
+  required string server = 2;
+  required string recommended = 3;
+}
+
+message World {
+  required int32 id = 1;
+  required string name = 2;
+  required int32 flag = 3;
+  required Messages messages = 4;
+  required Rates rates = 5;
+  repeated Channel channels = 6;
+}
+
+service WorldService {
+  rpc GetWorld (google.protobuf.Empty) returns (World);
+}
+
+service ChannelService {
+  rpc GetChannel (google.protobuf.Empty) returns (Channel);
+}

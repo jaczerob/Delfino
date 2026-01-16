@@ -28,3 +28,10 @@ logging:
     dev.jaczerob: DEBUG
     com.zaxxer: ERROR
     io.grpc: ERROR
+  structured:
+    json:
+      exclude:
+        - process.pid
+        - ecs
+        - service
+        - tags

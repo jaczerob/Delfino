@@ -19,8 +19,9 @@
         <module>network</module>
         <module>grpc-proto</module>
         <module>mdrs</module>
-        <module>maplestory</module>
+        <module>channel</module>
         <module>elm</module>
+        <module>world</module>
     </modules>
 
     <properties>

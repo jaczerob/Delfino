@@ -4,7 +4,7 @@ WORKDIR /opt/delfino
 
 COPY . .
 
-RUN mvn -f ./pom.xml clean install -DskipTests -pl '!mdrs,!login'
+RUN mvn -f ./pom.xml clean install -DskipTests -pl '!mdrs,!elm'
 
 FROM amazoncorretto:21
 

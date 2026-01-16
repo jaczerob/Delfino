@@ -13,7 +13,6 @@ import dev.jaczerob.delfino.elm.events.stateless.hello.HelloEvent;
 import dev.jaczerob.delfino.elm.events.stateless.ping.PingEvent;
 import dev.jaczerob.delfino.elm.events.stateless.pong.PongEvent;
 import dev.jaczerob.delfino.grpc.proto.account.Account;
-import dev.jaczerob.delfino.grpc.proto.character.Character;
 import dev.jaczerob.delfino.network.opcodes.RecvOpcode;
 import dev.jaczerob.delfino.network.packets.InPacket;
 import dev.jaczerob.delfino.network.packets.InvalidPacketHeaderException;
@@ -38,7 +37,6 @@ public class Client extends ChannelInboundHandlerAdapter {
     private final ApplicationEventPublisher applicationEventPublisher;
 
     private Account account;
-    private Character selectedCharacter;
     private Channel ioChannel;
 
     public Client(final ApplicationEventPublisher applicationEventPublisher) {

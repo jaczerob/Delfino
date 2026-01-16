@@ -3,55 +3,28 @@
          xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <parent>
         <groupId>dev.jaczerob.delfino</groupId>
         <artifactId>delfino-parent</artifactId>
         <version>0.0.1</version>
     </parent>
 
-    <groupId>dev.jaczerob.delfino.maplestory</groupId>
-    <artifactId>maplestory</artifactId>
+    <groupId>dev.jaczerob.delfino.world</groupId>
+    <artifactId>world</artifactId>
 
     <dependencies>
-        <dependency>
-            <groupId>dev.jaczerob.delfino.grpc</groupId>
-            <artifactId>grpc-proto</artifactId>
-        </dependency>
         <dependency>
             <groupId>dev.jaczerob.delfino.network</groupId>
             <artifactId>network</artifactId>
         </dependency>
-
         <dependency>
-            <groupId>com.esotericsoftware.yamlbeans</groupId>
-            <artifactId>yamlbeans</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>net.jcip</groupId>
-            <artifactId>jcip-annotations</artifactId>
+            <groupId>dev.jaczerob.delfino.grpc</groupId>
+            <artifactId>grpc-proto</artifactId>
         </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.jdbi</groupId>
-            <artifactId>jdbi3-core</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.graalvm.js</groupId>
-            <artifactId>js</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.graalvm.js</groupId>
-            <artifactId>js-scriptengine</artifactId>
+            <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
     </dependencies>
 

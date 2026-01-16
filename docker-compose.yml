@@ -7,9 +7,8 @@ services:
       - delfino-db
     ports:
       - "9090:9090"
-      - "9990:9990"
     environment:
-      - SERVER_PORT=9990
+      - SERVER_PORT=9090
       - DB_HOST=delfino-db
       - DB_PORT=5432
       - DB_DATABASE=delfino
@@ -19,16 +18,12 @@ services:
   maplestory:
     build:
       context: .
-      dockerfile: ./maplestory/Dockerfile
+      dockerfile: ./channel/Dockerfile
     depends_on:
       - delfino-db
       - mdrs
     ports:
       - "7575-7577:7575-7577"
-    volumes:
-      - ./maplestory/config.yaml:/opt/server/config.yaml
-      - ./maplestory/scripts:/opt/server/scripts
-      - ./maplestory/wz:/opt/server/wz
     environment:
       - DB_HOST=delfino-db
       - DB_PORT=5432
