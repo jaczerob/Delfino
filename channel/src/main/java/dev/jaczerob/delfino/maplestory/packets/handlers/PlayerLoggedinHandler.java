@@ -43,7 +43,6 @@ import dev.jaczerob.delfino.maplestory.service.NoteService;
 import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
 import dev.jaczerob.delfino.maplestory.tools.Pair;
-import dev.jaczerob.delfino.maplestory.tools.packets.WeddingPackets;
 import dev.jaczerob.delfino.network.opcodes.RecvOpcode;
 import dev.jaczerob.delfino.network.packets.InPacket;
 import io.netty.channel.ChannelHandlerContext;
@@ -425,16 +424,6 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
             player.updateCouponRates();
 
             player.receivePartyMemberHP();
-
-            if (player.getPartnerId() > 0) {
-                int partnerId = player.getPartnerId();
-                final Character partner = wserv.getPlayerStorage().getCharacterById(partnerId);
-
-                if (partner != null && !partner.isAwayFromWorld()) {
-                    player.sendPacket(WeddingPackets.getInstance().OnNotifyWeddingPartnerTransfer(partnerId, partner.getMapId()));
-                    partner.sendPacket(WeddingPackets.getInstance().OnNotifyWeddingPartnerTransfer(player.getId(), player.getMapId()));
-                }
-            }
 
             if (YamlConfig.config.server.USE_NPCS_SCRIPTABLE) {
 

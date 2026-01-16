@@ -47,7 +47,6 @@ import dev.jaczerob.delfino.maplestory.server.partyquest.MonsterCarnivalParty;
 import dev.jaczerob.delfino.maplestory.server.partyquest.PartyQuest;
 import dev.jaczerob.delfino.maplestory.server.quest.Quest;
 import dev.jaczerob.delfino.maplestory.tools.*;
-import dev.jaczerob.delfino.maplestory.tools.packets.WeddingPackets;
 import dev.jaczerob.delfino.network.packets.Packet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -214,9 +213,6 @@ public class Character extends AbstractCharacterObject {
     private Map<String, Events> events = new LinkedHashMap<>();
     private PartyQuest partyQuest = null;
     private Dragon dragon = null;
-    private Ring marriageRing;
-    private int marriageItemid = -1;
-    private int partnerId = -1;
     private boolean loggedIn = false;
     private boolean useCS;  //chaos scroll upon crafting item.
     private long npcCd;
@@ -1041,35 +1037,11 @@ public class Character extends AbstractCharacterObject {
                             if (pet != null && pet.isSummoned()) {
                                 ret.addPet(pet);
                             }
-                            continue;
-                        }
-
-                        InventoryType mit = item.getRight();
-                        if (mit.equals(InventoryType.EQUIP) || mit.equals(InventoryType.EQUIPPED)) {
-                            Equip equip = (Equip) item.getLeft();
-                            if (equip.getRingId() > -1) {
-                                Ring ring = Ring.loadFromDb(equip.getRingId());
-                                if (item.getRight().equals(InventoryType.EQUIPPED)) {
-                                    if (ring != null) {
-                                        ring.equip();
-                                        ret.addPlayerRing(ring);
-                                    }
-                                }
-                            }
                         }
                     }
 
                     if ((sandboxCheck & ItemConstants.SANDBOX) == ItemConstants.SANDBOX) {
                         ret.setHasSandboxItem();
-                    }
-
-                    ret.partnerId = rs.getInt("partnerId");
-                    ret.marriageItemid = rs.getInt("marriageItemId");
-                    if (ret.marriageItemid > 0 && ret.partnerId <= 0) {
-                        ret.marriageItemid = -1;
-                    } else if (ret.partnerId > 0 && wserv.getRelationshipId(ret.id) <= 0) {
-                        ret.marriageItemid = -1;
-                        ret.partnerId = -1;
                     }
 
                     NewYearCardRecord.loadPlayerNewYearCards(ret);
@@ -2756,12 +2728,6 @@ public class Character extends AbstractCharacterObject {
     }
 
     public void notifyMapTransferToPartner(int mapid) {
-        if (partnerId > 0) {
-            final Character partner = getWorldServer().getPlayerStorage().getCharacterById(partnerId);
-            if (partner != null && !partner.isAwayFromWorld()) {
-                partner.sendPacket(WeddingPackets.getInstance().OnNotifyWeddingPartnerTransfer(id, mapid));
-            }
-        }
     }
 
     public void removeIncomingInvites() {

@@ -2,8 +2,6 @@ package dev.jaczerob.delfino.maplestory.packets.handlers;
 
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Client;
-import dev.jaczerob.delfino.maplestory.client.Ring;
-import dev.jaczerob.delfino.maplestory.client.inventory.Equip;
 import dev.jaczerob.delfino.maplestory.client.inventory.Inventory;
 import dev.jaczerob.delfino.maplestory.client.inventory.InventoryType;
 import dev.jaczerob.delfino.maplestory.client.inventory.Item;
@@ -19,7 +17,6 @@ import dev.jaczerob.delfino.maplestory.server.CashShop.CashItemFactory;
 import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
 import dev.jaczerob.delfino.maplestory.service.NoteService;
 import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
-import dev.jaczerob.delfino.maplestory.tools.Pair;
 import dev.jaczerob.delfino.network.opcodes.RecvOpcode;
 import dev.jaczerob.delfino.network.packets.InPacket;
 import io.netty.channel.ChannelHandlerContext;
@@ -261,13 +258,6 @@ public class CashOperationHandler extends AbstractPacketHandler {
                     if (chr.getInventory(item.getInventoryType()).addItem(item) != -1) {
                         cs.removeFromInventory(item);
                         client.sendPacket(ChannelPacketCreator.getInstance().takeFromCashInventory(item));
-
-                        if (item instanceof Equip equip) {
-                            if (equip.getRingId() >= 0) {
-                                Ring ring = Ring.loadFromDb(equip.getRingId());
-                                chr.addPlayerRing(ring);
-                            }
-                        }
                     }
                 } else if (action == 0x0E) { // Put into Cash Inventory
                     int cashId = packet.readInt();
@@ -296,42 +286,6 @@ public class CashOperationHandler extends AbstractPacketHandler {
                     cs.addToInventory(item);
                     mi.removeSlot(item.getPosition());
                     client.sendPacket(ChannelPacketCreator.getInstance().putIntoCashInventory(item, client.getAccID()));
-                } else if (action == 0x1D) { //crush ring (action 28)
-                    int birthday = packet.readInt();
-                    if (checkBirthday(client, birthday)) {
-                        int toCharge = packet.readInt();
-                        int SN = packet.readInt();
-                        String recipientName = packet.readString();
-                        String text = packet.readString();
-                        CashItem itemRing = CashItemFactory.getItem(SN);
-                        Character partner = client.getChannelServer().getPlayerStorage().getCharacterByName(recipientName);
-                        if (partner == null) {
-                            chr.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "The partner you specified cannot be found.\r\nPlease make sure your partner is online and in the same channel."));
-                        } else {
-
-                          /*  if (partner.getGender() == chr.getGender()) {
-                                chr.dropMessage(5, "You and your partner are the same gender, please buy a friendship ring.");
-                                client.enableCSActions();
-                                return;
-                            }*/ //Gotta let them faggots marry too, hence why this is commented out <3 
-
-                            if (itemRing.toItem() instanceof Equip eqp) {
-                                Pair<Integer, Integer> rings = Ring.createRing(itemRing.getItemId(), chr, partner);
-                                eqp.setRingId(rings.getLeft());
-                                cs.addToInventory(eqp);
-                                client.sendPacket(ChannelPacketCreator.getInstance().showBoughtCashItem(eqp, client.getAccID()));
-                                cs.gainCash(toCharge, itemRing, chr.getWorld());
-                                cs.gift(partner.getId(), chr.getName(), text, eqp.getSN(), rings.getRight());
-                                chr.addCrushRing(Ring.loadFromDb(rings.getLeft()));
-                                noteService.sendWithFame(text, chr.getName(), partner.getName());
-                                noteService.show(partner);
-                            }
-                        }
-                    } else {
-                        client.sendPacket(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0xC4));
-                    }
-
-                    client.sendPacket(ChannelPacketCreator.getInstance().showCash(client.getPlayer()));
                 } else if (action == 0x20) {
                     int serialNumber = packet.readInt();  // thanks GabrielSin for detecting a potential exploit with 1 meso cash items.
                     if (serialNumber / 10000000 != 8) {
@@ -359,37 +313,6 @@ public class CashOperationHandler extends AbstractPacketHandler {
                             client.sendPacket(ChannelPacketCreator.getInstance().showBoughtQuestItem(itemId));
                         }
                     }
-                    client.sendPacket(ChannelPacketCreator.getInstance().showCash(client.getPlayer()));
-                } else if (action == 0x23) { //Friendship :3
-                    int birthday = packet.readInt();
-                    if (checkBirthday(client, birthday)) {
-                        int payment = packet.readByte();
-                        packet.skip(3); //0s
-                        int snID = packet.readInt();
-                        CashItem itemRing = CashItemFactory.getItem(snID);
-                        String sentTo = packet.readString();
-                        String text = packet.readString();
-                        Character partner = client.getChannelServer().getPlayerStorage().getCharacterByName(sentTo);
-                        if (partner == null) {
-                            client.sendPacket(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0xBE));
-                        } else {
-                            // Need to check to make sure its actually an equip and the right SN...
-                            if (itemRing.toItem() instanceof Equip eqp) {
-                                Pair<Integer, Integer> rings = Ring.createRing(itemRing.getItemId(), chr, partner);
-                                eqp.setRingId(rings.getLeft());
-                                cs.addToInventory(eqp);
-                                client.sendPacket(ChannelPacketCreator.getInstance().showBoughtCashRing(eqp, partner.getName(), client.getAccID()));
-                                cs.gainCash(payment, -itemRing.getPrice());
-                                cs.gift(partner.getId(), chr.getName(), text, eqp.getSN(), rings.getRight());
-                                chr.addFriendshipRing(Ring.loadFromDb(rings.getLeft()));
-                                noteService.sendWithFame(text, chr.getName(), partner.getName());
-                                noteService.show(partner);
-                            }
-                        }
-                    } else {
-                        client.sendPacket(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0xC4));
-                    }
-
                     client.sendPacket(ChannelPacketCreator.getInstance().showCash(client.getPlayer()));
                 } else if (action == 0x2E) { //name change
                     CashItem cItem = CashItemFactory.getItem(packet.readInt());
