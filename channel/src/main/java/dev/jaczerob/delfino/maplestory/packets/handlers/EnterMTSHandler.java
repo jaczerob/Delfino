@@ -41,12 +41,6 @@ public final class EnterMTSHandler extends AbstractPacketHandler {
             return;
         }
 
-        if (chr.getEventInstance() != null) {
-            client.sendPacket(ChannelPacketCreator.getInstance().serverNotice(5, "Entering Cash Shop or MTS are disabled when registered on an event."));
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
-            return;
-        }
-
         if (MiniDungeonInfo.isDungeonMap(chr.getMapId())) {
             client.sendPacket(ChannelPacketCreator.getInstance().serverNotice(5, "Changing channels or entering Cash Shop or MTS are disabled when inside a Mini-Dungeon."));
             client.sendPacket(ChannelPacketCreator.getInstance().enableActions());

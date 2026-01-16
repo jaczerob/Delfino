@@ -29,19 +29,12 @@ import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.net.server.channel.Channel;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.session.Hwid;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.session.SessionCoordinator;
-import dev.jaczerob.delfino.maplestory.net.server.coordinator.session.SessionCoordinator.AntiMulticlientResult;
 import dev.jaczerob.delfino.maplestory.net.server.guild.Guild;
 import dev.jaczerob.delfino.maplestory.net.server.guild.GuildCharacter;
 import dev.jaczerob.delfino.maplestory.net.server.guild.GuildPackets;
-import dev.jaczerob.delfino.maplestory.net.server.world.MessengerCharacter;
-import dev.jaczerob.delfino.maplestory.net.server.world.Party;
-import dev.jaczerob.delfino.maplestory.net.server.world.PartyCharacter;
-import dev.jaczerob.delfino.maplestory.net.server.world.PartyOperation;
-import dev.jaczerob.delfino.maplestory.net.server.world.World;
+import dev.jaczerob.delfino.maplestory.net.server.world.*;
 import dev.jaczerob.delfino.maplestory.packets.ChannelPacketProcessor;
 import dev.jaczerob.delfino.maplestory.scripting.AbstractPlayerInteraction;
-import dev.jaczerob.delfino.maplestory.scripting.event.EventInstanceManager;
-import dev.jaczerob.delfino.maplestory.scripting.event.EventManager;
 import dev.jaczerob.delfino.maplestory.scripting.npc.NPCConversationManager;
 import dev.jaczerob.delfino.maplestory.scripting.npc.NPCScriptManager;
 import dev.jaczerob.delfino.maplestory.scripting.quest.QuestActionManager;
@@ -52,10 +45,8 @@ import dev.jaczerob.delfino.maplestory.server.life.Monster;
 import dev.jaczerob.delfino.maplestory.server.maps.FieldLimit;
 import dev.jaczerob.delfino.maplestory.server.maps.MapleMap;
 import dev.jaczerob.delfino.maplestory.server.maps.MiniDungeonInfo;
-import dev.jaczerob.delfino.maplestory.tools.BCrypt;
 import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
-import dev.jaczerob.delfino.maplestory.tools.HexTool;
 import dev.jaczerob.delfino.network.packets.InPacket;
 import dev.jaczerob.delfino.network.packets.Packet;
 import dev.jaczerob.delfino.network.packets.logging.LoggingUtil;
@@ -69,23 +60,10 @@ import javax.script.ScriptEngine;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.util.ArrayList;
+import java.sql.*;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -117,14 +95,11 @@ public class Client extends ChannelInboundHandlerAdapter {
     private int world;
     private volatile long lastPong;
     private int gmlevel;
-    private Set<String> macs = new HashSet<>();
     private Map<String, ScriptEngine> engines = new HashMap<>();
     private byte characterSlots = 3;
-    private byte loginattempt = 0;
     private byte csattempt = 0;
     private byte gender = -1;
     private boolean disconnecting = false;
-    private int votePoints;
     private long lastNpcClick;
     private long lastPacket = System.currentTimeMillis();
     private int lang = 0;
@@ -155,16 +130,6 @@ public class Client extends ChannelInboundHandlerAdapter {
         }
 
         return remoteAddress;
-    }
-
-    private static boolean checkHash(String hash, String type, String password) {
-        try {
-            MessageDigest digester = MessageDigest.getInstance(type);
-            digester.update(password.getBytes(StandardCharsets.UTF_8), 0, password.length());
-            return HexTool.toHexString(digester.digest()).replace(" ", "").toLowerCase().equals(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Encoding the string failed", e);
-        }
     }
 
     @Override
@@ -278,10 +243,6 @@ public class Client extends ChannelInboundHandlerAdapter {
         return remoteAddress;
     }
 
-    public EventManager getEventManager(String event) {
-        return getChannelServer().getEventSM().getEventManager(event);
-    }
-
     public Character getPlayer() {
         return player;
     }
@@ -294,177 +255,8 @@ public class Client extends ChannelInboundHandlerAdapter {
         return new AbstractPlayerInteraction(this);
     }
 
-    public List<Character> loadCharacters(int serverId) {
-        List<Character> chars = new ArrayList<>(15);
-        try {
-            for (CharNameAndId cni : loadCharactersInternal(serverId)) {
-                chars.add(Character.loadCharFromDB(cni.id, this, false));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return chars;
-    }
-
-    private List<CharNameAndId> loadCharactersInternal(int worldId) {
-        List<CharNameAndId> chars = new ArrayList<>(15);
-        try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT id, name FROM characters WHERE accountid = ? AND world = ?")) {
-            ps.setInt(1, this.getAccID());
-            ps.setInt(2, worldId);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    chars.add(new CharNameAndId(rs.getString("name"), rs.getInt("id")));
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return chars;
-    }
-
     public boolean isLoggedIn() {
         return loggedIn;
-    }
-
-    private void loadMacsIfNescessary() throws SQLException {
-        if (macs.isEmpty()) {
-            try (Connection con = DatabaseConnection.getStaticConnection();
-                 PreparedStatement ps = con.prepareStatement("SELECT macs FROM accounts WHERE id = ?")) {
-                ps.setInt(1, accId);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        for (String mac : rs.getString("macs").split(", ")) {
-                            if (!mac.equals("")) {
-                                macs.add(mac);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    public void banMacs() {
-        try {
-            loadMacsIfNescessary();
-
-            List<String> filtered = new LinkedList<>();
-            try (Connection con = DatabaseConnection.getStaticConnection()) {
-                try (PreparedStatement ps = con.prepareStatement("SELECT filter FROM macfilters");
-                     ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        filtered.add(rs.getString("filter"));
-                    }
-                }
-
-                try (PreparedStatement ps = con.prepareStatement("INSERT INTO macbans (mac, aid) VALUES (?, ?)")) {
-                    for (String mac : macs) {
-                        boolean matched = false;
-                        for (String filter : filtered) {
-                            if (mac.matches(filter)) {
-                                matched = true;
-                                break;
-                            }
-                        }
-                        if (!matched) {
-                            ps.setString(1, mac);
-                            ps.setString(2, String.valueOf(getAccID()));
-                            ps.executeUpdate();
-                        }
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public int login(String login, String pwd, Hwid hwid) {
-        int loginok = 5;
-
-        loginattempt++;
-        if (loginattempt > 4) {
-            loggedIn = false;
-            SessionCoordinator.getInstance().closeSession(this, false);
-            return 6;   // thanks Survival_Project for finding out an issue with AUTOMATIC_REGISTER here
-        }
-
-        try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT id, password, gender, banned, characterslots, tos, language FROM accounts WHERE name = ?")) {
-            ps.setString(1, login);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                accId = -2;
-                if (rs.next()) {
-                    accId = rs.getInt("id");
-                    if (accId <= 0) {
-                        log.warn("Tried to log in with accId {}", accId);
-                        return 15;
-                    }
-
-                    boolean banned = (rs.getByte("banned") == 1);
-                    gmlevel = 0;
-                    gender = rs.getByte("gender");
-                    characterSlots = rs.getByte("characterslots");
-                    lang = rs.getInt("language");
-                    String passhash = rs.getString("password");
-                    byte tos = rs.getByte("tos");
-
-                    if (banned) {
-                        return 3;
-                    }
-
-                    if (getLoginState() > LOGIN_NOTLOGGEDIN) { // already loggedin
-                        loggedIn = false;
-                        loginok = 7;
-                    } else if (passhash.charAt(0) == '$' && passhash.charAt(1) == '2' && BCrypt.checkpw(pwd, passhash)) {
-                        loginok = (tos == 0) ? 23 : 0;
-                    } else if (pwd.equals(passhash) || checkHash(passhash, "SHA-1", pwd) || checkHash(passhash, "SHA-512", pwd)) {
-                        // thanks GabrielSin for detecting some no-bcrypt inconsistencies here
-                        loginok = (tos == 0) ? (!YamlConfig.config.server.BCRYPT_MIGRATION ? 23 : -23) : (!YamlConfig.config.server.BCRYPT_MIGRATION ? 0 : -10); // migrate to bcrypt
-                    } else {
-                        loggedIn = false;
-                        loginok = 4;
-                    }
-                } else {
-                    accId = -3;
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        if (loginok == 0 || loginok == 4) {
-            AntiMulticlientResult res = SessionCoordinator.getInstance().attemptLoginSession(this, hwid, accId, loginok == 4);
-
-            switch (res) {
-                case SUCCESS:
-                    if (loginok == 0) {
-                        loginattempt = 0;
-                    }
-
-                    return loginok;
-
-                case REMOTE_LOGGEDIN:
-                    return 17;
-
-                case REMOTE_REACHED_LIMIT:
-                    return 13;
-
-                case REMOTE_PROCESSING:
-                    return 10;
-
-                case MANY_ACCOUNT_ATTEMPTS:
-                    return 16;
-
-                default:
-                    return 8;
-            }
-        } else {
-            return loginok;
-        }
     }
 
     public Calendar getTempBanCalendar() {
@@ -592,11 +384,6 @@ public class Client extends ChannelInboundHandlerAdapter {
 
             if (!serverTransition) {    // thanks MedicOP for detecting an issue with party leader change on changing channels
                 removePartyPlayer(wserv);
-
-                EventInstanceManager eim = player.getEventInstance();
-                if (eim != null) {
-                    eim.playerDisconnected(player);
-                }
 
                 if (player.getMonsterCarnival() != null) {
                     player.getMonsterCarnival().playerDisconnected(getPlayer().getId());
@@ -743,7 +530,6 @@ public class Client extends ChannelInboundHandlerAdapter {
         }
 
         this.accountName = null;
-        this.macs = null;
         this.hwid = null;
         this.birthday = null;
         this.engines = null;
@@ -814,10 +600,6 @@ public class Client extends ChannelInboundHandlerAdapter {
         }, SECONDS.toMillis(15));
     }
 
-    public Set<String> getMacs() {
-        return Collections.unmodifiableSet(macs);
-    }
-
     public int getGMLevel() {
         return gmlevel;
     }
@@ -844,40 +626,6 @@ public class Client extends ChannelInboundHandlerAdapter {
 
     public QuestActionManager getQM() {
         return QuestScriptManager.getInstance().getQM(this);
-    }
-
-    public int getVotePoints() {
-        int points = 0;
-        try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT votepoints FROM accounts WHERE id = ?")) {
-            ps.setInt(1, accId);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    points = rs.getInt("votepoints");
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        votePoints = points;
-        return votePoints;
-    }
-
-    public void addVotePoints(int points) {
-        votePoints += points;
-        saveVotePoints();
-    }
-
-    private void saveVotePoints() {
-        try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("UPDATE accounts SET votepoints = ? WHERE id = ?")) {
-            ps.setInt(1, votePoints);
-            ps.setInt(2, accId);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
     }
 
     public void lockClient() {
@@ -1096,17 +844,5 @@ public class Client extends ChannelInboundHandlerAdapter {
     public enum Type {
         LOGIN,
         CHANNEL
-    }
-
-    private static class CharNameAndId {
-
-        public String name;
-        public int id;
-
-        public CharNameAndId(String name, int id) {
-            super();
-            this.name = name;
-            this.id = id;
-        }
     }
 }

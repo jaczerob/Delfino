@@ -36,7 +36,6 @@ import dev.jaczerob.delfino.maplestory.constants.game.GameConstants;
 import dev.jaczerob.delfino.maplestory.constants.id.MapId;
 import dev.jaczerob.delfino.maplestory.constants.id.MobId;
 import dev.jaczerob.delfino.maplestory.constants.inventory.ItemConstants;
-import dev.jaczerob.delfino.network.packets.Packet;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.net.server.channel.Channel;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.world.MonsterAggroCoordinator;
@@ -45,7 +44,6 @@ import dev.jaczerob.delfino.maplestory.net.server.services.task.channel.OverallS
 import dev.jaczerob.delfino.maplestory.net.server.services.type.ChannelServices;
 import dev.jaczerob.delfino.maplestory.net.server.world.Party;
 import dev.jaczerob.delfino.maplestory.net.server.world.World;
-import dev.jaczerob.delfino.maplestory.scripting.event.EventInstanceManager;
 import dev.jaczerob.delfino.maplestory.scripting.map.MapScriptManager;
 import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
 import dev.jaczerob.delfino.maplestory.server.StatEffect;
@@ -59,6 +57,7 @@ import dev.jaczerob.delfino.maplestory.server.partyquest.GuardianSpawnPoint;
 import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.Pair;
 import dev.jaczerob.delfino.maplestory.tools.Randomizer;
+import dev.jaczerob.delfino.network.packets.Packet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -111,7 +110,6 @@ public class MapleMap {
     private boolean clock;
     private boolean boat;
     private boolean docked = false;
-    private EventInstanceManager event = null;
     private String mapName;
     private String streetName;
     private MapEffect mapEffect = null;
@@ -185,14 +183,6 @@ public class MapleMap {
         objectWLock = objectLock.writeLock();
 
         aggroMonitor = new MonsterAggroCoordinator();
-    }
-
-    public void setEventInstance(EventInstanceManager eim) {
-        event = eim;
-    }
-
-    public EventInstanceManager getEventInstance() {
-        return event;
     }
 
     public Rectangle getMapArea() {
@@ -1815,9 +1805,6 @@ public class MapleMap {
 
     public void spawnRevives(final Monster monster) {
         monster.setMap(this);
-        if (getEventInstance() != null) {
-            getEventInstance().registerMonster(monster);
-        }
 
         spawnAndAddRangedMapObject(monster, c -> c.sendPacket(ChannelPacketCreator.getInstance().spawnMonster(monster, false)));
 
@@ -1902,9 +1889,6 @@ public class MapleMap {
         monster.changeDifficulty(difficulty, isPq);
 
         monster.setMap(this);
-        if (getEventInstance() != null) {
-            getEventInstance().registerMonster(monster);
-        }
 
         spawnAndAddRangedMapObject(monster, c -> c.sendPacket(ChannelPacketCreator.getInstance().spawnMonster(monster, true)), null);
 
@@ -1957,10 +1941,6 @@ public class MapleMap {
         spos = calcPointBelow(spos);
         if (spos == null) {
             return;
-        }
-
-        if (getEventInstance() != null) {
-            getEventInstance().registerMonster(monster);
         }
 
         spos.y--;
@@ -2472,21 +2452,15 @@ public class MapleMap {
         if (MapId.isGodlyStatMap(mapid)) {
             chr.sendPacket(ChannelPacketCreator.getInstance().aranGodlyStats());
         }
-        if (chr.getEventInstance() != null && chr.getEventInstance().isTimerStarted()) {
-            chr.sendPacket(ChannelPacketCreator.getInstance().getClock((int) (chr.getEventInstance().getTimeLeft() / 1000)));
-        }
         if (chr.getFitness() != null && chr.getFitness().isTimerStarted()) {
             chr.sendPacket(ChannelPacketCreator.getInstance().getClock((int) (chr.getFitness().getTimeLeft() / 1000)));
         }
-
         if (chr.getOla() != null && chr.getOla().isTimerStarted()) {
             chr.sendPacket(ChannelPacketCreator.getInstance().getClock((int) (chr.getOla().getTimeLeft() / 1000)));
         }
-
         if (mapid == MapId.EVENT_SNOWBALL) {
             chr.sendPacket(ChannelPacketCreator.getInstance().rollSnowBall(true, 0, null, null));
         }
-
         if (hasClock()) {
             Calendar cal = Calendar.getInstance();
             chr.sendPacket(ChannelPacketCreator.getInstance().getClockTime(cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), cal.get(Calendar.SECOND)));
@@ -3849,38 +3823,9 @@ public class MapleMap {
         this.eventstarted = true;
     }
 
-    public void setEventStarted(boolean event) {
-        this.eventstarted = event;
-    }
-
-    public String getEventNPC() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Talk to ");
-        if (mapid == MapId.SOUTHPERRY) {
-            sb.append("Paul!");
-        } else if (mapid == MapId.LITH_HARBOUR) {
-            sb.append("Jean!");
-        } else if (mapid == MapId.ORBIS) {
-            sb.append("Martin!");
-        } else if (mapid == MapId.LUDIBRIUM) {
-            sb.append("Tony!");
-        } else {
-            return null;
-        }
-        return sb.toString();
-    }
-
-    public boolean hasEventNPC() {
-        return this.mapid == 60000 || this.mapid == MapId.LITH_HARBOUR || this.mapid == MapId.ORBIS || this.mapid == MapId.LUDIBRIUM;
-    }
-
     public boolean isStartingEventMap() {
         return this.mapid == MapId.EVENT_PHYSICAL_FITNESS || this.mapid == MapId.EVENT_OX_QUIZ ||
                 this.mapid == MapId.EVENT_FIND_THE_JEWEL || this.mapid == MapId.EVENT_OLA_OLA_0 || this.mapid == MapId.EVENT_OLA_OLA_1;
-    }
-
-    public boolean isEventMap() {
-        return this.mapid >= MapId.EVENT_FIND_THE_JEWEL && this.mapid < MapId.EVENT_WINNER || this.mapid > MapId.EVENT_EXIT && this.mapid <= 109090000;
     }
 
     public void setTimeMob(int id, String msg) {
@@ -4337,7 +4282,6 @@ public class MapleMap {
 
         clearMapObjects();
 
-        event = null;
         footholds = null;
         portals.clear();
         mapEffect = null;

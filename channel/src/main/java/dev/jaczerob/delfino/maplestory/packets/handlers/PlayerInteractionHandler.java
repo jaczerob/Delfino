@@ -111,10 +111,6 @@ public final class PlayerInteractionHandler extends AbstractPacketHandler {
             return 13;
         }
 
-        if (chr.getEventInstance() != null) {
-            return 5;
-        }
-
         return 0;
     }
 

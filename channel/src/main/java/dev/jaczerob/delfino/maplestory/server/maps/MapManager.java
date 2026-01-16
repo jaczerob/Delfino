@@ -19,7 +19,6 @@
 */
 package dev.jaczerob.delfino.maplestory.server.maps;
 
-import dev.jaczerob.delfino.maplestory.scripting.event.EventInstanceManager;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,17 +29,15 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class MapManager {
     private final int channel;
     private final int world;
-    private EventInstanceManager event;
 
     private final Map<Integer, MapleMap> maps = new HashMap<>();
 
     private final Lock mapsRLock;
     private final Lock mapsWLock;
 
-    public MapManager(EventInstanceManager eim, int world, int channel) {
+    public MapManager(int world, int channel) {
         this.world = world;
         this.channel = channel;
-        this.event = eim;
 
         ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
         this.mapsRLock = readWriteLock.readLock();
@@ -74,7 +71,7 @@ public class MapManager {
             }
         }
 
-        map = MapFactory.loadMapFromWz(mapid, world, channel, event);
+        map = MapFactory.loadMapFromWz(mapid, world, channel);
 
         if (cache) {
             mapsWLock.lock();
@@ -134,8 +131,5 @@ public class MapManager {
         for (MapleMap map : getMaps().values()) {
             map.dispose();
         }
-
-        this.event = null;
     }
-
 }

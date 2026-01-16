@@ -1,24 +1,3 @@
-/*
- This file is part of the OdinMS Maple Story Server
- Copyright (C) 2008 Patrick Huy <patrick.huy@frz.cc>
- Matthias Butz <matze@odinms.de>
- Jan Christian Meyer <vimes@odinms.de>
-
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU Affero General Public License as
- published by the Free Software Foundation version 3 as published by
- the Free Software Foundation. You may not use, modify or distribute
- this program under any other version of the GNU Affero General Public
- License.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU Affero General Public License for more details.
-
- You should have received a copy of the GNU Affero General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package dev.jaczerob.delfino.maplestory.server.maps;
 
 import dev.jaczerob.delfino.maplestory.constants.id.MapId;
@@ -27,7 +6,6 @@ import dev.jaczerob.delfino.maplestory.provider.DataProvider;
 import dev.jaczerob.delfino.maplestory.provider.DataProviderFactory;
 import dev.jaczerob.delfino.maplestory.provider.DataTool;
 import dev.jaczerob.delfino.maplestory.provider.wz.WZFiles;
-import dev.jaczerob.delfino.maplestory.scripting.event.EventInstanceManager;
 import dev.jaczerob.delfino.maplestory.server.life.AbstractLoadedLife;
 import dev.jaczerob.delfino.maplestory.server.life.LifeFactory;
 import dev.jaczerob.delfino.maplestory.server.life.Monster;
@@ -130,7 +108,7 @@ public class MapFactory {
         }
     }
 
-    public static MapleMap loadMapFromWz(int mapid, int world, int channel, EventInstanceManager event) {
+    public static MapleMap loadMapFromWz(int mapid, int world, int channel) {
         MapleMap map;
 
         String mapName = getMapName(mapid);
@@ -148,7 +126,6 @@ public class MapFactory {
             monsterRate = (Float) mobRate.getData();
         }
         map = new MapleMap(mapid, world, channel, DataTool.getInt("returnMap", infoData), monsterRate);
-        map.setEventInstance(event);
 
         String onFirstEnter = DataTool.getString(infoData.getChildByPath("onFirstUserEnter"), String.valueOf(mapid));
         map.setOnFirstUserEnter(onFirstEnter.equals("") ? String.valueOf(mapid) : onFirstEnter);
@@ -238,20 +215,18 @@ public class MapFactory {
             int seats = mapData.getChildByPath("seat").getChildren().size();
             map.setSeats(seats);
         }
-        if (event == null) {
-            try (Connection con = DatabaseConnection.getStaticConnection();
-                 PreparedStatement ps = con.prepareStatement("SELECT * FROM playernpcs WHERE map = ? AND world = ?")) {
-                ps.setInt(1, mapid);
-                ps.setInt(2, world);
+        try (Connection con = DatabaseConnection.getStaticConnection();
+             PreparedStatement ps = con.prepareStatement("SELECT * FROM playernpcs WHERE map = ? AND world = ?")) {
+            ps.setInt(1, mapid);
+            ps.setInt(2, world);
 
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        map.addPlayerNPCMapObject(new PlayerNPC(rs));
-                    }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    map.addPlayerNPCMapObject(new PlayerNPC(rs));
                 }
-            } catch (SQLException e) {
-                e.printStackTrace();
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
         loadLifeFromWz(map, mapData);

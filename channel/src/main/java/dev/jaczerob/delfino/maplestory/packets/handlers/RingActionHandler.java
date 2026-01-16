@@ -12,7 +12,6 @@ import dev.jaczerob.delfino.maplestory.constants.id.ItemId;
 import dev.jaczerob.delfino.maplestory.net.server.channel.Channel;
 import dev.jaczerob.delfino.maplestory.net.server.world.World;
 import dev.jaczerob.delfino.maplestory.packets.AbstractPacketHandler;
-import dev.jaczerob.delfino.maplestory.scripting.event.EventInstanceManager;
 import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
 import dev.jaczerob.delfino.maplestory.service.NoteService;
 import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
@@ -470,46 +469,6 @@ public final class RingActionHandler extends AbstractPacketHandler {
                 break;
 
             case 9:
-                try {
-                    // By -- Dragoso (Drago)
-                    // Groom and Bride's Wishlist
-
-                    Character player = client.getPlayer();
-
-                    EventInstanceManager eim = player.getEventInstance();
-                    if (eim != null) {
-                        boolean isMarrying = (player.getId() == eim.getIntProperty("groomId") || player.getId() == eim.getIntProperty("brideId"));
-
-                        if (isMarrying) {
-                            int amount = packet.readShort();
-                            if (amount > 10) {
-                                amount = 10;
-                            }
-
-                            String wishlistItems = "";
-                            for (int i = 0; i < amount; i++) {
-                                String s = packet.readString();
-                                wishlistItems += (s + "\r\n");
-                            }
-
-                            String wlKey;
-                            if (player.getId() == eim.getIntProperty("groomId")) {
-                                wlKey = "groomWishlist";
-                            } else {
-                                wlKey = "brideWishlist";
-                            }
-
-                            if (eim.getProperty(wlKey).contentEquals("")) {
-                                eim.setProperty(wlKey, wishlistItems);
-                            }
-                        }
-                    }
-                } catch (NumberFormatException nfe) {
-                }
-
-                break;
-
-            default:
                 log.warn("Unhandled RING_ACTION mode. Packet: {}", packet);
                 break;
         }

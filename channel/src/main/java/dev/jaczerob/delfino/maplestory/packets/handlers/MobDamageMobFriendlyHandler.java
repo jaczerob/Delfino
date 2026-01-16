@@ -24,7 +24,6 @@ package dev.jaczerob.delfino.maplestory.packets.handlers;
 import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.constants.id.MobId;
 import dev.jaczerob.delfino.maplestory.packets.AbstractPacketHandler;
-import dev.jaczerob.delfino.maplestory.scripting.event.EventInstanceManager;
 import dev.jaczerob.delfino.maplestory.server.life.Monster;
 import dev.jaczerob.delfino.maplestory.server.maps.MapleMap;
 import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
@@ -86,12 +85,8 @@ public final class MobDamageMobFriendlyHandler extends AbstractPacketHandler {
             }
 
             map.killFriendlies(monster);
-        } else {
-            EventInstanceManager eim = map.getEventInstance();
-            if (eim != null) {
-                eim.friendlyDamaged(monster);
-            }
         }
+
 
         monster.applyAndGetHpDamage(damage, false);
         int remainingHp = monster.getHp();

@@ -62,7 +62,6 @@ import dev.jaczerob.delfino.maplestory.server.partyquest.MonsterCarnival;
 import dev.jaczerob.delfino.maplestory.server.partyquest.Pyramid;
 import dev.jaczerob.delfino.maplestory.server.partyquest.Pyramid.PyramidMode;
 import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
-import dev.jaczerob.delfino.maplestory.tools.packets.WeddingPackets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1055,48 +1054,5 @@ public class NPCConversationManager extends AbstractPlayerInteraction {
         } else {
             return "Other players are already competing on the Ariant tournament in this room. Please wait a while until the arena becomes available again.";
         }
-    }
-
-    public void sendMarriageWishlist(boolean groom) {
-        Character player = this.getPlayer();
-        Marriage marriage = player.getMarriageInstance();
-        if (marriage != null) {
-            int cid = marriage.getIntProperty(groom ? "groomId" : "brideId");
-            Character chr = marriage.getPlayerById(cid);
-            if (chr != null) {
-                if (chr.getId() == player.getId()) {
-                    player.sendPacket(WeddingPackets.getInstance().onWeddingGiftResult((byte) 0xA, marriage.getWishlistItems(groom), marriage.getGiftItems(player.getClient(), groom)));
-                } else {
-                    marriage.setIntProperty("wishlistSelection", groom ? 0 : 1);
-                    player.sendPacket(WeddingPackets.getInstance().onWeddingGiftResult((byte) 0x09, marriage.getWishlistItems(groom), marriage.getGiftItems(player.getClient(), groom)));
-                }
-            }
-        }
-    }
-
-    public void sendMarriageGifts(List<Item> gifts) {
-        this.getPlayer().sendPacket(WeddingPackets.getInstance().onWeddingGiftResult((byte) 0xA, Collections.singletonList(""), gifts));
-    }
-
-    public boolean createMarriageWishlist() {
-        Marriage marriage = this.getPlayer().getMarriageInstance();
-        if (marriage != null) {
-            Boolean groom = marriage.isMarriageGroom(this.getPlayer());
-            if (groom != null) {
-                String wlKey;
-                if (groom) {
-                    wlKey = "groomWishlist";
-                } else {
-                    wlKey = "brideWishlist";
-                }
-
-                if (marriage.getProperty(wlKey).contentEquals("")) {
-                    getClient().sendPacket(WeddingPackets.getInstance().sendWishList());
-                    return true;
-                }
-            }
-        }
-
-        return false;
     }
 }

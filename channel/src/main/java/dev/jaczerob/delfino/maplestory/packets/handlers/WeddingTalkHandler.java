@@ -22,7 +22,6 @@ package dev.jaczerob.delfino.maplestory.packets.handlers;
 
 import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.packets.AbstractPacketHandler;
-import dev.jaczerob.delfino.maplestory.scripting.event.EventInstanceManager;
 import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.packets.WeddingPackets;
 import dev.jaczerob.delfino.network.opcodes.RecvOpcode;
@@ -44,13 +43,7 @@ public final class WeddingTalkHandler extends AbstractPacketHandler {
     public void handlePacket(final InPacket packet, final Client client, final ChannelHandlerContext context) {
         byte action = packet.readByte();
         if (action == 1) {
-            EventInstanceManager eim = client.getPlayer().getEventInstance();
-
-            if (eim != null && !(client.getPlayer().getId() == eim.getIntProperty("groomId") || client.getPlayer().getId() == eim.getIntProperty("brideId"))) {
-                client.sendPacket(WeddingPackets.getInstance().OnWeddingProgress(false, 0, 0, (byte) 2));
-            } else {
-                client.sendPacket(WeddingPackets.getInstance().OnWeddingProgress(true, 0, 0, (byte) 3));
-            }
+            client.sendPacket(WeddingPackets.getInstance().OnWeddingProgress(true, 0, 0, (byte) 3));
         } else {
             client.sendPacket(WeddingPackets.getInstance().OnWeddingProgress(true, 0, 0, (byte) 3));
         }

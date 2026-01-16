@@ -28,7 +28,6 @@ import dev.jaczerob.delfino.maplestory.client.status.MonsterStatusEffect;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
 import dev.jaczerob.delfino.maplestory.constants.id.MobId;
 import dev.jaczerob.delfino.maplestory.constants.skills.*;
-import dev.jaczerob.delfino.network.packets.Packet;
 import dev.jaczerob.delfino.maplestory.net.server.channel.Channel;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.world.MonsterAggroCoordinator;
 import dev.jaczerob.delfino.maplestory.net.server.services.task.channel.MobAnimationService;
@@ -38,7 +37,6 @@ import dev.jaczerob.delfino.maplestory.net.server.services.task.channel.OverallS
 import dev.jaczerob.delfino.maplestory.net.server.services.type.ChannelServices;
 import dev.jaczerob.delfino.maplestory.net.server.world.Party;
 import dev.jaczerob.delfino.maplestory.net.server.world.PartyCharacter;
-import dev.jaczerob.delfino.maplestory.scripting.event.EventInstanceManager;
 import dev.jaczerob.delfino.maplestory.server.StatEffect;
 import dev.jaczerob.delfino.maplestory.server.TimerManager;
 import dev.jaczerob.delfino.maplestory.server.loot.LootManager;
@@ -50,6 +48,7 @@ import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.IntervalBuilder;
 import dev.jaczerob.delfino.maplestory.tools.Pair;
 import dev.jaczerob.delfino.maplestory.tools.Randomizer;
+import dev.jaczerob.delfino.network.packets.Packet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -654,14 +653,6 @@ public class Monster extends AbstractLoadedLife {
             distributePartyExperience(partyParticipation, expPerDmg, underleveled, personalRatio, sdevRatio);
         }
 
-        EventInstanceManager eim = getMap().getEventInstance();
-        if (eim != null) {
-            Character chr = mapPlayers.get(killerId);
-            if (chr != null) {
-                eim.monsterKilled(chr, this);
-            }
-        }
-
         for (Character mc : underleveled) {
             mc.showUnderleveledInfo(this);
         }
@@ -773,8 +764,6 @@ public class Monster extends AbstractLoadedLife {
             }
 
             if (toSpawn.size() > 0) {
-                final EventInstanceManager eim = this.getMap().getEventInstance();
-
                 TimerManager.getInstance().schedule(() -> {
                     Character controller = lastController.getLeft();
                     boolean aggro = lastController.getRight();
@@ -814,10 +803,6 @@ public class Monster extends AbstractLoadedLife {
                         } else if (controller != null) {
                             mob.aggroSwitchController(controller, aggro);
                         }
-
-                        if (eim != null) {
-                            eim.reviveMonster(mob);
-                        }
                     }
                 }, getAnimationTime("die1"));
             }
@@ -845,11 +830,6 @@ public class Monster extends AbstractLoadedLife {
             if (!chrList.isEmpty()) {
                 Character chr = chrList.get(0);
 
-                EventInstanceManager eim = map.getEventInstance();
-                if (eim != null) {
-                    eim.friendlyItemDrop(m);
-                }
-
                 map.dropFromFriendlyMonster(chr, m);
             }
         }, delay, delay);
@@ -875,15 +855,6 @@ public class Monster extends AbstractLoadedLife {
 
     public void dispatchMonsterKilled(boolean hasKiller) {
         processMonsterKilled(hasKiller);
-
-        EventInstanceManager eim = getMap().getEventInstance();
-        if (eim != null) {
-            if (!this.getStats().isFriendly()) {
-                eim.monsterKilled(this, hasKiller);
-            } else {
-                eim.friendlyKilled(this, hasKiller);
-            }
-        }
     }
 
     private synchronized void processMonsterKilled(boolean hasKiller) {

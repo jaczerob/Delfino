@@ -1,39 +1,8 @@
-/* 
- This file is part of the OdinMS Maple Story Server
- Copyright (C) 2008 Patrick Huy <patrick.huy@frz.cc>
- Matthias Butz <matze@odinms.de>
- Jan Christian Meyer <vimes@odinms.de>
-
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU Affero General Public License as
- published by the Free Software Foundation version 3 as published by
- the Free Software Foundation. You may not use, modify or distribute
- this program under any otheer version of the GNU Affero General Public
- License.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; witout even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU Affero General Public License for more details.
-
-
- You should have received a copy of the GNU Affero General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package dev.jaczerob.delfino.maplestory.client;
 
 import dev.jaczerob.delfino.maplestory.client.autoban.AutobanManager;
 import dev.jaczerob.delfino.maplestory.client.creator.CharacterFactoryRecipe;
-import dev.jaczerob.delfino.maplestory.client.inventory.Equip;
-import dev.jaczerob.delfino.maplestory.client.inventory.Inventory;
-import dev.jaczerob.delfino.maplestory.client.inventory.InventoryProof;
-import dev.jaczerob.delfino.maplestory.client.inventory.InventoryType;
-import dev.jaczerob.delfino.maplestory.client.inventory.Item;
-import dev.jaczerob.delfino.maplestory.client.inventory.ItemFactory;
-import dev.jaczerob.delfino.maplestory.client.inventory.ModifyInventory;
-import dev.jaczerob.delfino.maplestory.client.inventory.Pet;
-import dev.jaczerob.delfino.maplestory.client.inventory.PetDataFactory;
-import dev.jaczerob.delfino.maplestory.client.inventory.WeaponType;
+import dev.jaczerob.delfino.maplestory.client.inventory.*;
 import dev.jaczerob.delfino.maplestory.client.inventory.manipulator.InventoryManipulator;
 import dev.jaczerob.delfino.maplestory.client.keybind.KeyBinding;
 import dev.jaczerob.delfino.maplestory.client.keybind.QuickslotBinding;
@@ -47,35 +16,7 @@ import dev.jaczerob.delfino.maplestory.constants.id.ItemId;
 import dev.jaczerob.delfino.maplestory.constants.id.MapId;
 import dev.jaczerob.delfino.maplestory.constants.id.MobId;
 import dev.jaczerob.delfino.maplestory.constants.inventory.ItemConstants;
-import dev.jaczerob.delfino.maplestory.constants.skills.Aran;
-import dev.jaczerob.delfino.maplestory.constants.skills.Beginner;
-import dev.jaczerob.delfino.maplestory.constants.skills.Bishop;
-import dev.jaczerob.delfino.maplestory.constants.skills.BlazeWizard;
-import dev.jaczerob.delfino.maplestory.constants.skills.Bowmaster;
-import dev.jaczerob.delfino.maplestory.constants.skills.Brawler;
-import dev.jaczerob.delfino.maplestory.constants.skills.Buccaneer;
-import dev.jaczerob.delfino.maplestory.constants.skills.Corsair;
-import dev.jaczerob.delfino.maplestory.constants.skills.Crusader;
-import dev.jaczerob.delfino.maplestory.constants.skills.DarkKnight;
-import dev.jaczerob.delfino.maplestory.constants.skills.DawnWarrior;
-import dev.jaczerob.delfino.maplestory.constants.skills.Evan;
-import dev.jaczerob.delfino.maplestory.constants.skills.FPArchMage;
-import dev.jaczerob.delfino.maplestory.constants.skills.Hermit;
-import dev.jaczerob.delfino.maplestory.constants.skills.Hero;
-import dev.jaczerob.delfino.maplestory.constants.skills.ILArchMage;
-import dev.jaczerob.delfino.maplestory.constants.skills.Legend;
-import dev.jaczerob.delfino.maplestory.constants.skills.Magician;
-import dev.jaczerob.delfino.maplestory.constants.skills.Marauder;
-import dev.jaczerob.delfino.maplestory.constants.skills.Marksman;
-import dev.jaczerob.delfino.maplestory.constants.skills.NightLord;
-import dev.jaczerob.delfino.maplestory.constants.skills.Noblesse;
-import dev.jaczerob.delfino.maplestory.constants.skills.Paladin;
-import dev.jaczerob.delfino.maplestory.constants.skills.Priest;
-import dev.jaczerob.delfino.maplestory.constants.skills.Ranger;
-import dev.jaczerob.delfino.maplestory.constants.skills.Shadower;
-import dev.jaczerob.delfino.maplestory.constants.skills.Sniper;
-import dev.jaczerob.delfino.maplestory.constants.skills.ThunderBreaker;
-import dev.jaczerob.delfino.maplestory.constants.skills.Warrior;
+import dev.jaczerob.delfino.maplestory.constants.skills.*;
 import dev.jaczerob.delfino.maplestory.net.server.PlayerBuffValueHolder;
 import dev.jaczerob.delfino.maplestory.net.server.PlayerCoolDownValueHolder;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
@@ -86,69 +27,26 @@ import dev.jaczerob.delfino.maplestory.net.server.guild.GuildCharacter;
 import dev.jaczerob.delfino.maplestory.net.server.guild.GuildPackets;
 import dev.jaczerob.delfino.maplestory.net.server.services.task.world.CharacterSaveService;
 import dev.jaczerob.delfino.maplestory.net.server.services.type.WorldServices;
-import dev.jaczerob.delfino.maplestory.net.server.world.Messenger;
-import dev.jaczerob.delfino.maplestory.net.server.world.MessengerCharacter;
-import dev.jaczerob.delfino.maplestory.net.server.world.Party;
-import dev.jaczerob.delfino.maplestory.net.server.world.PartyCharacter;
-import dev.jaczerob.delfino.maplestory.net.server.world.PartyOperation;
-import dev.jaczerob.delfino.maplestory.net.server.world.World;
+import dev.jaczerob.delfino.maplestory.net.server.world.*;
 import dev.jaczerob.delfino.maplestory.scripting.AbstractPlayerInteraction;
-import dev.jaczerob.delfino.maplestory.scripting.event.EventInstanceManager;
 import dev.jaczerob.delfino.maplestory.scripting.item.ItemScriptManager;
-import dev.jaczerob.delfino.maplestory.server.CashShop;
-import dev.jaczerob.delfino.maplestory.server.ExpLogger;
+import dev.jaczerob.delfino.maplestory.server.*;
 import dev.jaczerob.delfino.maplestory.server.ExpLogger.ExpLogRecord;
-import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
 import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider.ScriptedItem;
-import dev.jaczerob.delfino.maplestory.server.Marriage;
-import dev.jaczerob.delfino.maplestory.server.Shop;
-import dev.jaczerob.delfino.maplestory.server.StatEffect;
-import dev.jaczerob.delfino.maplestory.server.Storage;
-import dev.jaczerob.delfino.maplestory.server.ThreadManager;
-import dev.jaczerob.delfino.maplestory.server.TimerManager;
-import dev.jaczerob.delfino.maplestory.server.Trade;
 import dev.jaczerob.delfino.maplestory.server.events.Events;
 import dev.jaczerob.delfino.maplestory.server.events.RescueGaga;
 import dev.jaczerob.delfino.maplestory.server.events.gm.Fitness;
 import dev.jaczerob.delfino.maplestory.server.events.gm.Ola;
-import dev.jaczerob.delfino.maplestory.server.life.BanishInfo;
-import dev.jaczerob.delfino.maplestory.server.life.MobSkill;
-import dev.jaczerob.delfino.maplestory.server.life.MobSkillFactory;
-import dev.jaczerob.delfino.maplestory.server.life.MobSkillId;
-import dev.jaczerob.delfino.maplestory.server.life.MobSkillType;
-import dev.jaczerob.delfino.maplestory.server.life.Monster;
-import dev.jaczerob.delfino.maplestory.server.life.PlayerNPC;
-import dev.jaczerob.delfino.maplestory.server.maps.AbstractAnimatedMapObject;
-import dev.jaczerob.delfino.maplestory.server.maps.Door;
-import dev.jaczerob.delfino.maplestory.server.maps.DoorObject;
-import dev.jaczerob.delfino.maplestory.server.maps.Dragon;
-import dev.jaczerob.delfino.maplestory.server.maps.FieldLimit;
-import dev.jaczerob.delfino.maplestory.server.maps.HiredMerchant;
-import dev.jaczerob.delfino.maplestory.server.maps.MapEffect;
-import dev.jaczerob.delfino.maplestory.server.maps.MapItem;
-import dev.jaczerob.delfino.maplestory.server.maps.MapManager;
-import dev.jaczerob.delfino.maplestory.server.maps.MapObject;
-import dev.jaczerob.delfino.maplestory.server.maps.MapObjectType;
-import dev.jaczerob.delfino.maplestory.server.maps.MapleMap;
-import dev.jaczerob.delfino.maplestory.server.maps.MiniGame;
+import dev.jaczerob.delfino.maplestory.server.life.*;
+import dev.jaczerob.delfino.maplestory.server.maps.*;
 import dev.jaczerob.delfino.maplestory.server.maps.MiniGame.MiniGameResult;
-import dev.jaczerob.delfino.maplestory.server.maps.PlayerShop;
-import dev.jaczerob.delfino.maplestory.server.maps.PlayerShopItem;
-import dev.jaczerob.delfino.maplestory.server.maps.Portal;
-import dev.jaczerob.delfino.maplestory.server.maps.SavedLocation;
-import dev.jaczerob.delfino.maplestory.server.maps.SavedLocationType;
-import dev.jaczerob.delfino.maplestory.server.maps.Summon;
 import dev.jaczerob.delfino.maplestory.server.minigame.RockPaperScissor;
 import dev.jaczerob.delfino.maplestory.server.partyquest.AriantColiseum;
 import dev.jaczerob.delfino.maplestory.server.partyquest.MonsterCarnival;
 import dev.jaczerob.delfino.maplestory.server.partyquest.MonsterCarnivalParty;
 import dev.jaczerob.delfino.maplestory.server.partyquest.PartyQuest;
 import dev.jaczerob.delfino.maplestory.server.quest.Quest;
-import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
-import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
-import dev.jaczerob.delfino.maplestory.tools.LongTool;
-import dev.jaczerob.delfino.maplestory.tools.Pair;
-import dev.jaczerob.delfino.maplestory.tools.Randomizer;
+import dev.jaczerob.delfino.maplestory.tools.*;
 import dev.jaczerob.delfino.maplestory.tools.packets.WeddingPackets;
 import dev.jaczerob.delfino.network.packets.Packet;
 import org.slf4j.Logger;
@@ -156,29 +54,11 @@ import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.lang.ref.WeakReference;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.EnumMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -188,9 +68,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static java.util.concurrent.TimeUnit.DAYS;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.*;
 
 public class Character extends AbstractCharacterObject {
     private static final Logger log = LoggerFactory.getLogger(Character.class);
@@ -289,7 +167,6 @@ public class Character extends AbstractCharacterObject {
     private long totalExpGained = 0;
     private int merchantmeso;
     private BuddyList buddylist;
-    private EventInstanceManager eventInstance = null;
     private HiredMerchant hiredMerchant = null;
     private Client client;
     private GuildCharacter mgc = null;
@@ -2036,16 +1913,6 @@ public class Character extends AbstractCharacterObject {
     }
 
     public boolean hasJustMarried() {
-        EventInstanceManager eim = getEventInstance();
-        if (eim != null) {
-            String prop = eim.getProperty("groomId");
-
-            if (prop != null) {
-                return (Integer.parseInt(prop) == id || eim.getIntProperty("brideId") == id) &&
-                        (mapid == MapId.CHAPEL_WEDDING_ALTAR || mapid == MapId.CATHEDRAL_WEDDING_ALTAR);
-            }
-        }
-
         return false;
     }
 
@@ -2633,15 +2500,7 @@ public class Character extends AbstractCharacterObject {
     }
 
     public MapleMap getWarpMap(int map) {
-        MapleMap warpMap;
-        EventInstanceManager eim = getEventInstance();
-        if (eim != null) {
-            warpMap = eim.getMapInstance(map);
-        } else if (this.getMonsterCarnival() != null && this.getMonsterCarnival().getEventMap().getId() == map) {
-            warpMap = this.getMonsterCarnival().getEventMap();
-        } else {
-            warpMap = client.getChannelServer().getMapFactory().getMap(map);
-        }
+        MapleMap warpMap = client.getChannelServer().getMapFactory().getMap(map);
         return warpMap;
     }
 
@@ -2651,17 +2510,11 @@ public class Character extends AbstractCharacterObject {
     }
 
     private void eventChangedMap(int map) {
-        EventInstanceManager eim = getEventInstance();
-        if (eim != null) {
-            eim.changedMap(this, map);
-        }
+
     }
 
     private void eventAfterChangedMap(int map) {
-        EventInstanceManager eim = getEventInstance();
-        if (eim != null) {
-            eim.afterChangedMap(this, map);
-        }
+
     }
 
     public void changeMapBanish(BanishInfo banishInfo) {
@@ -2675,53 +2528,25 @@ public class Character extends AbstractCharacterObject {
     }
 
     public void changeMap(int map) {
-        MapleMap warpMap;
-        EventInstanceManager eim = getEventInstance();
-
-        if (eim != null) {
-            warpMap = eim.getMapInstance(map);
-        } else {
-            warpMap = client.getChannelServer().getMapFactory().getMap(map);
-        }
+        MapleMap warpMap = client.getChannelServer().getMapFactory().getMap(map);
 
         changeMap(warpMap, warpMap.getRandomPlayerSpawnpoint());
     }
 
     public void changeMap(int map, int portal) {
-        MapleMap warpMap;
-        EventInstanceManager eim = getEventInstance();
-
-        if (eim != null) {
-            warpMap = eim.getMapInstance(map);
-        } else {
-            warpMap = client.getChannelServer().getMapFactory().getMap(map);
-        }
+        MapleMap warpMap = client.getChannelServer().getMapFactory().getMap(map);
 
         changeMap(warpMap, warpMap.getPortal(portal));
     }
 
     public void changeMap(int map, String portal) {
-        MapleMap warpMap;
-        EventInstanceManager eim = getEventInstance();
-
-        if (eim != null) {
-            warpMap = eim.getMapInstance(map);
-        } else {
-            warpMap = client.getChannelServer().getMapFactory().getMap(map);
-        }
+        MapleMap warpMap = warpMap = client.getChannelServer().getMapFactory().getMap(map);
 
         changeMap(warpMap, warpMap.getPortal(portal));
     }
 
     public void changeMap(int map, Portal portal) {
-        MapleMap warpMap;
-        EventInstanceManager eim = getEventInstance();
-
-        if (eim != null) {
-            warpMap = eim.getMapInstance(map);
-        } else {
-            warpMap = client.getChannelServer().getMapFactory().getMap(map);
-        }
+        MapleMap warpMap = client.getChannelServer().getMapFactory().getMap(map);
 
         changeMap(warpMap, portal);
     }
@@ -2774,20 +2599,6 @@ public class Character extends AbstractCharacterObject {
 
         canWarpCounter++;
         eventChangedMap(MapId.NONE);
-
-        EventInstanceManager mapEim = target.getEventInstance();
-        if (mapEim != null) {
-            EventInstanceManager playerEim = this.getEventInstance();
-            if (playerEim != null) {
-                playerEim.exitPlayer(this);
-                if (playerEim.getPlayerCount() == 0) {
-                    playerEim.dispose();
-                }
-            }
-
-            // thanks Thora for finding an issue with players not being actually warped into the target event map (rather sent to the event starting map)
-            mapEim.registerPlayer(this, false);
-        }
 
         MapleMap to = target; // warps directly to the target intead of the target's map id, this allows GMs to patrol players inside instances.
         if (pto == null) {
@@ -3012,12 +2823,6 @@ public class Character extends AbstractCharacterObject {
             newWarpMap = -1;
             changeMap(temp);
         } else {
-            // if this event map has a gate already opened, render it
-            EventInstanceManager eim = getEventInstance();
-            if (eim != null) {
-                eim.recoverOpenedGate(this, map.getId());
-            }
-
             // if this map has obstacle components moving, make it do so for this client
             sendPacket(ChannelPacketCreator.getInstance().environmentMoveList(map.getEnvironment().entrySet()));
         }
@@ -4096,7 +3901,7 @@ public class Character extends AbstractCharacterObject {
     private synchronized void gainExpInternal(long gain, int equip, int party, boolean show, boolean inChat, boolean white) {   // need of method synchonization here detected thanks to MedicOP
         long total = Math.max(gain + equip + party, -exp.get());
 
-        if (level < getMaxLevel() && (allowExpGain || this.getEventInstance() != null)) {
+        if (level < getMaxLevel() && allowExpGain) {
             long leftover = 0;
             long nextExp = exp.get() + total;
 
@@ -5510,34 +5315,6 @@ public class Character extends AbstractCharacterObject {
 
     public void setEnergyBar(int set) {
         energybar = set;
-    }
-
-    public EventInstanceManager getEventInstance() {
-        evtLock.lock();
-        try {
-            return eventInstance;
-        } finally {
-            evtLock.unlock();
-        }
-    }
-
-    public void setEventInstance(EventInstanceManager eventInstance) {
-        evtLock.lock();
-        try {
-            this.eventInstance = eventInstance;
-        } finally {
-            evtLock.unlock();
-        }
-    }
-
-    public Marriage getMarriageInstance() {
-        EventInstanceManager eim = getEventInstance();
-
-        if (eim != null || !(eim instanceof Marriage)) {
-            return (Marriage) eim;
-        } else {
-            return null;
-        }
     }
 
     public void resetExcluded(int petId) {
@@ -7667,10 +7444,6 @@ public class Character extends AbstractCharacterObject {
         dispelDebuffs();
         lastDeathtime = Server.getInstance().getCurrentTime();
 
-        EventInstanceManager eim = getEventInstance();
-        if (eim != null) {
-            eim.playerKilled(this);
-        }
         int[] charmID = {ItemId.SAFETY_CHARM, ItemId.EASTER_BASKET, ItemId.EASTER_CHARM};
         int possesed = 0;
         int i;
@@ -7761,13 +7534,6 @@ public class Character extends AbstractCharacterObject {
     }
 
     public void respawn(int returnMap) {
-        respawn(null, returnMap);    // unspecified EIM, don't force EIM unregister in this case
-    }
-
-    public void respawn(EventInstanceManager eim, int returnMap) {
-        if (eim != null) {
-            eim.unregisterPlayer(this);    // some event scripts uses this...
-        }
         changeMap(returnMap);
 
         cancelAllBuffs(false);  // thanks Oblivium91 for finding out players still could revive in area and take damage before returning to town

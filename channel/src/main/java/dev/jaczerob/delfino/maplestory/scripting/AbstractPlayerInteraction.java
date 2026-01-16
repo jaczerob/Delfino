@@ -36,11 +36,8 @@ import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.net.server.guild.Guild;
 import dev.jaczerob.delfino.maplestory.net.server.world.Party;
 import dev.jaczerob.delfino.maplestory.net.server.world.PartyCharacter;
-import dev.jaczerob.delfino.maplestory.scripting.event.EventInstanceManager;
-import dev.jaczerob.delfino.maplestory.scripting.event.EventManager;
 import dev.jaczerob.delfino.maplestory.scripting.npc.NPCScriptManager;
 import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
-import dev.jaczerob.delfino.maplestory.server.Marriage;
 import dev.jaczerob.delfino.maplestory.server.expeditions.Expedition;
 import dev.jaczerob.delfino.maplestory.server.expeditions.ExpeditionBossLog;
 import dev.jaczerob.delfino.maplestory.server.expeditions.ExpeditionType;
@@ -182,14 +179,6 @@ public class AbstractPlayerInteraction {
 
     public void resetMapObjects(int mapid) {
         getWarpMap(mapid).resetMapObjects();
-    }
-
-    public EventManager getEventManager(String event) {
-        return getClient().getEventManager(event);
-    }
-
-    public EventInstanceManager getEventInstance() {
-        return getPlayer().getEventInstance();
     }
 
     public Inventory getInventory(int type) {
@@ -757,10 +746,6 @@ public class AbstractPlayerInteraction {
         return getParty().getLeaderId() == getPlayer().getId();
     }
 
-    public boolean isEventLeader() {
-        return getEventInstance() != null && getPlayer().getId() == getEventInstance().getLeaderId();
-    }
-
     public void givePartyItems(int id, short quantity, List<Character> party) {
         for (Character chr : party) {
             Client cl = chr.getClient();
@@ -828,7 +813,7 @@ public class AbstractPlayerInteraction {
                     size--;
                 } else {
                     Character chr = member.getPlayer();
-                    if (chr != null && chr.getEventInstance() == null) {
+                    if (chr != null) {
                         size--;
                     }
                 }
@@ -844,7 +829,7 @@ public class AbstractPlayerInteraction {
             if (player == null) {
                 continue;
             }
-            if (instance && player.getEventInstance() == null) {
+            if (instance) {
                 continue; // They aren't in the instance, don't give EXP.
             }
             int base = PartyQuest.getExp(PQ, player.getLevel());
@@ -1139,10 +1124,6 @@ public class AbstractPlayerInteraction {
         }
 
         return list;
-    }
-
-    public List<Item> getUnclaimedMarriageGifts() {
-        return Marriage.loadGiftItemsFromDb(this.getClient(), this.getPlayer().getId());
     }
 
     public boolean startDungeonInstance(int dungeonid) {

@@ -25,7 +25,6 @@ import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.client.Family;
 import dev.jaczerob.delfino.maplestory.client.SkillFactory;
-import dev.jaczerob.delfino.maplestory.client.command.CommandsExecutor;
 import dev.jaczerob.delfino.maplestory.client.inventory.Item;
 import dev.jaczerob.delfino.maplestory.client.inventory.ItemFactory;
 import dev.jaczerob.delfino.maplestory.client.inventory.manipulator.CashIdGenerator;
@@ -43,15 +42,7 @@ import dev.jaczerob.delfino.maplestory.net.server.coordinator.session.SessionCoo
 import dev.jaczerob.delfino.maplestory.net.server.guild.Alliance;
 import dev.jaczerob.delfino.maplestory.net.server.guild.Guild;
 import dev.jaczerob.delfino.maplestory.net.server.guild.GuildCharacter;
-import dev.jaczerob.delfino.maplestory.net.server.task.BossLogTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.CharacterDiseaseTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.CouponTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.DueyFredrickTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.EventRecallCoordinatorTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.InvitationTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.RankingCommandTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.RankingLoginTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.RespawnTask;
+import dev.jaczerob.delfino.maplestory.net.server.task.*;
 import dev.jaczerob.delfino.maplestory.net.server.world.World;
 import dev.jaczerob.delfino.maplestory.server.CashShop.CashItemFactory;
 import dev.jaczerob.delfino.maplestory.server.SkillbookInformationProvider;
@@ -76,16 +67,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -95,10 +77,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static java.util.concurrent.TimeUnit.DAYS;
-import static java.util.concurrent.TimeUnit.HOURS;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.*;
 
 @Component
 @DependsOn("channelPacketCreator")
@@ -848,11 +827,6 @@ public class Server {
         log.info("Cosmic is now online after {} ms.", initDuration.toMillis());
 
         OpcodeConstants.generateOpcodeNames();
-        CommandsExecutor.getInstance();
-
-        for (Channel ch : this.getAllChannels()) {
-            ch.reloadEventScriptManager();
-        }
     }
 
     private ChannelDependencies registerChannelDependencies() {
@@ -867,7 +841,6 @@ public class Server {
         this.timerManager.register(new CouponTask(), YamlConfig.config.server.COUPON_INTERVAL, timeLeft);
         this.timerManager.register(new RankingCommandTask(), MINUTES.toMillis(5), MINUTES.toMillis(5));
         this.timerManager.register(new RankingLoginTask(), YamlConfig.config.server.RANKING_INTERVAL, timeLeft);
-        this.timerManager.register(new EventRecallCoordinatorTask(), HOURS.toMillis(1), timeLeft);
         this.timerManager.register(new DueyFredrickTask(channelDependencies.fredrickProcessor()), HOURS.toMillis(1), timeLeft);
         this.timerManager.register(new InvitationTask(), SECONDS.toMillis(30), SECONDS.toMillis(30));
         this.timerManager.register(new RespawnTask(), YamlConfig.config.server.RESPAWN_INTERVAL, YamlConfig.config.server.RESPAWN_INTERVAL);

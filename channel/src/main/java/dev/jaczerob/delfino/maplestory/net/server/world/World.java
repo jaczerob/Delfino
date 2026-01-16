@@ -29,7 +29,6 @@ import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Family;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
 import dev.jaczerob.delfino.maplestory.constants.game.GameConstants;
-import dev.jaczerob.delfino.network.packets.Packet;
 import dev.jaczerob.delfino.maplestory.net.server.PlayerStorage;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.net.server.channel.Channel;
@@ -46,58 +45,21 @@ import dev.jaczerob.delfino.maplestory.net.server.guild.GuildSummary;
 import dev.jaczerob.delfino.maplestory.net.server.services.BaseService;
 import dev.jaczerob.delfino.maplestory.net.server.services.ServicesManager;
 import dev.jaczerob.delfino.maplestory.net.server.services.type.WorldServices;
-import dev.jaczerob.delfino.maplestory.net.server.task.CharacterAutosaverTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.CharacterHpDecreaseTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.FamilyDailyResetTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.FishingTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.HiredMerchantTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.MapOwnershipTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.MountTirednessTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.PartySearchTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.PetFullnessTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.ServerMessageTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.TimedMapObjectTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.TimeoutTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.WeddingReservationTask;
-import dev.jaczerob.delfino.maplestory.scripting.event.EventInstanceManager;
+import dev.jaczerob.delfino.maplestory.net.server.task.*;
 import dev.jaczerob.delfino.maplestory.server.Storage;
 import dev.jaczerob.delfino.maplestory.server.TimerManager;
-import dev.jaczerob.delfino.maplestory.server.maps.AbstractMapObject;
-import dev.jaczerob.delfino.maplestory.server.maps.HiredMerchant;
-import dev.jaczerob.delfino.maplestory.server.maps.MapleMap;
-import dev.jaczerob.delfino.maplestory.server.maps.MiniDungeon;
-import dev.jaczerob.delfino.maplestory.server.maps.MiniDungeonInfo;
-import dev.jaczerob.delfino.maplestory.server.maps.PlayerShop;
-import dev.jaczerob.delfino.maplestory.server.maps.PlayerShopItem;
 import dev.jaczerob.delfino.maplestory.server.maps.*;
 import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
 import dev.jaczerob.delfino.maplestory.tools.Pair;
 import dev.jaczerob.delfino.maplestory.tools.packets.Fishing;
+import dev.jaczerob.delfino.network.packets.Packet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.sql.*;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.PriorityQueue;
-import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
-import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -106,10 +68,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static java.util.concurrent.TimeUnit.DAYS;
-import static java.util.concurrent.TimeUnit.HOURS;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.*;
 
 /**
  * @author kevintjuh93
@@ -1016,24 +975,18 @@ public class World {
             case CHANGE_LEADER:
                 Character mc = party.getLeader().getPlayer();
                 if (mc != null) {
-                    EventInstanceManager eim = mc.getEventInstance();
+                    int oldLeaderMapid = mc.getMapId();
 
-                    if (eim != null && eim.isEventLeader(mc)) {
-                        eim.changedLeader(target);
-                    } else {
-                        int oldLeaderMapid = mc.getMapId();
-
-                        if (MiniDungeonInfo.isDungeonMap(oldLeaderMapid)) {
-                            if (oldLeaderMapid != target.getMapId()) {
-                                MiniDungeon mmd = mc.getClient().getChannelServer().getMiniDungeon(oldLeaderMapid);
-                                if (mmd != null) {
-                                    mmd.close();
-                                }
+                    if (MiniDungeonInfo.isDungeonMap(oldLeaderMapid)) {
+                        if (oldLeaderMapid != target.getMapId()) {
+                            MiniDungeon mmd = mc.getClient().getChannelServer().getMiniDungeon(oldLeaderMapid);
+                            if (mmd != null) {
+                                mmd.close();
                             }
                         }
                     }
-                    party.setLeader(target);
                 }
+                party.setLeader(target);
                 break;
             default:
                 log.warn("Unhandled updateParty operation: {}", operation.name());

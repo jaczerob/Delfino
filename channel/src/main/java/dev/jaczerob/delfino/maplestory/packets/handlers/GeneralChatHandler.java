@@ -24,7 +24,6 @@ package dev.jaczerob.delfino.maplestory.packets.handlers;
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.client.autoban.AutobanFactory;
-import dev.jaczerob.delfino.maplestory.client.command.CommandsExecutor;
 import dev.jaczerob.delfino.maplestory.packets.AbstractPacketHandler;
 import dev.jaczerob.delfino.maplestory.server.ChatLogger;
 import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
@@ -58,25 +57,26 @@ public final class GeneralChatHandler extends AbstractPacketHandler {
             client.disconnect(true, false);
             return;
         }
+        
         char heading = s.charAt(0);
-        if (CommandsExecutor.isCommand(client, s)) {
-            CommandsExecutor.getInstance().handle(client, s);
-        } else if (heading != '/') {
-            int show = packet.readByte();
-            if (chr.getMap().isMuted() && !chr.isGM()) {
-                chr.dropMessage(5, "The map you are in is currently muted. Please try again later.");
-                return;
-            }
-
-            if (!chr.isHidden()) {
-                chr.getMap().broadcastMessage(ChannelPacketCreator.getInstance().getChatText(chr.getId(), s, chr.getWhiteChat(), show));
-                ChatLogger.log(client, "General", s);
-            } else {
-                chr.getMap().broadcastGMMessage(ChannelPacketCreator.getInstance().getChatText(chr.getId(), s, chr.getWhiteChat(), show));
-                ChatLogger.log(client, "GM General", s);
-            }
-
-            chr.getAutobanManager().spam(7);
+        if (heading == '/') {
+            return;
         }
+
+        int show = packet.readByte();
+        if (chr.getMap().isMuted() && !chr.isGM()) {
+            chr.dropMessage(5, "The map you are in is currently muted. Please try again later.");
+            return;
+        }
+
+        if (!chr.isHidden()) {
+            chr.getMap().broadcastMessage(ChannelPacketCreator.getInstance().getChatText(chr.getId(), s, chr.getWhiteChat(), show));
+            ChatLogger.log(client, "General", s);
+        } else {
+            chr.getMap().broadcastGMMessage(ChannelPacketCreator.getInstance().getChatText(chr.getId(), s, chr.getWhiteChat(), show));
+            ChatLogger.log(client, "GM General", s);
+        }
+
+        chr.getAutobanManager().spam(7);
     }
 }

@@ -11,7 +11,6 @@ import dev.jaczerob.delfino.maplestory.net.server.services.type.ChannelServices;
 import dev.jaczerob.delfino.maplestory.net.server.world.Party;
 import dev.jaczerob.delfino.maplestory.net.server.world.PartyCharacter;
 import dev.jaczerob.delfino.maplestory.net.server.world.World;
-import dev.jaczerob.delfino.maplestory.scripting.event.EventScriptManager;
 import dev.jaczerob.delfino.maplestory.server.TimerManager;
 import dev.jaczerob.delfino.maplestory.server.events.gm.Event;
 import dev.jaczerob.delfino.maplestory.server.expeditions.Expedition;
@@ -48,7 +47,6 @@ public class Channel {
     private PlayerStorage players = new PlayerStorage();
     private String serverMessage;
     private MapManager mapManager;
-    private EventScriptManager eventSM;
     private ServicesManager services;
     private final Map<Integer, HiredMerchant> hiredMerchants = new HashMap<>();
     private final Map<Integer, Integer> storedVars = new HashMap<>();
@@ -90,7 +88,7 @@ public class Channel {
         this.channel = channel;
 
         this.ongoingStartTime = startTime + 10000;  // rude approach to a world's last channel boot time, placeholder for the 1st wedding reservation ever
-        this.mapManager = new MapManager(null, world, channel);
+        this.mapManager = new MapManager(world, channel);
         this.port = BASE_PORT + (this.channel - 1) + (world * 100);
         this.ip = YamlConfig.config.server.HOST + ":" + port;
 
@@ -100,14 +98,6 @@ public class Channel {
 
         try {
             expedType.addAll(Arrays.asList(ExpeditionType.values()));
-
-            if (Server.getInstance().isOnline()) {  // postpone event loading to improve boot time... thanks Riizade, daronhudson for noticing slow startup times
-                eventSM = new EventScriptManager(this, getEvents());
-                eventSM.init();
-            } else {
-                String[] ev = {"0_EXAMPLE"};
-                eventSM = new EventScriptManager(this, ev);
-            }
 
             dojoStage = new int[20];
             dojoFinishTime = new long[20];
@@ -126,16 +116,6 @@ public class Channel {
         }
     }
 
-    public synchronized void reloadEventScriptManager() {
-        if (finishedShutdown) {
-            return;
-        }
-
-        eventSM.cancel();
-        eventSM = null;
-        eventSM = new EventScriptManager(this, getEvents());
-    }
-
     public synchronized void shutdown() {
         try {
             if (finishedShutdown) {
@@ -147,9 +127,6 @@ public class Channel {
             closeAllMerchants();
             disconnectAwayPlayers();
             players.disconnectAll();
-
-            eventSM.dispose();
-            eventSM = null;
 
             mapManager.dispose();
             mapManager = null;
@@ -261,10 +238,6 @@ public class Channel {
 
     public void setEvent(Event event) {
         this.event = event;
-    }
-
-    public EventScriptManager getEventSM() {
-        return eventSM;
     }
 
     public void broadcastGMPacket(Packet packet) {
@@ -386,11 +359,6 @@ public class Channel {
 
     public boolean isConnected(String name) {
         return getPlayerStorage().getCharacterByName(name) != null;
-    }
-
-    public boolean isActive() {
-        EventScriptManager esm = this.getEventSM();
-        return esm != null && esm.isActive();
     }
 
     public boolean finishedShutdown() {

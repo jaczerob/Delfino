@@ -143,7 +143,7 @@ public class GenericPortal implements Portal {
         } else if (getTargetMapId() != MapId.NONE) {
             Character chr = c.getPlayer();
             if (!(chr.getChalkboard() != null && GameConstants.isFreeMarketRoom(getTargetMapId()))) {
-                MapleMap to = chr.getEventInstance() == null ? c.getChannelServer().getMapFactory().getMap(getTargetMapId()) : chr.getEventInstance().getMapInstance(getTargetMapId());
+                MapleMap to = c.getChannelServer().getMapFactory().getMap(getTargetMapId());
                 Portal pto = to.getPortal(getTarget());
                 if (pto == null) {// fallback for missing portals - no real life case anymore - interesting for not implemented areas
                     pto = to.getPortal(0);

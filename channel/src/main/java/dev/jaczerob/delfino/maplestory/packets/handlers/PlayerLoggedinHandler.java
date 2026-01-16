@@ -21,21 +21,9 @@
  */
 package dev.jaczerob.delfino.maplestory.packets.handlers;
 
-import dev.jaczerob.delfino.maplestory.client.BuddyList;
-import dev.jaczerob.delfino.maplestory.client.BuddylistEntry;
+import dev.jaczerob.delfino.maplestory.client.*;
 import dev.jaczerob.delfino.maplestory.client.Character;
-import dev.jaczerob.delfino.maplestory.client.CharacterNameAndId;
-import dev.jaczerob.delfino.maplestory.client.Client;
-import dev.jaczerob.delfino.maplestory.client.Disease;
-import dev.jaczerob.delfino.maplestory.client.Family;
-import dev.jaczerob.delfino.maplestory.client.FamilyEntry;
-import dev.jaczerob.delfino.maplestory.client.Mount;
-import dev.jaczerob.delfino.maplestory.client.SkillFactory;
-import dev.jaczerob.delfino.maplestory.client.inventory.Equip;
-import dev.jaczerob.delfino.maplestory.client.inventory.Inventory;
-import dev.jaczerob.delfino.maplestory.client.inventory.InventoryType;
-import dev.jaczerob.delfino.maplestory.client.inventory.Item;
-import dev.jaczerob.delfino.maplestory.client.inventory.Pet;
+import dev.jaczerob.delfino.maplestory.client.inventory.*;
 import dev.jaczerob.delfino.maplestory.client.keybind.KeyBinding;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
 import dev.jaczerob.delfino.maplestory.constants.game.GameConstants;
@@ -43,7 +31,6 @@ import dev.jaczerob.delfino.maplestory.net.server.PlayerBuffValueHolder;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.net.server.channel.Channel;
 import dev.jaczerob.delfino.maplestory.net.server.channel.CharacterIdChannelPair;
-import dev.jaczerob.delfino.maplestory.net.server.coordinator.world.EventRecallCoordinator;
 import dev.jaczerob.delfino.maplestory.net.server.guild.Alliance;
 import dev.jaczerob.delfino.maplestory.net.server.guild.Guild;
 import dev.jaczerob.delfino.maplestory.net.server.guild.GuildPackets;
@@ -51,7 +38,6 @@ import dev.jaczerob.delfino.maplestory.net.server.world.PartyCharacter;
 import dev.jaczerob.delfino.maplestory.net.server.world.PartyOperation;
 import dev.jaczerob.delfino.maplestory.net.server.world.World;
 import dev.jaczerob.delfino.maplestory.packets.AbstractPacketHandler;
-import dev.jaczerob.delfino.maplestory.scripting.event.EventInstanceManager;
 import dev.jaczerob.delfino.maplestory.server.life.MobSkill;
 import dev.jaczerob.delfino.maplestory.service.NoteService;
 import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
@@ -69,13 +55,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
@@ -455,14 +436,6 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
                 }
             }
 
-            if (newcomer) {
-                EventInstanceManager eim = EventRecallCoordinator.getInstance().recallEventInstance(cid);
-                if (eim != null) {
-                    eim.registerPlayer(player);
-                }
-            }
-
-            // Tell the client to use the custom scripts available for the NPCs provided, instead of the WZ entries.
             if (YamlConfig.config.server.USE_NPCS_SCRIPTABLE) {
 
                 // Create a copy to prevent always adding entries to the server's list.
