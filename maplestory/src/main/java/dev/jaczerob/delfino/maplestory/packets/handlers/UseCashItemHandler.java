@@ -21,11 +21,23 @@
  */
 package dev.jaczerob.delfino.maplestory.packets.handlers;
 
-import dev.jaczerob.delfino.maplestory.client.*;
 import dev.jaczerob.delfino.maplestory.client.Character;
-import dev.jaczerob.delfino.maplestory.client.creator.veteran.*;
-import dev.jaczerob.delfino.maplestory.client.inventory.*;
+import dev.jaczerob.delfino.maplestory.client.Client;
+import dev.jaczerob.delfino.maplestory.client.Skill;
+import dev.jaczerob.delfino.maplestory.client.SkillFactory;
+import dev.jaczerob.delfino.maplestory.client.SkillMacro;
+import dev.jaczerob.delfino.maplestory.client.creator.veteran.BowmanCreator;
+import dev.jaczerob.delfino.maplestory.client.creator.veteran.MagicianCreator;
+import dev.jaczerob.delfino.maplestory.client.creator.veteran.PirateCreator;
+import dev.jaczerob.delfino.maplestory.client.creator.veteran.ThiefCreator;
+import dev.jaczerob.delfino.maplestory.client.creator.veteran.WarriorCreator;
+import dev.jaczerob.delfino.maplestory.client.inventory.Equip;
 import dev.jaczerob.delfino.maplestory.client.inventory.Equip.ScrollResult;
+import dev.jaczerob.delfino.maplestory.client.inventory.Inventory;
+import dev.jaczerob.delfino.maplestory.client.inventory.InventoryType;
+import dev.jaczerob.delfino.maplestory.client.inventory.Item;
+import dev.jaczerob.delfino.maplestory.client.inventory.ModifyInventory;
+import dev.jaczerob.delfino.maplestory.client.inventory.Pet;
 import dev.jaczerob.delfino.maplestory.client.inventory.manipulator.InventoryManipulator;
 import dev.jaczerob.delfino.maplestory.client.inventory.manipulator.KarmaManipulator;
 import dev.jaczerob.delfino.maplestory.client.processor.npc.DueyProcessor;
@@ -42,13 +54,19 @@ import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
 import dev.jaczerob.delfino.maplestory.server.Shop;
 import dev.jaczerob.delfino.maplestory.server.ShopFactory;
 import dev.jaczerob.delfino.maplestory.server.TimerManager;
-import dev.jaczerob.delfino.maplestory.server.maps.*;
+import dev.jaczerob.delfino.maplestory.server.maps.AbstractMapObject;
+import dev.jaczerob.delfino.maplestory.server.maps.FieldLimit;
+import dev.jaczerob.delfino.maplestory.server.maps.Kite;
+import dev.jaczerob.delfino.maplestory.server.maps.MapleMap;
+import dev.jaczerob.delfino.maplestory.server.maps.MapleTVEffect;
+import dev.jaczerob.delfino.maplestory.server.maps.PlayerShopItem;
 import dev.jaczerob.delfino.maplestory.service.NoteService;
 import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.Pair;
 import dev.jaczerob.delfino.network.opcodes.RecvOpcode;
+import dev.jaczerob.delfino.network.opcodes.SendOpcode;
 import dev.jaczerob.delfino.network.packets.InPacket;
-import dev.jaczerob.delfino.network.packets.out.SendNoteSuccessPacket;
+import dev.jaczerob.delfino.network.packets.OutPacket;
 import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,6 +87,40 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
 
     public UseCashItemHandler(NoteService noteService) {
         this.noteService = noteService;
+    }
+
+    private static void remove(Client client, short position, int itemid) {
+        Inventory cashInv = client.getPlayer().getInventory(InventoryType.CASH);
+        cashInv.lockInventory();
+        try {
+            Item it = cashInv.getItem(position);
+            if (it == null || it.getItemId() != itemid) {
+                it = cashInv.findById(itemid);
+                if (it != null) {
+                    position = it.getPosition();
+                }
+            }
+
+            InventoryManipulator.removeFromSlot(client, InventoryType.CASH, position, (short) 1, true, false);
+        } finally {
+            cashInv.unlockInventory();
+        }
+    }
+
+    private static boolean getIncubatedItem(Client client, int id) {
+        final int[] ids = {1012070, 1302049, 1302063, 1322027, 2000004, 2000005, 2020013, 2020015, 2040307, 2040509, 2040519, 2040521, 2040533, 2040715, 2040717, 2040810, 2040811, 2070005, 2070006, 4020009,};
+        final int[] quantitys = {1, 1, 1, 1, 240, 200, 200, 200, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3};
+        int amount = 0;
+        for (int i = 0; i < ids.length; i++) {
+            if (i == id) {
+                amount = quantitys[i];
+            }
+        }
+        if (client.getPlayer().getInventory(InventoryType.getByType((byte) (id / 1000000))).isFull()) {
+            return false;
+        }
+        InventoryManipulator.addById(client, id, (short) amount);
+        return true;
     }
 
     @Override
@@ -378,7 +430,7 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
             boolean sendSuccess = noteService.sendNormal(msg, player.getName(), sendTo);
             if (sendSuccess) {
                 remove(client, position, itemId);
-                client.sendPacket(new SendNoteSuccessPacket());
+                client.sendPacket(OutPacket.create(SendOpcode.MEMO_RESULT).writeByte(4));
             }
         } else if (itemType == 510) {
             player.getMap().broadcastMessage(ChannelPacketCreator.getInstance().musicChange("Jukebox/Congratulation"));
@@ -623,39 +675,5 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
             log.warn("NEW CASH ITEM TYPE: {}, packet: {}", itemType, packet);
             client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
         }
-    }
-
-    private static void remove(Client client, short position, int itemid) {
-        Inventory cashInv = client.getPlayer().getInventory(InventoryType.CASH);
-        cashInv.lockInventory();
-        try {
-            Item it = cashInv.getItem(position);
-            if (it == null || it.getItemId() != itemid) {
-                it = cashInv.findById(itemid);
-                if (it != null) {
-                    position = it.getPosition();
-                }
-            }
-
-            InventoryManipulator.removeFromSlot(client, InventoryType.CASH, position, (short) 1, true, false);
-        } finally {
-            cashInv.unlockInventory();
-        }
-    }
-
-    private static boolean getIncubatedItem(Client client, int id) {
-        final int[] ids = {1012070, 1302049, 1302063, 1322027, 2000004, 2000005, 2020013, 2020015, 2040307, 2040509, 2040519, 2040521, 2040533, 2040715, 2040717, 2040810, 2040811, 2070005, 2070006, 4020009,};
-        final int[] quantitys = {1, 1, 1, 1, 240, 200, 200, 200, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3};
-        int amount = 0;
-        for (int i = 0; i < ids.length; i++) {
-            if (i == id) {
-                amount = quantitys[i];
-            }
-        }
-        if (client.getPlayer().getInventory(InventoryType.getByType((byte) (id / 1000000))).isFull()) {
-            return false;
-        }
-        InventoryManipulator.addById(client, id, (short) amount);
-        return true;
     }
 }

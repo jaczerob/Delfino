@@ -1,24 +1,18 @@
 package dev.jaczerob.delfino.elm.events;
 
-import dev.jaczerob.delfino.elm.coordinators.SessionCoordinator;
 import lombok.AccessLevel;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
-import org.springframework.context.event.EventListener;
+import org.springframework.context.ApplicationListener;
 
 @Getter(AccessLevel.PROTECTED)
-public abstract class AbstractClientEventHandler<T, E extends AbstractClientEvent<T>> {
+public abstract class AbstractClientEventHandler<T, E extends AbstractClientEvent<T>> implements ApplicationListener<E> {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private final SessionCoordinator sessionCoordinator;
 
-    public AbstractClientEventHandler(final SessionCoordinator sessionCoordinator) {
-        this.sessionCoordinator = sessionCoordinator;
-    }
-
-    @EventListener
-    public final void handleEvent(final E event) {
+    @Override
+    public final void onApplicationEvent(final E event) {
         MDC.put("event.name", event.getClass().getSimpleName());
 
         final boolean validState;

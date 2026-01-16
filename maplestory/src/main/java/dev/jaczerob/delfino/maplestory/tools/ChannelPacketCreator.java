@@ -1,11 +1,28 @@
 package dev.jaczerob.delfino.maplestory.tools;
 
-import dev.jaczerob.delfino.common.config.DelfinoConfigurationProperties;
-import dev.jaczerob.delfino.maplestory.client.*;
+import dev.jaczerob.delfino.maplestory.client.BuddylistEntry;
+import dev.jaczerob.delfino.maplestory.client.BuffStat;
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Character.SkillEntry;
-import dev.jaczerob.delfino.maplestory.client.inventory.*;
+import dev.jaczerob.delfino.maplestory.client.Client;
+import dev.jaczerob.delfino.maplestory.client.Disease;
+import dev.jaczerob.delfino.maplestory.client.FamilyEntitlement;
+import dev.jaczerob.delfino.maplestory.client.FamilyEntry;
+import dev.jaczerob.delfino.maplestory.client.MonsterBook;
+import dev.jaczerob.delfino.maplestory.client.Mount;
+import dev.jaczerob.delfino.maplestory.client.QuestStatus;
+import dev.jaczerob.delfino.maplestory.client.Ring;
+import dev.jaczerob.delfino.maplestory.client.Skill;
+import dev.jaczerob.delfino.maplestory.client.SkillMacro;
+import dev.jaczerob.delfino.maplestory.client.Stat;
+import dev.jaczerob.delfino.maplestory.client.inventory.Equip;
 import dev.jaczerob.delfino.maplestory.client.inventory.Equip.ScrollResult;
+import dev.jaczerob.delfino.maplestory.client.inventory.Inventory;
+import dev.jaczerob.delfino.maplestory.client.inventory.InventoryType;
+import dev.jaczerob.delfino.maplestory.client.inventory.Item;
+import dev.jaczerob.delfino.maplestory.client.inventory.ItemFactory;
+import dev.jaczerob.delfino.maplestory.client.inventory.ModifyInventory;
+import dev.jaczerob.delfino.maplestory.client.inventory.Pet;
 import dev.jaczerob.delfino.maplestory.client.keybind.KeyBinding;
 import dev.jaczerob.delfino.maplestory.client.keybind.QuickslotBinding;
 import dev.jaczerob.delfino.maplestory.client.newyear.NewYearCardRecord;
@@ -21,7 +38,6 @@ import dev.jaczerob.delfino.maplestory.constants.skills.Buccaneer;
 import dev.jaczerob.delfino.maplestory.constants.skills.ChiefBandit;
 import dev.jaczerob.delfino.maplestory.constants.skills.Corsair;
 import dev.jaczerob.delfino.maplestory.constants.skills.ThunderBreaker;
-import dev.jaczerob.delfino.maplestory.net.opcodes.SendOpcode;
 import dev.jaczerob.delfino.maplestory.net.server.PlayerCoolDownValueHolder;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.net.server.guild.Alliance;
@@ -35,32 +51,59 @@ import dev.jaczerob.delfino.maplestory.packets.handlers.AbstractDealDamageHandle
 import dev.jaczerob.delfino.maplestory.packets.handlers.PlayerInteractionHandler;
 import dev.jaczerob.delfino.maplestory.packets.handlers.SummonDamageHandler.SummonAttackTarget;
 import dev.jaczerob.delfino.maplestory.packets.handlers.WhisperHandler;
-import dev.jaczerob.delfino.maplestory.server.*;
+import dev.jaczerob.delfino.maplestory.server.CashShop;
 import dev.jaczerob.delfino.maplestory.server.CashShop.CashItem;
 import dev.jaczerob.delfino.maplestory.server.CashShop.CashItemFactory;
 import dev.jaczerob.delfino.maplestory.server.CashShop.SpecialCashItem;
+import dev.jaczerob.delfino.maplestory.server.DueyPackage;
+import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
+import dev.jaczerob.delfino.maplestory.server.MTSItemInfo;
+import dev.jaczerob.delfino.maplestory.server.ShopItem;
+import dev.jaczerob.delfino.maplestory.server.Trade;
 import dev.jaczerob.delfino.maplestory.server.events.gm.Snowball;
-import dev.jaczerob.delfino.maplestory.server.life.*;
-import dev.jaczerob.delfino.maplestory.server.maps.*;
+import dev.jaczerob.delfino.maplestory.server.life.MobSkill;
+import dev.jaczerob.delfino.maplestory.server.life.MobSkillId;
+import dev.jaczerob.delfino.maplestory.server.life.Monster;
+import dev.jaczerob.delfino.maplestory.server.life.NPC;
+import dev.jaczerob.delfino.maplestory.server.life.PlayerNPC;
+import dev.jaczerob.delfino.maplestory.server.maps.AbstractMapObject;
+import dev.jaczerob.delfino.maplestory.server.maps.Door;
+import dev.jaczerob.delfino.maplestory.server.maps.DoorObject;
+import dev.jaczerob.delfino.maplestory.server.maps.Dragon;
+import dev.jaczerob.delfino.maplestory.server.maps.HiredMerchant;
+import dev.jaczerob.delfino.maplestory.server.maps.MapItem;
+import dev.jaczerob.delfino.maplestory.server.maps.MapleMap;
+import dev.jaczerob.delfino.maplestory.server.maps.MiniGame;
 import dev.jaczerob.delfino.maplestory.server.maps.MiniGame.MiniGameResult;
+import dev.jaczerob.delfino.maplestory.server.maps.Mist;
+import dev.jaczerob.delfino.maplestory.server.maps.PlayerShop;
+import dev.jaczerob.delfino.maplestory.server.maps.PlayerShopItem;
+import dev.jaczerob.delfino.maplestory.server.maps.Reactor;
+import dev.jaczerob.delfino.maplestory.server.maps.Summon;
 import dev.jaczerob.delfino.maplestory.server.movement.LifeMovementFragment;
+import dev.jaczerob.delfino.network.opcodes.SendOpcode;
 import dev.jaczerob.delfino.network.packets.ByteBufOutPacket;
 import dev.jaczerob.delfino.network.packets.InPacket;
 import dev.jaczerob.delfino.network.packets.OutPacket;
 import dev.jaczerob.delfino.network.packets.Packet;
-import dev.jaczerob.delfino.network.tools.PacketCreator;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
 import java.net.InetAddress;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 @Component
-public class ChannelPacketCreator extends PacketCreator {
+public class ChannelPacketCreator {
     public static final List<Pair<Stat, Integer>> EMPTY_STATUPDATE = Collections.emptyList();
     private static final long FT_UT_OFFSET = 116444736010800000L + (10000L * TimeZone.getDefault().getOffset(System.currentTimeMillis()));
     private static final long DEFAULT_TIME = 150842304000000000L;
@@ -69,8 +112,8 @@ public class ChannelPacketCreator extends PacketCreator {
 
     private static ChannelPacketCreator INSTANCE;
 
-    public ChannelPacketCreator(final DelfinoConfigurationProperties properties) {
-        super(properties.getServer().getVersion());
+    public ChannelPacketCreator() {
+        super();
         INSTANCE = this;
     }
 

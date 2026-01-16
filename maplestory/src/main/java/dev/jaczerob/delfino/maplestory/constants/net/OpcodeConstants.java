@@ -19,8 +19,8 @@
 */
 package dev.jaczerob.delfino.maplestory.constants.net;
 
-import dev.jaczerob.delfino.maplestory.net.opcodes.RecvOpcode;
-import dev.jaczerob.delfino.maplestory.net.opcodes.SendOpcode;
+import dev.jaczerob.delfino.network.opcodes.RecvOpcode;
+import dev.jaczerob.delfino.network.opcodes.SendOpcode;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -19,14 +19,7 @@ public class ServerInitializer extends ServerChannelInitializer {
             final DelfinoConfigurationProperties delfinoConfigurationProperties,
             final ApplicationEventPublisher applicationEventPublisher
     ) {
-        super(
-                sendPacketLogger,
-                receivePacketLogger,
-                delfinoConfigurationProperties.getNetty().getIdleTimeSeconds(),
-                delfinoConfigurationProperties.getNetty().isLogPackets(),
-                delfinoConfigurationProperties.getServer().getVersion()
-        );
-
+        super(sendPacketLogger, receivePacketLogger, delfinoConfigurationProperties);
         this.applicationEventPublisher = applicationEventPublisher;
     }
 

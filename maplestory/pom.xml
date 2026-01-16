@@ -10,13 +10,10 @@
         <version>0.0.1</version>
     </parent>
 
+    <groupId>dev.jaczerob.delfino.maplestory</groupId>
     <artifactId>maplestory</artifactId>
 
     <dependencies>
-        <dependency>
-            <groupId>dev.jaczerob.delfino.common</groupId>
-            <artifactId>common</artifactId>
-        </dependency>
         <dependency>
             <groupId>dev.jaczerob.delfino.grpc</groupId>
             <artifactId>grpc-proto</artifactId>
@@ -37,10 +34,6 @@
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-redis</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
         <dependency>
@@ -53,36 +46,12 @@
         </dependency>
 
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-reactor-netty</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.netty</groupId>
-                    <artifactId>netty-codec-native-quic</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-codec-native-quic</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>org.graalvm.js</groupId>
             <artifactId>js</artifactId>
         </dependency>
         <dependency>
             <groupId>org.graalvm.js</groupId>
             <artifactId>js-scriptengine</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>redis.clients</groupId>
-            <artifactId>jedis</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
         </dependency>
     </dependencies>
 

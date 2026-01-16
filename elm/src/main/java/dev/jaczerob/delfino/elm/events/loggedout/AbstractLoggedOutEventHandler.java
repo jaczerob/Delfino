@@ -8,10 +8,15 @@ import dev.jaczerob.delfino.elm.events.AbstractClientEventHandler;
 import dev.jaczerob.delfino.network.opcodes.SendOpcode;
 import dev.jaczerob.delfino.network.packets.OutPacket;
 import dev.jaczerob.delfino.network.packets.Packet;
+import lombok.AccessLevel;
+import lombok.Getter;
 
+@Getter(AccessLevel.PROTECTED)
 public abstract class AbstractLoggedOutEventHandler<T, E extends AbstractClientEvent<T>> extends AbstractClientEventHandler<T, E> {
-    public AbstractLoggedOutEventHandler(SessionCoordinator sessionCoordinator) {
-        super(sessionCoordinator);
+    private final SessionCoordinator sessionCoordinator;
+
+    public AbstractLoggedOutEventHandler(final SessionCoordinator sessionCoordinator) {
+        this.sessionCoordinator = sessionCoordinator;
     }
 
     @Override
@@ -39,8 +44,8 @@ public abstract class AbstractLoggedOutEventHandler<T, E extends AbstractClientE
 
                 .writeInt(1)
 
-                .writeByte(PINEnabled.DISABLED)               // 0 = Pin-System Enabled, 1 = Disabled
-                .writeByte(PICEnabled.DISABLED);              // 0 = Register PIC, 1 = Ask for PIC, 2 = Disabled
+                .writeByte(PINEnabled.DISABLED)
+                .writeByte(PICEnabled.DISABLED);
     }
 
     private static class PINEnabled {

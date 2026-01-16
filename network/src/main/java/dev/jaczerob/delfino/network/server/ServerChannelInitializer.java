@@ -1,22 +1,20 @@
 package dev.jaczerob.delfino.network.server;
 
+import dev.jaczerob.delfino.common.config.DelfinoConfigurationProperties;
 import dev.jaczerob.delfino.network.encryption.ClientCyphers;
 import dev.jaczerob.delfino.network.encryption.InitializationVector;
 import dev.jaczerob.delfino.network.encryption.PacketCodec;
 import dev.jaczerob.delfino.network.packets.ByteBufOutPacket;
 import dev.jaczerob.delfino.network.packets.Packet;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.*;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.net.InetSocketAddress;
 
 public abstract class ServerChannelInitializer extends ChannelInitializer<SocketChannel> {
-    private static final Logger log = LoggerFactory.getLogger(ServerChannelInitializer.class);
-
     private final ChannelHandler sendPacketLogger;
     private final ChannelHandler receivePacketLogger;
     private final int idleTimeSeconds;
@@ -26,32 +24,22 @@ public abstract class ServerChannelInitializer extends ChannelInitializer<Socket
     protected ServerChannelInitializer(
             final ChannelHandler sendPacketLogger,
             final ChannelHandler receivePacketLogger,
-            final int idleTimeSeconds,
-            final boolean logPackets,
-            final short mapleVersion
+            final DelfinoConfigurationProperties delfinoConfigurationProperties
     ) {
         this.sendPacketLogger = sendPacketLogger;
         this.receivePacketLogger = receivePacketLogger;
-        this.idleTimeSeconds = idleTimeSeconds;
-        this.logPackets = logPackets;
-        this.mapleVersion = mapleVersion;
+        this.idleTimeSeconds = delfinoConfigurationProperties.getNetty().getIdleTimeSeconds();
+        this.logPackets = delfinoConfigurationProperties.getNetty().isLogPackets();
+        this.mapleVersion = delfinoConfigurationProperties.getServer().getVersion();
     }
 
     @Override
-    protected void initChannel(final SocketChannel socketChannel) throws Exception {
+    protected void initChannel(final SocketChannel socketChannel) {
         final var client = this.initClient();
         this.initPipeline(socketChannel, client);
     }
 
     protected abstract ChannelInboundHandlerAdapter initClient();
-
-    protected String getRemoteAddress(final Channel channel) {
-        try {
-            return ((InetSocketAddress) channel.remoteAddress()).getAddress().getHostAddress();
-        } catch (final Exception exc) {
-            return null;
-        }
-    }
 
     protected void initPipeline(final SocketChannel socketChannel, final ChannelInboundHandlerAdapter client) {
         final InitializationVector sendIv = InitializationVector.generateSend();

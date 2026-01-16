@@ -24,16 +24,17 @@ package dev.jaczerob.delfino.network.opcodes;
 public enum RecvOpcode {
     CUSTOM_PACKET(0x3713),//13 37 lol
 
+    CLIENT_HELLO(0x23),
     LOGIN_PASSWORD(0x01),
     GUEST_LOGIN(0x02),
-    SERVERLIST_REREQUEST(0x04),
-    CHARLIST_REQUEST(0x05),
-    SERVERSTATUS_REQUEST(0x06),
+    SERVER_LIST_REREQUEST(0x04),
+    CHARACTER_LIST_REQUEST(0x05),
+    SERVER_STATUS_REQUEST(0x06),
     ACCEPT_TOS(0x07),
     SET_GENDER(0x08),
     AFTER_LOGIN(0x09),
     REGISTER_PIN(0x0A),
-    SERVERLIST_REQUEST(0x0B),
+    SERVER_LIST_REQUEST(0x0B),
     PLAYER_DC(0x0C),
     VIEW_ALL_CHAR(0x0D),
     PICK_ALL_CHAR(0x0E),
@@ -210,14 +211,6 @@ public enum RecvOpcode {
         this.code = code;
     }
 
-    public int getValue() {
-        return code;
-    }
-
-    public String toHex() {
-        return Integer.toHexString(this.code);
-    }
-
     public static RecvOpcode getByValue(final int value) {
         for (final var recvOpcode : values()) {
             if (recvOpcode.getValue() == value) {
@@ -226,5 +219,13 @@ public enum RecvOpcode {
         }
 
         return null;
+    }
+
+    public int getValue() {
+        return code;
+    }
+
+    public String toHex() {
+        return Integer.toHexString(this.code);
     }
 }

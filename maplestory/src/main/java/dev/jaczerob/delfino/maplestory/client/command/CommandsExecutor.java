@@ -98,8 +98,6 @@ import dev.jaczerob.delfino.maplestory.client.command.commands.gm3.KillCommand;
 import dev.jaczerob.delfino.maplestory.client.command.commands.gm3.KillMapCommand;
 import dev.jaczerob.delfino.maplestory.client.command.commands.gm3.MaxEnergyCommand;
 import dev.jaczerob.delfino.maplestory.client.command.commands.gm3.MaxHpMpCommand;
-import dev.jaczerob.delfino.maplestory.client.command.commands.gm3.MonitorCommand;
-import dev.jaczerob.delfino.maplestory.client.command.commands.gm3.MonitorsCommand;
 import dev.jaczerob.delfino.maplestory.client.command.commands.gm3.MusicCommand;
 import dev.jaczerob.delfino.maplestory.client.command.commands.gm3.MuteMapCommand;
 import dev.jaczerob.delfino.maplestory.client.command.commands.gm3.NightCommand;
@@ -416,8 +414,6 @@ public class CommandsExecutor {
         addCommand("hpmp", 3, HpMpCommand.class);
         addCommand("maxhpmp", 3, MaxHpMpCommand.class);
         addCommand("music", 3, MusicCommand.class);
-        addCommand("monitor", 3, MonitorCommand.class);
-        addCommand("monitors", 3, MonitorsCommand.class);
         addCommand("ignore", 3, IgnoreCommand.class);
         addCommand("ignored", 3, IgnoredCommand.class);
         addCommand("pos", 3, PosCommand.class);

@@ -43,7 +43,15 @@ import dev.jaczerob.delfino.maplestory.net.server.coordinator.session.SessionCoo
 import dev.jaczerob.delfino.maplestory.net.server.guild.Alliance;
 import dev.jaczerob.delfino.maplestory.net.server.guild.Guild;
 import dev.jaczerob.delfino.maplestory.net.server.guild.GuildCharacter;
-import dev.jaczerob.delfino.maplestory.net.server.task.*;
+import dev.jaczerob.delfino.maplestory.net.server.task.BossLogTask;
+import dev.jaczerob.delfino.maplestory.net.server.task.CharacterDiseaseTask;
+import dev.jaczerob.delfino.maplestory.net.server.task.CouponTask;
+import dev.jaczerob.delfino.maplestory.net.server.task.DueyFredrickTask;
+import dev.jaczerob.delfino.maplestory.net.server.task.EventRecallCoordinatorTask;
+import dev.jaczerob.delfino.maplestory.net.server.task.InvitationTask;
+import dev.jaczerob.delfino.maplestory.net.server.task.RankingCommandTask;
+import dev.jaczerob.delfino.maplestory.net.server.task.RankingLoginTask;
+import dev.jaczerob.delfino.maplestory.net.server.task.RespawnTask;
 import dev.jaczerob.delfino.maplestory.net.server.world.World;
 import dev.jaczerob.delfino.maplestory.server.CashShop.CashItemFactory;
 import dev.jaczerob.delfino.maplestory.server.SkillbookInformationProvider;
@@ -59,6 +67,7 @@ import dev.jaczerob.delfino.network.packets.Packet;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 
 import java.sql.Connection;
@@ -67,7 +76,16 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -77,9 +95,13 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static java.util.concurrent.TimeUnit.*;
+import static java.util.concurrent.TimeUnit.DAYS;
+import static java.util.concurrent.TimeUnit.HOURS;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 @Component
+@DependsOn("channelPacketCreator")
 public class Server {
     private static final Logger log = LoggerFactory.getLogger(Server.class);
     private static final Set<Integer> activeFly = new HashSet<>();

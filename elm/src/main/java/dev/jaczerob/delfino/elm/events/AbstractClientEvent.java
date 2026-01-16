@@ -24,4 +24,9 @@ public abstract class AbstractClientEvent<T> extends ApplicationEvent {
     }
 
     protected abstract T parsePayload(final InPacket inPacket);
+
+    @Override
+    public int hashCode() {
+        return this.getClass().getSimpleName().hashCode();
+    }
 }

@@ -2,10 +2,16 @@ package dev.jaczerob.delfino.elm.client;
 
 import dev.jaczerob.delfino.elm.coordinators.SessionCoordinator;
 import dev.jaczerob.delfino.elm.events.AbstractClientEvent;
+import dev.jaczerob.delfino.elm.events.loggedin.characterlistrequest.CharacterListRequestEvent;
+import dev.jaczerob.delfino.elm.events.loggedin.characterselected.CharacterSelectedEvent;
+import dev.jaczerob.delfino.elm.events.loggedin.serverlistrequest.ServerListRequestEvent;
+import dev.jaczerob.delfino.elm.events.loggedin.serverstatus.ServerStatusRequestEvent;
 import dev.jaczerob.delfino.elm.events.loggedout.accepttos.AcceptToSEvent;
 import dev.jaczerob.delfino.elm.events.loggedout.loginpassword.LoginPasswordEvent;
 import dev.jaczerob.delfino.elm.events.loggedout.relog.RelogEvent;
+import dev.jaczerob.delfino.elm.events.stateless.hello.HelloEvent;
 import dev.jaczerob.delfino.elm.events.stateless.ping.PingEvent;
+import dev.jaczerob.delfino.elm.events.stateless.pong.PongEvent;
 import dev.jaczerob.delfino.grpc.proto.account.Account;
 import dev.jaczerob.delfino.grpc.proto.character.Character;
 import dev.jaczerob.delfino.network.opcodes.RecvOpcode;
@@ -46,11 +52,13 @@ public class Client extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelInactive(final ChannelHandlerContext context) {
+        log.info("Client disconnected: {}", this.ioChannel.remoteAddress());
         SessionCoordinator.getInstance().logout(this);
     }
 
     @Override
     public void channelRead(final ChannelHandlerContext context, final Object message) throws Exception {
+        MDC.clear();
         MDC.put("client.account.id", this.account != null ? String.valueOf(this.account.getId()) : "null");
 
         if (!(message instanceof InPacket inPacket)) {
@@ -66,14 +74,20 @@ public class Client extends ChannelInboundHandlerAdapter {
         }
 
         MDC.put("packet.name", opcode.name());
-        MDC.put("packet.opcode", String.format("0x%04X", opcodeValue));
+        MDC.put("packet.opcode", String.format("0x%02X", opcodeValue));
 
         log.info("Received packet");
 
         final AbstractClientEvent<?> event = switch (opcode) {
+            case CLIENT_HELLO -> new HelloEvent(inPacket, this, context);
             case ACCEPT_TOS -> new AcceptToSEvent(inPacket, this, context);
             case LOGIN_PASSWORD -> new LoginPasswordEvent(inPacket, this, context);
             case RELOG -> new RelogEvent(inPacket, this, context);
+            case PONG -> new PongEvent(inPacket, this, context);
+            case SERVER_LIST_REQUEST, SERVER_LIST_REREQUEST -> new ServerListRequestEvent(inPacket, this, context);
+            case CHARACTER_LIST_REQUEST -> new CharacterListRequestEvent(inPacket, this, context);
+            case SERVER_STATUS_REQUEST -> new ServerStatusRequestEvent(inPacket, this, context);
+            case CHAR_SELECT_WITH_PIC -> new CharacterSelectedEvent(inPacket, this, context);
             default -> null;
         };
 
@@ -94,6 +108,7 @@ public class Client extends ChannelInboundHandlerAdapter {
             return;
         }
 
+        MDC.clear();
         log.info("User event triggered for client: {}", event);
         this.applicationEventPublisher.publishEvent(new PingEvent(null, this, context));
     }

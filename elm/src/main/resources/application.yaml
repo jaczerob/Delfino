@@ -3,11 +3,6 @@ spring:
     name: Delfino
   main:
     banner-mode: off
-  datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_DATABASE:delfino}
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:delfino}
-    driver-class-name: org.postgresql.Driver
   data:
     redis:
       database: 0
@@ -19,9 +14,29 @@ spring:
     change-log: classpath:db/changelog/db.changelog-master.xml
 
 delfino:
-  server:
-    channel-load: 100
-    localhost: 127.0.0.1
+  world:
+    id: 0
+    name: 'Delfino'
+    flag: 0
+    messages:
+      event: 'Welcome!'
+      server: 'Welcome!'
+      recommended: 'Welcome!'
+    rates:
+      exp: 1
+      meso: 1
+      drop: 1
+      boss-drop: 1
+      quest: 1
+      fishing: 1
+      travel: 1
+    channels:
+      - id: 0
+        capacity: 1000
+      - id: 1
+        capacity: 1000
+      - id: 2
+        capacity: 1000
   mdrs:
     url: ${MDRS_HOST:0.0.0.0}:${MDRS_PORT:9090}
 

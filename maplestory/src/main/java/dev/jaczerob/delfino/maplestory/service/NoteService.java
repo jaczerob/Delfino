@@ -5,13 +5,16 @@ import dev.jaczerob.delfino.maplestory.database.DaoException;
 import dev.jaczerob.delfino.maplestory.database.note.NoteDao;
 import dev.jaczerob.delfino.maplestory.model.Note;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
-import dev.jaczerob.delfino.network.packets.out.ShowNotesPacket;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
+import dev.jaczerob.delfino.network.opcodes.SendOpcode;
+import dev.jaczerob.delfino.network.packets.ByteBufOutPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Component
@@ -115,4 +118,23 @@ public class NoteService {
         }
     }
 
+    private static class ShowNotesPacket extends ByteBufOutPacket {
+
+        public ShowNotesPacket(List<Note> notes) {
+            super(SendOpcode.MEMO_RESULT);
+            Objects.requireNonNull(notes);
+
+            writeByte(3);
+            writeByte(notes.size());
+            notes.forEach(this::writeNote);
+        }
+
+        private void writeNote(Note note) {
+            writeInt(note.id());
+            writeString(note.from() + " "); //Stupid nexon forgot space lol
+            writeString(note.message());
+            writeLong(ChannelPacketCreator.getInstance().getTime(note.timestamp()));
+            writeByte(note.fame());
+        }
+    }
 }

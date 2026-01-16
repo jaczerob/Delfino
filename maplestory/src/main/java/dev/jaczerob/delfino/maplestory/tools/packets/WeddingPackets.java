@@ -6,14 +6,13 @@
 
 package dev.jaczerob.delfino.maplestory.tools.packets;
 
-import dev.jaczerob.delfino.common.config.DelfinoConfigurationProperties;
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.inventory.Item;
 import dev.jaczerob.delfino.maplestory.constants.id.ItemId;
 import dev.jaczerob.delfino.maplestory.constants.id.MapId;
-import dev.jaczerob.delfino.maplestory.net.opcodes.SendOpcode;
 import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.StringUtil;
+import dev.jaczerob.delfino.network.opcodes.SendOpcode;
 import dev.jaczerob.delfino.network.packets.OutPacket;
 import dev.jaczerob.delfino.network.packets.Packet;
 import org.slf4j.Logger;
@@ -29,161 +28,12 @@ public class WeddingPackets extends ChannelPacketCreator {
 
     private static WeddingPackets INSTANCE;
 
-    public WeddingPackets(final DelfinoConfigurationProperties properties) {
-        super(properties);
+    public WeddingPackets() {
         INSTANCE = this;
     }
 
     public static WeddingPackets getInstance() {
         return INSTANCE;
-    }
-
-    public class Field_Wedding {
-        public int m_nNoticeCount;
-        public int m_nCurrentStep;
-        public int m_nBlessStartTime;
-    }
-
-    public class Field_WeddingPhoto {
-        public boolean m_bPictureTook;
-    }
-
-    public class GW_WeddingReservation {
-        public int dwReservationNo;
-        public int dwGroom, dwBride;
-        public String sGroomName, sBrideName;
-        public int usWeddingType;
-    }
-
-    public class WeddingWishList {
-        public Character pUser;
-        public int dwMarriageNo;
-        public int nGender;
-        public int nWLType;
-        public int nSlotCount;
-        public List<String> asWishList = new ArrayList<>();
-        public int usModifiedFlag; // dword
-        public boolean bLoaded;
-    }
-
-    public class GW_WeddingWishList {
-        public final int WEDDINGWL_MAX = 0xA; // enum WEDDINGWL
-        public int dwReservationNo;
-        public byte nGender;
-        public String sItemName;
-    }
-
-    public enum MarriageStatus {
-        SINGLE(0x0),
-        ENGAGED(0x1),
-        RESERVED(0x2),
-        MARRIED(0x3);
-        private final int ms;
-
-        MarriageStatus(int ms) {
-            this.ms = ms;
-        }
-
-        public int getMarriageStatus() {
-            return ms;
-        }
-    }
-
-    public enum MarriageRequest {
-        AddMarriageRecord(0x0),
-        SetMarriageRecord(0x1),
-        DeleteMarriageRecord(0x2),
-        LoadReservation(0x3),
-        AddReservation(0x4),
-        DeleteReservation(0x5),
-        GetReservation(0x6);
-        private final int req;
-
-        MarriageRequest(int req) {
-            this.req = req;
-        }
-
-        public int getMarriageRequest() {
-            return req;
-        }
-    }
-
-    public enum WeddingType {
-        CATHEDRAL(0x1),
-        VEGAS(0x2),
-        CATHEDRAL_PREMIUM(0xA),
-        CATHEDRAL_NORMAL(0xB),
-        VEGAS_PREMIUM(0x14),
-        VEGAS_NORMAL(0x15);
-        private final int wt;
-
-        WeddingType(int wt) {
-            this.wt = wt;
-        }
-
-        public int getType() {
-            return wt;
-        }
-    }
-
-    public enum WeddingMap {
-        WEDDINGTOWN(MapId.AMORIA),
-        CHAPEL_STARTMAP(MapId.CHAPEL_WEDDING_ALTAR),
-        CATHEDRAL_STARTMAP(MapId.CATHEDRAL_WEDDING_ALTAR),
-        PHOTOMAP(MapId.WEDDING_PHOTO),
-        EXITMAP(MapId.WEDDING_EXIT);
-        private final int wm;
-
-        WeddingMap(int wm) {
-            this.wm = wm;
-        }
-
-        public int getMap() {
-            return wm;
-        }
-    }
-
-    public enum WeddingItem {
-        WR_MOONSTONE(ItemId.WEDDING_RING_MOONSTONE), // Wedding Ring
-        WR_STARGEM(ItemId.WEDDING_RING_STAR),
-        WR_GOLDENHEART(ItemId.WEDDING_RING_GOLDEN),
-        WR_SILVERSWAN(ItemId.WEDDING_RING_SILVER),
-        ERB_MOONSTONE(ItemId.ENGAGEMENT_BOX_MOONSTONE), // Engagement Ring Box
-        ERB_STARGEM(ItemId.ENGAGEMENT_BOX_STAR),
-        ERB_GOLDENHEART(ItemId.ENGAGEMENT_BOX_GOLDEN),
-        ERB_SILVERSWAN(ItemId.ENGAGEMENT_BOX_SILVER),
-        ERBE_MOONSTONE(ItemId.EMPTY_ENGAGEMENT_BOX_MOONSTONE), // Engagement Ring Box (Empty)
-        ER_MOONSTONE(ItemId.ENGAGEMENT_RING_MOONSTONE), // Engagement Ring
-        ERBE_STARGEM(ItemId.EMPTY_ENGAGEMENT_BOX_STAR),
-        ER_STARGEM(ItemId.ENGAGEMENT_RING_STAR),
-        ERBE_GOLDENHEART(ItemId.EMPTY_ENGAGEMENT_BOX_GOLDEN),
-        ER_GOLDENHEART(ItemId.ENGAGEMENT_RING_GOLDEN),
-        ERBE_SILVERSWAN(ItemId.EMPTY_ENGAGEMENT_BOX_SILVER),
-        ER_SILVERSWAN(ItemId.ENGAGEMENT_RING_SILVER),
-        PARENTS_BLESSING(ItemId.PARENTS_BLESSING), // Parents Blessing
-        OFFICIATORS_PERMISSION(ItemId.OFFICIATORS_PERMISSION), // Officiator's Permission
-        WR_CATHEDRAL_PREMIUM(ItemId.PREMIUM_CATHEDRAL_RESERVATION_RECEIPT), // Wedding Ring?
-        WR_VEGAS_PREMIUM(ItemId.PREMIUM_CHAPEL_RESERVATION_RECEIPT),
-        IB_VEGAS(ItemId.INVITATION_CHAPEL),      // toSend invitation
-        IB_CATHEDRAL(ItemId.INVITATION_CATHEDRAL),  // toSend invitation
-        IG_VEGAS(ItemId.RECEIVED_INVITATION_CHAPEL),      // rcvd invitation
-        IG_CATHEDRAL(ItemId.RECEIVED_INVITATION_CATHEDRAL),  // rcvd invitation
-        OB_FORCOUPLE(ItemId.ONYX_CHEST_FOR_COUPLE), // Onyx Box? For Couple
-        WR_CATHEDRAL_NORMAL(ItemId.NORMAL_CATHEDRAL_RESERVATION_RECEIPT), // Wedding Ring?
-        WR_VEGAS_NORMAL(ItemId.NORMAL_CHAPEL_RESERVATION_RECEIPT),
-        WT_CATHEDRAL_NORMAL(ItemId.NORMAL_WEDDING_TICKET_CATHEDRAL), // Wedding Ticket
-        WT_VEGAS_NORMAL(ItemId.NORMAL_WEDDING_TICKET_CHAPEL),
-        WT_VEGAS_PREMIUM(ItemId.PREMIUM_WEDDING_TICKET_CHAPEL),
-        WT_CATHEDRAL_PREMIUM(ItemId.PREMIUM_WEDDING_TICKET_CATHEDRAL);
-        private final int wi;
-
-        WeddingItem(int wi) {
-            this.wi = wi;
-        }
-
-        public int getItem() {
-            return wi;
-        }
     }
 
     /**
@@ -367,7 +217,7 @@ public class WeddingPackets extends ChannelPacketCreator {
         OutPacket p = OutPacket.create(SendOpcode.WEDDING_GIFT_RESULT);
         p.writeByte(mode);
         switch (mode) {
-            case 0xC: // 12 : You cannot give more than one present for each wishlist 
+            case 0xC: // 12 : You cannot give more than one present for each wishlist
             case 0xE: // 14 : Failed to send the gift.
                 break;
 
@@ -378,10 +228,10 @@ public class WeddingPackets extends ChannelPacketCreator {
                 }
                 break;
             }
-            case 0xA: // Load Bride's Wishlist 
+            case 0xA: // Load Bride's Wishlist
             case 0xF: // 10, 15, 16 = CWishListRecvDlg::OnPacket
-            case 0xB: { // Add Item to Wedding Registry 
-                // 11 : You have sent a gift | | 13 : Failed to send the gift. | 
+            case 0xB: { // Add Item to Wedding Registry
+                // 11 : You have sent a gift | | 13 : Failed to send the gift. |
                 if (mode == 0xB) {
                     p.writeByte(itemnames.size());
                     for (String names : itemnames) {
@@ -401,5 +251,153 @@ public class WeddingPackets extends ChannelPacketCreator {
             }
         }
         return p;
+    }
+
+    public enum MarriageStatus {
+        SINGLE(0x0),
+        ENGAGED(0x1),
+        RESERVED(0x2),
+        MARRIED(0x3);
+        private final int ms;
+
+        MarriageStatus(int ms) {
+            this.ms = ms;
+        }
+
+        public int getMarriageStatus() {
+            return ms;
+        }
+    }
+
+    public enum MarriageRequest {
+        AddMarriageRecord(0x0),
+        SetMarriageRecord(0x1),
+        DeleteMarriageRecord(0x2),
+        LoadReservation(0x3),
+        AddReservation(0x4),
+        DeleteReservation(0x5),
+        GetReservation(0x6);
+        private final int req;
+
+        MarriageRequest(int req) {
+            this.req = req;
+        }
+
+        public int getMarriageRequest() {
+            return req;
+        }
+    }
+
+    public enum WeddingType {
+        CATHEDRAL(0x1),
+        VEGAS(0x2),
+        CATHEDRAL_PREMIUM(0xA),
+        CATHEDRAL_NORMAL(0xB),
+        VEGAS_PREMIUM(0x14),
+        VEGAS_NORMAL(0x15);
+        private final int wt;
+
+        WeddingType(int wt) {
+            this.wt = wt;
+        }
+
+        public int getType() {
+            return wt;
+        }
+    }
+
+    public enum WeddingMap {
+        WEDDINGTOWN(MapId.AMORIA),
+        CHAPEL_STARTMAP(MapId.CHAPEL_WEDDING_ALTAR),
+        CATHEDRAL_STARTMAP(MapId.CATHEDRAL_WEDDING_ALTAR),
+        PHOTOMAP(MapId.WEDDING_PHOTO),
+        EXITMAP(MapId.WEDDING_EXIT);
+        private final int wm;
+
+        WeddingMap(int wm) {
+            this.wm = wm;
+        }
+
+        public int getMap() {
+            return wm;
+        }
+    }
+
+    public enum WeddingItem {
+        WR_MOONSTONE(ItemId.WEDDING_RING_MOONSTONE), // Wedding Ring
+        WR_STARGEM(ItemId.WEDDING_RING_STAR),
+        WR_GOLDENHEART(ItemId.WEDDING_RING_GOLDEN),
+        WR_SILVERSWAN(ItemId.WEDDING_RING_SILVER),
+        ERB_MOONSTONE(ItemId.ENGAGEMENT_BOX_MOONSTONE), // Engagement Ring Box
+        ERB_STARGEM(ItemId.ENGAGEMENT_BOX_STAR),
+        ERB_GOLDENHEART(ItemId.ENGAGEMENT_BOX_GOLDEN),
+        ERB_SILVERSWAN(ItemId.ENGAGEMENT_BOX_SILVER),
+        ERBE_MOONSTONE(ItemId.EMPTY_ENGAGEMENT_BOX_MOONSTONE), // Engagement Ring Box (Empty)
+        ER_MOONSTONE(ItemId.ENGAGEMENT_RING_MOONSTONE), // Engagement Ring
+        ERBE_STARGEM(ItemId.EMPTY_ENGAGEMENT_BOX_STAR),
+        ER_STARGEM(ItemId.ENGAGEMENT_RING_STAR),
+        ERBE_GOLDENHEART(ItemId.EMPTY_ENGAGEMENT_BOX_GOLDEN),
+        ER_GOLDENHEART(ItemId.ENGAGEMENT_RING_GOLDEN),
+        ERBE_SILVERSWAN(ItemId.EMPTY_ENGAGEMENT_BOX_SILVER),
+        ER_SILVERSWAN(ItemId.ENGAGEMENT_RING_SILVER),
+        PARENTS_BLESSING(ItemId.PARENTS_BLESSING), // Parents Blessing
+        OFFICIATORS_PERMISSION(ItemId.OFFICIATORS_PERMISSION), // Officiator's Permission
+        WR_CATHEDRAL_PREMIUM(ItemId.PREMIUM_CATHEDRAL_RESERVATION_RECEIPT), // Wedding Ring?
+        WR_VEGAS_PREMIUM(ItemId.PREMIUM_CHAPEL_RESERVATION_RECEIPT),
+        IB_VEGAS(ItemId.INVITATION_CHAPEL),      // toSend invitation
+        IB_CATHEDRAL(ItemId.INVITATION_CATHEDRAL),  // toSend invitation
+        IG_VEGAS(ItemId.RECEIVED_INVITATION_CHAPEL),      // rcvd invitation
+        IG_CATHEDRAL(ItemId.RECEIVED_INVITATION_CATHEDRAL),  // rcvd invitation
+        OB_FORCOUPLE(ItemId.ONYX_CHEST_FOR_COUPLE), // Onyx Box? For Couple
+        WR_CATHEDRAL_NORMAL(ItemId.NORMAL_CATHEDRAL_RESERVATION_RECEIPT), // Wedding Ring?
+        WR_VEGAS_NORMAL(ItemId.NORMAL_CHAPEL_RESERVATION_RECEIPT),
+        WT_CATHEDRAL_NORMAL(ItemId.NORMAL_WEDDING_TICKET_CATHEDRAL), // Wedding Ticket
+        WT_VEGAS_NORMAL(ItemId.NORMAL_WEDDING_TICKET_CHAPEL),
+        WT_VEGAS_PREMIUM(ItemId.PREMIUM_WEDDING_TICKET_CHAPEL),
+        WT_CATHEDRAL_PREMIUM(ItemId.PREMIUM_WEDDING_TICKET_CATHEDRAL);
+        private final int wi;
+
+        WeddingItem(int wi) {
+            this.wi = wi;
+        }
+
+        public int getItem() {
+            return wi;
+        }
+    }
+
+    public class Field_Wedding {
+        public int m_nNoticeCount;
+        public int m_nCurrentStep;
+        public int m_nBlessStartTime;
+    }
+
+    public class Field_WeddingPhoto {
+        public boolean m_bPictureTook;
+    }
+
+    public class GW_WeddingReservation {
+        public int dwReservationNo;
+        public int dwGroom, dwBride;
+        public String sGroomName, sBrideName;
+        public int usWeddingType;
+    }
+
+    public class WeddingWishList {
+        public Character pUser;
+        public int dwMarriageNo;
+        public int nGender;
+        public int nWLType;
+        public int nSlotCount;
+        public List<String> asWishList = new ArrayList<>();
+        public int usModifiedFlag; // dword
+        public boolean bLoaded;
+    }
+
+    public class GW_WeddingWishList {
+        public final int WEDDINGWL_MAX = 0xA; // enum WEDDINGWL
+        public int dwReservationNo;
+        public byte nGender;
+        public String sItemName;
     }
 } 
