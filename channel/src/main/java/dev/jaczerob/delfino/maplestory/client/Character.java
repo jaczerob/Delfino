@@ -35,8 +35,6 @@ import dev.jaczerob.delfino.maplestory.net.server.world.Party;
 import dev.jaczerob.delfino.maplestory.net.server.world.PartyCharacter;
 import dev.jaczerob.delfino.maplestory.net.server.world.PartyOperation;
 import dev.jaczerob.delfino.maplestory.net.server.world.World;
-import dev.jaczerob.delfino.maplestory.scripting.AbstractPlayerInteraction;
-import dev.jaczerob.delfino.maplestory.scripting.item.ItemScriptManager;
 import dev.jaczerob.delfino.maplestory.server.CashShop;
 import dev.jaczerob.delfino.maplestory.server.ExpLogger;
 import dev.jaczerob.delfino.maplestory.server.ExpLogger.ExpLogRecord;
@@ -4213,10 +4211,6 @@ public class Character extends AbstractCharacterObject {
 
     public void setClient(Client c) {
         this.client = c;
-    }
-
-    public AbstractPlayerInteraction getAbstractPlayerInteraction() {
-        return client.getAbstractPlayerInteraction();
     }
 
     private List<QuestStatus> getQuests() {

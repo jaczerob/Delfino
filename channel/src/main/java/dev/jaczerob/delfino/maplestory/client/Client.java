@@ -34,11 +34,6 @@ import dev.jaczerob.delfino.maplestory.net.server.world.PartyCharacter;
 import dev.jaczerob.delfino.maplestory.net.server.world.PartyOperation;
 import dev.jaczerob.delfino.maplestory.net.server.world.World;
 import dev.jaczerob.delfino.maplestory.packets.ChannelPacketProcessor;
-import dev.jaczerob.delfino.maplestory.scripting.AbstractPlayerInteraction;
-import dev.jaczerob.delfino.maplestory.scripting.npc.NPCConversationManager;
-import dev.jaczerob.delfino.maplestory.scripting.npc.NPCScriptManager;
-import dev.jaczerob.delfino.maplestory.scripting.quest.QuestActionManager;
-import dev.jaczerob.delfino.maplestory.scripting.quest.QuestScriptManager;
 import dev.jaczerob.delfino.maplestory.server.ThreadManager;
 import dev.jaczerob.delfino.maplestory.server.TimerManager;
 import dev.jaczerob.delfino.maplestory.server.life.Monster;
@@ -253,10 +248,6 @@ public class Client extends ChannelInboundHandlerAdapter {
 
     public void setPlayer(Character player) {
         this.player = player;
-    }
-
-    public AbstractPlayerInteraction getAbstractPlayerInteraction() {
-        return new AbstractPlayerInteraction(this);
     }
 
     public boolean isLoggedIn() {
@@ -571,26 +562,6 @@ public class Client extends ChannelInboundHandlerAdapter {
         gmlevel = level;
     }
 
-    public void setScriptEngine(String name, ScriptEngine e) {
-        engines.put(name, e);
-    }
-
-    public ScriptEngine getScriptEngine(String name) {
-        return engines.get(name);
-    }
-
-    public void removeScriptEngine(String name) {
-        engines.remove(name);
-    }
-
-    public NPCConversationManager getCM() {
-        return NPCScriptManager.getInstance().getCM(this);
-    }
-
-    public QuestActionManager getQM() {
-        return QuestScriptManager.getInstance().getQM(this);
-    }
-
     public void lockClient() {
         lock.lock();
     }
@@ -611,14 +582,6 @@ public class Client extends ChannelInboundHandlerAdapter {
     public void releaseClient() {
         unlockClient();
         actionsSemaphore.release();
-    }
-
-    public short getAvailableCharacterSlots() {
-        return (short) Math.max(0, characterSlots - Server.getInstance().getAccountCharacterCount(accId));
-    }
-
-    public short getAvailableCharacterWorldSlots() {
-        return (short) Math.max(0, characterSlots - Server.getInstance().getAccountWorldCharacterCount(accId, world));
     }
 
     public short getAvailableCharacterWorldSlots(int world) {

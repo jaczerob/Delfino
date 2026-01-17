@@ -43,7 +43,8 @@ import dev.jaczerob.delfino.maplestory.net.server.services.task.channel.OverallS
 import dev.jaczerob.delfino.maplestory.net.server.services.type.ChannelServices;
 import dev.jaczerob.delfino.maplestory.net.server.world.Party;
 import dev.jaczerob.delfino.maplestory.net.server.world.World;
-import dev.jaczerob.delfino.maplestory.scripting.map.MapScriptManager;
+import dev.jaczerob.delfino.maplestory.scripts.ScriptManager;
+import dev.jaczerob.delfino.maplestory.scripts.ScriptType;
 import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
 import dev.jaczerob.delfino.maplestory.server.StatEffect;
 import dev.jaczerob.delfino.maplestory.server.TimerManager;
@@ -2229,7 +2230,6 @@ public class MapleMap {
             getWorldServer().removePlayerHpDecrease(chr);
         }
 
-        MapScriptManager msm = MapScriptManager.getInstance();
         if (chrSize == 1) {
             if (!hasItemMonitor()) {
                 startItemMonitor();
@@ -2237,7 +2237,7 @@ public class MapleMap {
             }
 
             if (!onFirstUserEnter.isEmpty()) {
-                msm.runMapScript(chr.getClient(), "onFirstUserEnter/" + onFirstUserEnter, true);
+                ScriptManager.getInstance().runScript("onFirstUserEnter/" + onFirstUserEnter, ScriptType.FIELD);
             }
         }
         if (!onUserEnter.isEmpty()) {
@@ -2245,7 +2245,7 @@ public class MapleMap {
                 chr.saveLocation("INTRO");
             }
 
-            msm.runMapScript(chr.getClient(), "onUserEnter/" + onUserEnter, false);
+            ScriptManager.getInstance().runScript("onUserEnter/" + onUserEnter, ScriptType.FIELD);
         }
         if (FieldLimit.CANNOTUSEMOUNTS.check(fieldLimit) && chr.getBuffedValue(BuffStat.MONSTER_RIDING) != null) {
             chr.cancelEffectFromBuffStat(BuffStat.MONSTER_RIDING);

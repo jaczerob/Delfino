@@ -91,6 +91,7 @@ public final class NPCTalkHandler extends AbstractPacketHandler {
             if (pnpc.getScriptId() < NpcId.CUSTOM_DEV && !nsm.isNpcScriptAvailable(client, "" + pnpc.getScriptId())) {
                 nsm.start(client, pnpc.getScriptId(), "rank_user", null);
             } else {
+                log.debug("Getting npc script for client for: {}", pnpc.getScriptId());
                 nsm.start(client, pnpc.getScriptId(), null);
             }
         }

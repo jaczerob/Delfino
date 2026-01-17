@@ -141,7 +141,13 @@ public class GenericPortal implements Portal {
             }
         } else if (getTargetMapId() != MapId.NONE) {
             Character chr = c.getPlayer();
-            chr.dropMessage(5, "You cannot enter this map with the chalkboard opened.");
+            MapleMap to = c.getChannelServer().getMapFactory().getMap(getTargetMapId());
+            Portal pto = to.getPortal(getTarget());
+            if (pto == null) {
+                pto = to.getPortal(0);
+            }
+            chr.changeMap(to, pto);
+            changed = true;
         }
         if (!changed) {
             c.sendPacket(ChannelPacketCreator.getInstance().enableActions());

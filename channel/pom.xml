@@ -46,6 +46,10 @@
         </dependency>
 
         <dependency>
+            <groupId>moe.maple</groupId>
+            <artifactId>script-api</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.graalvm.js</groupId>
             <artifactId>js</artifactId>
         </dependency>
