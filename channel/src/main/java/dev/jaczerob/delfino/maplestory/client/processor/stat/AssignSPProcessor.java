@@ -15,7 +15,7 @@ public class AssignSPProcessor {
 
     public static boolean canSPAssign(Client c, int skillid) {
         Character player = c.getPlayer();
-        if ((!GameConstants.isPqSkillMap(player.getMapId()) && GameConstants.isPqSkill(skillid)) || (!player.isGM() && GameConstants.isGMSkills(skillid)) || (!GameConstants.isInJobTree(skillid, player.getJob().getId()) && !player.isGM())) {
+        if ((!player.isGM() && GameConstants.isGMSkills(skillid)) || (!GameConstants.isInJobTree(skillid, player.getJob().getId()) && !player.isGM())) {
             AutobanFactory.PACKET_EDIT.alert(player, "tried to packet edit in distributing sp.");
             log.warn("Chr {} tried to use skill {} without it being in their job.", c.getPlayer().getName(), skillid);
 

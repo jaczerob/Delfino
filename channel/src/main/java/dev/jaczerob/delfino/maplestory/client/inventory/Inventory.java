@@ -5,12 +5,18 @@ import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.client.inventory.manipulator.InventoryManipulator;
 import dev.jaczerob.delfino.maplestory.constants.inventory.ItemConstants;
 import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
-import dev.jaczerob.delfino.maplestory.server.ThreadManager;
 import dev.jaczerob.delfino.maplestory.tools.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -35,369 +41,8 @@ public class Inventory implements Iterable<Item> {
         this.slotLimit = slotLimit;
     }
 
-    public boolean isExtendableInventory() { // not sure about cash, basing this on the previous one.
-        return !(type.equals(InventoryType.UNDEFINED) || type.equals(InventoryType.EQUIPPED) || type.equals(InventoryType.CASH));
-    }
-
-    public boolean isEquipInventory() {
-        return type.equals(InventoryType.EQUIP) || type.equals(InventoryType.EQUIPPED);
-    }
-
-    public byte getSlotLimit() {
-        lock.lock();
-        try {
-            return slotLimit;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    public void setSlotLimit(int newLimit) {
-        lock.lock();
-        try {
-            if (newLimit < slotLimit) {
-                List<Short> toRemove = new LinkedList<>();
-                for (Item it : list()) {
-                    if (it.getPosition() > newLimit) {
-                        toRemove.add(it.getPosition());
-                    }
-                }
-
-                for (Short slot : toRemove) {
-                    removeSlot(slot);
-                }
-            }
-
-            slotLimit = (byte) newLimit;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    public Collection<Item> list() {
-        lock.lock();
-        try {
-            return Collections.unmodifiableCollection(inventory.values());
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    public Item findById(int itemId) {
-        for (Item item : list()) {
-            if (item.getItemId() == itemId) {
-                return item;
-            }
-        }
-        return null;
-    }
-
-    public Item findByName(String name) {
-        ItemInformationProvider ii = ItemInformationProvider.getInstance();
-        for (Item item : list()) {
-            String itemName = ii.getName(item.getItemId());
-            if (itemName == null) {
-                log.error("[CRITICAL] Item {} has no name", item.getItemId());
-                continue;
-            }
-
-            if (name.compareToIgnoreCase(itemName) == 0) {
-                return item;
-            }
-        }
-        return null;
-    }
-
-    public int countById(int itemId) {
-        int qty = 0;
-        for (Item item : list()) {
-            if (item.getItemId() == itemId) {
-                qty += item.getQuantity();
-            }
-        }
-        return qty;
-    }
-
-    public int countNotOwnedById(int itemId) {
-        int qty = 0;
-        for (Item item : list()) {
-            if (item.getItemId() == itemId && item.getOwner().equals("")) {
-                qty += item.getQuantity();
-            }
-        }
-        return qty;
-    }
-
-    public int freeSlotCountById(int itemId, int required) {
-        List<Item> itemList = listById(itemId);
-        int openSlot = 0;
-
-        if (!ItemConstants.isRechargeable(itemId)) {
-            for (Item item : itemList) {
-                required -= item.getQuantity();
-
-                if (required >= 0) {
-                    openSlot++;
-                    if (required == 0) {
-                        return openSlot;
-                    }
-                } else {
-                    return openSlot;
-                }
-            }
-        } else {
-            for (Item item : itemList) {
-                required -= 1;
-
-                if (required >= 0) {
-                    openSlot++;
-                    if (required == 0) {
-                        return openSlot;
-                    }
-                } else {
-                    return openSlot;
-                }
-            }
-        }
-
-        return -1;
-    }
-
-    public List<Item> listById(int itemId) {
-        List<Item> ret = new ArrayList<>();
-        for (Item item : list()) {
-            if (item.getItemId() == itemId) {
-                ret.add(item);
-            }
-        }
-
-        if (ret.size() > 1) {
-            ret.sort((i1, i2) -> i1.getPosition() - i2.getPosition());
-        }
-
-        return ret;
-    }
-
-    public List<Item> linkedListById(int itemId) {
-        List<Item> ret = new LinkedList<>();
-        for (Item item : list()) {
-            if (item.getItemId() == itemId) {
-                ret.add(item);
-            }
-        }
-
-        if (ret.size() > 1) {
-            ret.sort((i1, i2) -> i1.getPosition() - i2.getPosition());
-        }
-
-        return ret;
-    }
-
-    public short addItem(Item item) {
-        short slotId = addSlot(item);
-        if (slotId == -1) {
-            return -1;
-        }
-        item.setPosition(slotId);
-        return slotId;
-    }
-
-    public void addItemFromDB(Item item) {
-        if (item.getPosition() < 0 && !type.equals(InventoryType.EQUIPPED)) {
-            return;
-        }
-        addSlotFromDB(item.getPosition(), item);
-    }
-
     private static boolean isSameOwner(Item source, Item target) {
         return source.getOwner().equals(target.getOwner());
-    }
-
-    public void move(short sSlot, short dSlot, short slotMax) {
-        lock.lock();
-        try {
-            Item source = inventory.get(sSlot);
-            Item target = inventory.get(dSlot);
-            if (source == null) {
-                return;
-            }
-            if (target == null) {
-                source.setPosition(dSlot);
-                inventory.put(dSlot, source);
-                inventory.remove(sSlot);
-            } else if (target.getItemId() == source.getItemId() && !ItemConstants.isRechargeable(source.getItemId()) && isSameOwner(source, target)) {
-                if (type.getType() == InventoryType.EQUIP.getType() || type.getType() == InventoryType.CASH.getType()) {
-                    swap(target, source);
-                } else if (source.getQuantity() + target.getQuantity() > slotMax) {
-                    short rest = (short) ((source.getQuantity() + target.getQuantity()) - slotMax);
-                    source.setQuantity(rest);
-                    target.setQuantity(slotMax);
-                } else {
-                    target.setQuantity((short) (source.getQuantity() + target.getQuantity()));
-                    inventory.remove(sSlot);
-                }
-            } else {
-                swap(target, source);
-            }
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    private void swap(Item source, Item target) {
-        inventory.remove(source.getPosition());
-        inventory.remove(target.getPosition());
-        short swapPos = source.getPosition();
-        source.setPosition(target.getPosition());
-        target.setPosition(swapPos);
-        inventory.put(source.getPosition(), source);
-        inventory.put(target.getPosition(), target);
-    }
-
-    public Item getItem(short slot) {
-        lock.lock();
-        try {
-            return inventory.get(slot);
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    public void removeItem(short slot) {
-        removeItem(slot, (short) 1, false);
-    }
-
-    public void removeItem(short slot, short quantity, boolean allowZero) {
-        Item item = getItem(slot);
-        if (item == null) {// TODO is it ok not to throw an exception here?
-            return;
-        }
-        item.setQuantity((short) (item.getQuantity() - quantity));
-        if (item.getQuantity() < 0) {
-            item.setQuantity((short) 0);
-        }
-        if (item.getQuantity() == 0 && !allowZero) {
-            removeSlot(slot);
-        }
-    }
-
-    protected short addSlot(Item item) {
-        if (item == null) {
-            return -1;
-        }
-
-        short slotId;
-        lock.lock();
-        try {
-            slotId = getNextFreeSlot();
-            if (slotId < 0) {
-                return -1;
-            }
-
-            inventory.put(slotId, item);
-        } finally {
-            lock.unlock();
-        }
-
-        if (ItemConstants.isRateCoupon(item.getItemId())) {
-            // deadlocks with coupons rates found thanks to GabrielSin & Masterrulax
-            ThreadManager.getInstance().newTask(() -> owner.updateCouponRates());
-        }
-
-        return slotId;
-    }
-
-    protected void addSlotFromDB(short slot, Item item) {
-        lock.lock();
-        try {
-            inventory.put(slot, item);
-        } finally {
-            lock.unlock();
-        }
-
-        if (ItemConstants.isRateCoupon(item.getItemId())) {
-            ThreadManager.getInstance().newTask(() -> owner.updateCouponRates());
-        }
-    }
-
-    public void removeSlot(short slot) {
-        Item item;
-        lock.lock();
-        try {
-            item = inventory.remove(slot);
-        } finally {
-            lock.unlock();
-        }
-
-        if (item != null && ItemConstants.isRateCoupon(item.getItemId())) {
-            ThreadManager.getInstance().newTask(() -> owner.updateCouponRates());
-        }
-    }
-
-    public boolean isFull() {
-        lock.lock();
-        try {
-            return inventory.size() >= slotLimit;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    public boolean isFull(int margin) {
-        lock.lock();
-        try {
-            //System.out.print("(" + inventory.size() + " " + margin + " <> " + slotLimit + ")");
-            return inventory.size() + margin >= slotLimit;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    public boolean isFullAfterSomeItems(int margin, int used) {
-        lock.lock();
-        try {
-            //System.out.print("(" + inventory.size() + " " + margin + " <> " + slotLimit + " -" + used + ")");
-            return inventory.size() + margin >= slotLimit - used;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    public short getNextFreeSlot() {
-        if (isFull()) {
-            return -1;
-        }
-
-        lock.lock();
-        try {
-            for (short i = 1; i <= slotLimit; i++) {
-                if (!inventory.containsKey(i)) {
-                    return i;
-                }
-            }
-            return -1;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    public short getNumFreeSlot() {
-        if (isFull()) {
-            return 0;
-        }
-
-        lock.lock();
-        try {
-            short free = 0;
-            for (short i = 1; i <= slotLimit; i++) {
-                if (!inventory.containsKey(i)) {
-                    free++;
-                }
-            }
-            return free;
-        } finally {
-            lock.unlock();
-        }
     }
 
     private static boolean checkItemRestricted(List<Pair<Item, InventoryType>> items) {
@@ -575,6 +220,353 @@ public class Inventory implements Iterable<Item> {
         }
 
         return true;
+    }
+
+    public boolean isExtendableInventory() { // not sure about cash, basing this on the previous one.
+        return !(type.equals(InventoryType.UNDEFINED) || type.equals(InventoryType.EQUIPPED) || type.equals(InventoryType.CASH));
+    }
+
+    public boolean isEquipInventory() {
+        return type.equals(InventoryType.EQUIP) || type.equals(InventoryType.EQUIPPED);
+    }
+
+    public byte getSlotLimit() {
+        lock.lock();
+        try {
+            return slotLimit;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void setSlotLimit(int newLimit) {
+        lock.lock();
+        try {
+            if (newLimit < slotLimit) {
+                List<Short> toRemove = new LinkedList<>();
+                for (Item it : list()) {
+                    if (it.getPosition() > newLimit) {
+                        toRemove.add(it.getPosition());
+                    }
+                }
+
+                for (Short slot : toRemove) {
+                    removeSlot(slot);
+                }
+            }
+
+            slotLimit = (byte) newLimit;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public Collection<Item> list() {
+        lock.lock();
+        try {
+            return Collections.unmodifiableCollection(inventory.values());
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public Item findById(int itemId) {
+        for (Item item : list()) {
+            if (item.getItemId() == itemId) {
+                return item;
+            }
+        }
+        return null;
+    }
+
+    public Item findByName(String name) {
+        ItemInformationProvider ii = ItemInformationProvider.getInstance();
+        for (Item item : list()) {
+            String itemName = ii.getName(item.getItemId());
+            if (itemName == null) {
+                log.error("[CRITICAL] Item {} has no name", item.getItemId());
+                continue;
+            }
+
+            if (name.compareToIgnoreCase(itemName) == 0) {
+                return item;
+            }
+        }
+        return null;
+    }
+
+    public int countById(int itemId) {
+        int qty = 0;
+        for (Item item : list()) {
+            if (item.getItemId() == itemId) {
+                qty += item.getQuantity();
+            }
+        }
+        return qty;
+    }
+
+    public int countNotOwnedById(int itemId) {
+        int qty = 0;
+        for (Item item : list()) {
+            if (item.getItemId() == itemId && item.getOwner().equals("")) {
+                qty += item.getQuantity();
+            }
+        }
+        return qty;
+    }
+
+    public int freeSlotCountById(int itemId, int required) {
+        List<Item> itemList = listById(itemId);
+        int openSlot = 0;
+
+        if (!ItemConstants.isRechargeable(itemId)) {
+            for (Item item : itemList) {
+                required -= item.getQuantity();
+
+                if (required >= 0) {
+                    openSlot++;
+                    if (required == 0) {
+                        return openSlot;
+                    }
+                } else {
+                    return openSlot;
+                }
+            }
+        } else {
+            for (Item item : itemList) {
+                required -= 1;
+
+                if (required >= 0) {
+                    openSlot++;
+                    if (required == 0) {
+                        return openSlot;
+                    }
+                } else {
+                    return openSlot;
+                }
+            }
+        }
+
+        return -1;
+    }
+
+    public List<Item> listById(int itemId) {
+        List<Item> ret = new ArrayList<>();
+        for (Item item : list()) {
+            if (item.getItemId() == itemId) {
+                ret.add(item);
+            }
+        }
+
+        if (ret.size() > 1) {
+            ret.sort((i1, i2) -> i1.getPosition() - i2.getPosition());
+        }
+
+        return ret;
+    }
+
+    public List<Item> linkedListById(int itemId) {
+        List<Item> ret = new LinkedList<>();
+        for (Item item : list()) {
+            if (item.getItemId() == itemId) {
+                ret.add(item);
+            }
+        }
+
+        if (ret.size() > 1) {
+            ret.sort((i1, i2) -> i1.getPosition() - i2.getPosition());
+        }
+
+        return ret;
+    }
+
+    public short addItem(Item item) {
+        short slotId = addSlot(item);
+        if (slotId == -1) {
+            return -1;
+        }
+        item.setPosition(slotId);
+        return slotId;
+    }
+
+    public void addItemFromDB(Item item) {
+        if (item.getPosition() < 0 && !type.equals(InventoryType.EQUIPPED)) {
+            return;
+        }
+        addSlotFromDB(item.getPosition(), item);
+    }
+
+    public void move(short sSlot, short dSlot, short slotMax) {
+        lock.lock();
+        try {
+            Item source = inventory.get(sSlot);
+            Item target = inventory.get(dSlot);
+            if (source == null) {
+                return;
+            }
+            if (target == null) {
+                source.setPosition(dSlot);
+                inventory.put(dSlot, source);
+                inventory.remove(sSlot);
+            } else if (target.getItemId() == source.getItemId() && !ItemConstants.isRechargeable(source.getItemId()) && isSameOwner(source, target)) {
+                if (type.getType() == InventoryType.EQUIP.getType() || type.getType() == InventoryType.CASH.getType()) {
+                    swap(target, source);
+                } else if (source.getQuantity() + target.getQuantity() > slotMax) {
+                    short rest = (short) ((source.getQuantity() + target.getQuantity()) - slotMax);
+                    source.setQuantity(rest);
+                    target.setQuantity(slotMax);
+                } else {
+                    target.setQuantity((short) (source.getQuantity() + target.getQuantity()));
+                    inventory.remove(sSlot);
+                }
+            } else {
+                swap(target, source);
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private void swap(Item source, Item target) {
+        inventory.remove(source.getPosition());
+        inventory.remove(target.getPosition());
+        short swapPos = source.getPosition();
+        source.setPosition(target.getPosition());
+        target.setPosition(swapPos);
+        inventory.put(source.getPosition(), source);
+        inventory.put(target.getPosition(), target);
+    }
+
+    public Item getItem(short slot) {
+        lock.lock();
+        try {
+            return inventory.get(slot);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void removeItem(short slot) {
+        removeItem(slot, (short) 1, false);
+    }
+
+    public void removeItem(short slot, short quantity, boolean allowZero) {
+        Item item = getItem(slot);
+        if (item == null) {// TODO is it ok not to throw an exception here?
+            return;
+        }
+        item.setQuantity((short) (item.getQuantity() - quantity));
+        if (item.getQuantity() < 0) {
+            item.setQuantity((short) 0);
+        }
+        if (item.getQuantity() == 0 && !allowZero) {
+            removeSlot(slot);
+        }
+    }
+
+    protected short addSlot(Item item) {
+        if (item == null) {
+            return -1;
+        }
+
+        short slotId;
+        lock.lock();
+        try {
+            slotId = getNextFreeSlot();
+            if (slotId < 0) {
+                return -1;
+            }
+
+            inventory.put(slotId, item);
+        } finally {
+            lock.unlock();
+        }
+
+        return slotId;
+    }
+
+    protected void addSlotFromDB(short slot, Item item) {
+        lock.lock();
+        try {
+            inventory.put(slot, item);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void removeSlot(short slot) {
+        lock.lock();
+        try {
+            inventory.remove(slot);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public boolean isFull() {
+        lock.lock();
+        try {
+            return inventory.size() >= slotLimit;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public boolean isFull(int margin) {
+        lock.lock();
+        try {
+            //System.out.print("(" + inventory.size() + " " + margin + " <> " + slotLimit + ")");
+            return inventory.size() + margin >= slotLimit;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public boolean isFullAfterSomeItems(int margin, int used) {
+        lock.lock();
+        try {
+            //System.out.print("(" + inventory.size() + " " + margin + " <> " + slotLimit + " -" + used + ")");
+            return inventory.size() + margin >= slotLimit - used;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public short getNextFreeSlot() {
+        if (isFull()) {
+            return -1;
+        }
+
+        lock.lock();
+        try {
+            for (short i = 1; i <= slotLimit; i++) {
+                if (!inventory.containsKey(i)) {
+                    return i;
+                }
+            }
+            return -1;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public short getNumFreeSlot() {
+        if (isFull()) {
+            return 0;
+        }
+
+        lock.lock();
+        try {
+            short free = 0;
+            for (short i = 1; i <= slotLimit; i++) {
+                if (!inventory.containsKey(i)) {
+                    free++;
+                }
+            }
+            return free;
+        } finally {
+            lock.unlock();
+        }
     }
 
     public InventoryType getType() {

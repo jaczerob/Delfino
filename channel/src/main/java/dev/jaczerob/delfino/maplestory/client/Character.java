@@ -2935,83 +2935,77 @@ public class Character extends AbstractCharacterObject {
 
     public void expirationTask() {
         if (itemExpireTask == null) {
-            itemExpireTask = TimerManager.getInstance().register(new Runnable() {
-                @Override
-                public void run() {
-                    boolean deletedCoupon = false;
+            itemExpireTask = TimerManager.getInstance().register(() -> {
+                boolean deletedCoupon = false;
 
-                    long expiration, currenttime = System.currentTimeMillis();
-                    Set<Skill> keys = getSkills().keySet();
-                    for (Iterator<Skill> i = keys.iterator(); i.hasNext(); ) {
-                        Skill key = i.next();
-                        SkillEntry skill = getSkills().get(key);
-                        if (skill.expiration != -1 && skill.expiration < currenttime) {
-                            changeSkillLevel(key, (byte) -1, 0, -1);
-                        }
+                long expiration, currenttime = System.currentTimeMillis();
+                Set<Skill> keys = getSkills().keySet();
+                for (Iterator<Skill> i = keys.iterator(); i.hasNext(); ) {
+                    Skill key = i.next();
+                    SkillEntry skill = getSkills().get(key);
+                    if (skill.expiration != -1 && skill.expiration < currenttime) {
+                        changeSkillLevel(key, (byte) -1, 0, -1);
                     }
+                }
 
-                    List<Item> toberemove = new ArrayList<>();
-                    for (Inventory inv : inventory) {
-                        for (Item item : inv.list()) {
-                            expiration = item.getExpiration();
+                List<Item> toberemove = new ArrayList<>();
+                for (Inventory inv : inventory) {
+                    for (Item item : inv.list()) {
+                        expiration = item.getExpiration();
 
-                            if (expiration != -1 && (expiration < currenttime) && ((item.getFlag() & ItemConstants.LOCK) == ItemConstants.LOCK)) {
-                                short lock = item.getFlag();
-                                lock &= ~(ItemConstants.LOCK);
-                                item.setFlag(lock); //Probably need a check, else people can make expiring items into permanent items...
-                                item.setExpiration(-1);
-                                forceUpdateItem(item);   //TEST :3
-                            } else if (expiration != -1 && expiration < currenttime) {
-                                if (!ItemConstants.isPet(item.getItemId())) {
+                        if (expiration != -1 && (expiration < currenttime) && ((item.getFlag() & ItemConstants.LOCK) == ItemConstants.LOCK)) {
+                            short lock = item.getFlag();
+                            lock &= ~(ItemConstants.LOCK);
+                            item.setFlag(lock); //Probably need a check, else people can make expiring items into permanent items...
+                            item.setExpiration(-1);
+                            forceUpdateItem(item);   //TEST :3
+                        } else if (expiration != -1 && expiration < currenttime) {
+                            if (!ItemConstants.isPet(item.getItemId())) {
+                                sendPacket(ChannelPacketCreator.getInstance().itemExpired(item.getItemId()));
+                                toberemove.add(item);
+                                if (ItemConstants.isRateCoupon(item.getItemId())) {
+                                    deletedCoupon = true;
+                                }
+                            } else {
+                                Pet pet = item.getPet();   // thanks Lame for noticing pets not getting despawned after expiration time
+                                if (pet != null) {
+                                    unequipPet(pet, true);
+                                }
+
+                                if (ItemConstants.isExpirablePet(item.getItemId())) {
                                     sendPacket(ChannelPacketCreator.getInstance().itemExpired(item.getItemId()));
                                     toberemove.add(item);
-                                    if (ItemConstants.isRateCoupon(item.getItemId())) {
-                                        deletedCoupon = true;
-                                    }
                                 } else {
-                                    Pet pet = item.getPet();   // thanks Lame for noticing pets not getting despawned after expiration time
-                                    if (pet != null) {
-                                        unequipPet(pet, true);
-                                    }
-
-                                    if (ItemConstants.isExpirablePet(item.getItemId())) {
-                                        sendPacket(ChannelPacketCreator.getInstance().itemExpired(item.getItemId()));
-                                        toberemove.add(item);
-                                    } else {
-                                        item.setExpiration(-1);
-                                        forceUpdateItem(item);
-                                    }
+                                    item.setExpiration(-1);
+                                    forceUpdateItem(item);
                                 }
                             }
-                        }
-
-                        if (!toberemove.isEmpty()) {
-                            for (Item item : toberemove) {
-                                InventoryManipulator.removeFromSlot(client, inv.getType(), item.getPosition(), item.getQuantity(), true);
-                            }
-
-                            ItemInformationProvider ii = ItemInformationProvider.getInstance();
-                            for (Item item : toberemove) {
-                                List<Integer> toadd = new ArrayList<>();
-                                Pair<Integer, String> replace = ii.getReplaceOnExpire(item.getItemId());
-                                if (replace.left > 0) {
-                                    toadd.add(replace.left);
-                                    if (!replace.right.isEmpty()) {
-                                        dropMessage(replace.right);
-                                    }
-                                }
-                                for (Integer itemid : toadd) {
-                                    InventoryManipulator.addById(client, itemid, (short) 1);
-                                }
-                            }
-
-                            toberemove.clear();
-                        }
-
-                        if (deletedCoupon) {
-                            updateCouponRates();
                         }
                     }
+
+                    if (!toberemove.isEmpty()) {
+                        for (Item item : toberemove) {
+                            InventoryManipulator.removeFromSlot(client, inv.getType(), item.getPosition(), item.getQuantity(), true);
+                        }
+
+                        ItemInformationProvider ii = ItemInformationProvider.getInstance();
+                        for (Item item : toberemove) {
+                            List<Integer> toadd = new ArrayList<>();
+                            Pair<Integer, String> replace = ii.getReplaceOnExpire(item.getItemId());
+                            if (replace.left > 0) {
+                                toadd.add(replace.left);
+                                if (!replace.right.isEmpty()) {
+                                    dropMessage(replace.right);
+                                }
+                            }
+                            for (Integer itemid : toadd) {
+                                InventoryManipulator.addById(client, itemid, (short) 1);
+                            }
+                        }
+
+                        toberemove.clear();
+                    }
+
                 }
             }, 60000);
         }
@@ -5515,46 +5509,6 @@ public class Character extends AbstractCharacterObject {
         this.dropRate *= worldz.getDropRate();
     }
 
-    private void setCouponRates() {
-        List<Integer> couponEffects;
-
-        Collection<Item> cashItems = this.getInventory(InventoryType.CASH).list();
-        chrLock.lock();
-        try {
-            setActiveCoupons(cashItems);
-            couponEffects = activateCouponsEffects();
-        } finally {
-            chrLock.unlock();
-        }
-
-        for (Integer couponId : couponEffects) {
-            commitBuffCoupon(couponId);
-        }
-    }
-
-    private void revertCouponRates() {
-        revertCouponsEffects();
-    }
-
-    public void updateCouponRates() {
-        Inventory cashInv = this.getInventory(InventoryType.CASH);
-        if (cashInv == null) {
-            return;
-        }
-
-        effLock.lock();
-        chrLock.lock();
-        cashInv.lockInventory();
-        try {
-            revertCouponRates();
-            setCouponRates();
-        } finally {
-            cashInv.unlockInventory();
-            chrLock.unlock();
-            effLock.unlock();
-        }
-    }
-
     public void resetPlayerRates() {
         expRate = 1;
         mesoRate = 1;
@@ -5563,178 +5517,6 @@ public class Character extends AbstractCharacterObject {
         expCoupon = 1;
         mesoCoupon = 1;
         dropCoupon = 1;
-    }
-
-    private int getCouponMultiplier(int couponId) {
-        return activeCouponRates.get(couponId);
-    }
-
-    private void setExpCouponRate(int couponId, int couponQty) {
-        this.expCoupon *= (getCouponMultiplier(couponId) * couponQty);
-    }
-
-    private void setDropCouponRate(int couponId, int couponQty) {
-        this.dropCoupon *= (getCouponMultiplier(couponId) * couponQty);
-        this.mesoCoupon *= (getCouponMultiplier(couponId) * couponQty);
-    }
-
-    private void revertCouponsEffects() {
-        dispelBuffCoupons();
-
-        this.expRate /= this.expCoupon;
-        this.dropRate /= this.dropCoupon;
-        this.mesoRate /= this.mesoCoupon;
-
-        this.expCoupon = 1;
-        this.dropCoupon = 1;
-        this.mesoCoupon = 1;
-    }
-
-    private List<Integer> activateCouponsEffects() {
-        List<Integer> toCommitEffect = new LinkedList<>();
-
-        if (YamlConfig.config.server.USE_STACK_COUPON_RATES) {
-            for (Entry<Integer, Integer> coupon : activeCoupons.entrySet()) {
-                int couponId = coupon.getKey();
-                int couponQty = coupon.getValue();
-
-                toCommitEffect.add(couponId);
-
-                if (ItemConstants.isExpCoupon(couponId)) {
-                    setExpCouponRate(couponId, couponQty);
-                } else {
-                    setDropCouponRate(couponId, couponQty);
-                }
-            }
-        } else {
-            int maxExpRate = 1, maxDropRate = 1, maxExpCouponId = -1, maxDropCouponId = -1;
-
-            for (Entry<Integer, Integer> coupon : activeCoupons.entrySet()) {
-                int couponId = coupon.getKey();
-
-                if (ItemConstants.isExpCoupon(couponId)) {
-                    if (maxExpRate < getCouponMultiplier(couponId)) {
-                        maxExpCouponId = couponId;
-                        maxExpRate = getCouponMultiplier(couponId);
-                    }
-                } else {
-                    if (maxDropRate < getCouponMultiplier(couponId)) {
-                        maxDropCouponId = couponId;
-                        maxDropRate = getCouponMultiplier(couponId);
-                    }
-                }
-            }
-
-            if (maxExpCouponId > -1) {
-                toCommitEffect.add(maxExpCouponId);
-            }
-            if (maxDropCouponId > -1) {
-                toCommitEffect.add(maxDropCouponId);
-            }
-
-            this.expCoupon = maxExpRate;
-            this.dropCoupon = maxDropRate;
-            this.mesoCoupon = maxDropRate;
-        }
-
-        this.expRate *= this.expCoupon;
-        this.dropRate *= this.dropCoupon;
-        this.mesoRate *= this.mesoCoupon;
-
-        return toCommitEffect;
-    }
-
-    private void commitBuffCoupon(int couponid) {
-        if (!isLoggedin() || getCashShop().isOpened()) {
-            return;
-        }
-
-        ItemInformationProvider ii = ItemInformationProvider.getInstance();
-        StatEffect mse = ii.getItemEffect(couponid);
-        mse.applyTo(this);
-    }
-
-    public void dispelBuffCoupons() {
-        List<BuffStatValueHolder> allBuffs = getAllStatups();
-
-        for (BuffStatValueHolder mbsvh : allBuffs) {
-            if (ItemConstants.isRateCoupon(mbsvh.effect.getSourceId())) {
-                cancelEffect(mbsvh.effect, false, mbsvh.startTime);
-            }
-        }
-    }
-
-    public Set<Integer> getActiveCoupons() {
-        chrLock.lock();
-        try {
-            return Collections.unmodifiableSet(activeCoupons.keySet());
-        } finally {
-            chrLock.unlock();
-        }
-    }
-
-    private void setActiveCoupons(Collection<Item> cashItems) {
-        activeCoupons.clear();
-        activeCouponRates.clear();
-
-        Map<Integer, Integer> coupons = Server.getInstance().getCouponRates();
-        List<Integer> active = Server.getInstance().getActiveCoupons();
-
-        for (Item it : cashItems) {
-            if (ItemConstants.isRateCoupon(it.getItemId()) && active.contains(it.getItemId())) {
-                Integer count = activeCoupons.get(it.getItemId());
-
-                if (count != null) {
-                    activeCoupons.put(it.getItemId(), count + 1);
-                } else {
-                    activeCoupons.put(it.getItemId(), 1);
-                    activeCouponRates.put(it.getItemId(), coupons.get(it.getItemId()));
-                }
-            }
-        }
-    }
-
-    public Character generateCharacterEntry() {
-        Character ret = new Character();
-
-        ret.accountid = this.getAccountID();
-        ret.id = this.getId();
-        ret.name = this.getName();
-        ret.gender = this.getGender();
-        ret.skinColor = this.getSkinColor();
-        ret.face = this.getFace();
-        ret.hair = this.getHair();
-
-        // skipping pets, probably unneeded here
-
-        ret.level = this.getLevel();
-        ret.job = this.getJob();
-        ret.str = this.getStr();
-        ret.dex = this.getDex();
-        ret.int_ = this.getInt();
-        ret.luk = this.getLuk();
-        ret.hp = this.getHp();
-        ret.setMaxHp(this.getMaxHp());
-        ret.mp = this.getMp();
-        ret.setMaxMp(this.getMaxMp());
-        ret.remainingAp = this.getRemainingAp();
-        ret.setRemainingSp(this.getRemainingSps());
-        ret.exp.set(this.getExp());
-        ret.fame = this.getFame();
-        ret.gachaexp.set(this.getGachaExp());
-        ret.mapid = this.getMapId();
-        ret.initialSpawnPoint = this.getInitialSpawnpoint();
-
-        ret.inventory[InventoryType.EQUIPPED.ordinal()] = this.getInventory(InventoryType.EQUIPPED);
-
-        ret.setGMLevel(this.gmLevel());
-        ret.world = this.getWorld();
-        ret.rank = this.getRank();
-        ret.rankMove = this.getRankMove();
-        ret.jobRank = this.getJobRank();
-        ret.jobRankMove = this.getJobRankMove();
-
-        return ret;
     }
 
     private void loadCharSkillPoints(String[] skillPoints) {
@@ -5882,24 +5664,6 @@ public class Character extends AbstractCharacterObject {
         }
 
         setStance(0);
-    }
-
-    private void prepareDragonBlood(final StatEffect bloodEffect) {
-        if (dragonBloodSchedule != null) {
-            dragonBloodSchedule.cancel(false);
-        }
-        dragonBloodSchedule = TimerManager.getInstance().register(new Runnable() {
-            @Override
-            public void run() {
-                if (awayFromWorld.get()) {
-                    return;
-                }
-
-                addHP(-bloodEffect.getX());
-                sendPacket(ChannelPacketCreator.getInstance().showOwnBuffEffect(bloodEffect.getSourceId(), 5));
-                getMap().broadcastMessage(Character.this, ChannelPacketCreator.getInstance().showBuffEffect(getId(), bloodEffect.getSourceId(), 5), false);
-            }
-        }, 4000, 4000);
     }
 
     private void recalcEquipStats() {
@@ -6088,25 +5852,6 @@ public class Character extends AbstractCharacterObject {
         }
     }
 
-    public void removeAllCooldownsExcept(int id, boolean packet) {
-        effLock.lock();
-        chrLock.lock();
-        try {
-            ArrayList<CooldownValueHolder> list = new ArrayList<>(coolDowns.values());
-            for (CooldownValueHolder mcvh : list) {
-                if (mcvh.skillId != id) {
-                    coolDowns.remove(mcvh.skillId);
-                    if (packet) {
-                        sendPacket(ChannelPacketCreator.getInstance().skillCooldown(mcvh.skillId, 0));
-                    }
-                }
-            }
-        } finally {
-            chrLock.unlock();
-            effLock.unlock();
-        }
-    }
-
     public void removeCooldown(int skillId) {
         effLock.lock();
         chrLock.lock();
@@ -6149,59 +5894,6 @@ public class Character extends AbstractCharacterObject {
 
     public void removeVisibleMapObject(MapObject mo) {
         visibleMapObjects.remove(mo);
-    }
-
-    public synchronized void resetStats() {
-        if (!YamlConfig.config.server.USE_AUTOASSIGN_STARTERS_AP) {
-            return;
-        }
-
-        effLock.lock();
-        statWlock.lock();
-        try {
-            int tap = remainingAp + str + dex + int_ + luk, tsp = 1;
-            int tstr = 4, tdex = 4, tint = 4, tluk = 4;
-
-            switch (job.getId()) {
-                case 100:
-                case 1100:
-                case 2100:
-                    tstr = 35;
-                    tsp += ((getLevel() - 10) * 3);
-                    break;
-                case 200:
-                case 1200:
-                    tint = 20;
-                    tsp += ((getLevel() - 8) * 3);
-                    break;
-                case 300:
-                case 1300:
-                case 400:
-                case 1400:
-                    tdex = 25;
-                    tsp += ((getLevel() - 10) * 3);
-                    break;
-                case 500:
-                case 1500:
-                    tdex = 20;
-                    tsp += ((getLevel() - 10) * 3);
-                    break;
-            }
-
-            tap -= tstr;
-            tap -= tdex;
-            tap -= tint;
-            tap -= tluk;
-
-            if (tap >= 0) {
-                updateStrDexIntLukSp(tstr, tdex, tint, tluk, tap, tsp, GameConstants.getSkillBook(job.getId()));
-            } else {
-                log.warn("Chr {} tried to have its stats reset without enough AP available");
-            }
-        } finally {
-            statWlock.unlock();
-            effLock.unlock();
-        }
     }
 
     public synchronized void saveCooldowns() {
@@ -6251,30 +5943,6 @@ public class Character extends AbstractCharacterObject {
         }
     }
 
-    public void saveGuildStatus() {
-        try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("UPDATE characters SET guildid = ?, guildrank = ?, allianceRank = ? WHERE id = ?")) {
-            ps.setInt(1, guildid);
-            ps.setInt(2, guildRank);
-            ps.setInt(3, allianceRank);
-            ps.setInt(4, id);
-            ps.executeUpdate();
-        } catch (SQLException se) {
-            se.printStackTrace();
-        }
-    }
-
-    public void saveLocationOnWarp() {  // suggestion to remember the map before warp command thanks to Lei
-        Portal closest = map.findClosestPortal(getPosition());
-        int curMapid = getMapId();
-
-        for (int i = 0; i < savedLocations.length; i++) {
-            if (savedLocations[i] == null) {
-                savedLocations[i] = new SavedLocation(curMapid, closest != null ? closest.getId() : 0);
-            }
-        }
-    }
-
     public void saveLocation(String type) {
         Portal closest = map.findClosestPortal(getPosition());
         savedLocations[SavedLocationType.fromString(type).ordinal()] = new SavedLocation(getMapId(), closest != null ? closest.getId() : 0);
@@ -6296,7 +5964,6 @@ public class Character extends AbstractCharacterObject {
         }
     }
 
-    //ItemFactory saveItems and monsterbook.saveCards are the most time consuming here.
     public synchronized void saveCharToDB(boolean notAutosave) {
         if (!loggedIn) {
             return;
@@ -6873,10 +6540,6 @@ public class Character extends AbstractCharacterObject {
         return true;
     }
 
-    public void setInventory(InventoryType type, Inventory inv) {
-        inventory[type.ordinal()] = inv;
-    }
-
     public void setMap(int PmapId) {
         this.mapid = PmapId;
     }
@@ -7035,10 +6698,6 @@ public class Character extends AbstractCharacterObject {
         return true;
     }
 
-    public void startMapEffect(String msg, int itemId) {
-        startMapEffect(msg, itemId, 30000);
-    }
-
     public void startMapEffect(String msg, int itemId, int duration) {
         final MapEffect mapEffect = new MapEffect(msg, itemId);
         sendPacket(mapEffect.makeStartData());
@@ -7048,15 +6707,6 @@ public class Character extends AbstractCharacterObject {
                 sendPacket(mapEffect.makeDestroyData());
             }
         }, duration);
-    }
-
-    public void unequipAllPets() {
-        for (int i = 0; i < 3; i++) {
-            Pet pet = getPet(i);
-            if (pet != null) {
-                unequipPet(pet, true);
-            }
-        }
     }
 
     public void unequipPet(Pet pet, boolean shift_left) {

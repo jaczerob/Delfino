@@ -1,24 +1,3 @@
-/*
- This file is part of the OdinMS Maple Story Server
- Copyright (C) 2008 Patrick Huy <patrick.huy@frz.cc>
- Matthias Butz <matze@odinms.de>
- Jan Christian Meyer <vimes@odinms.de>
-
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU Affero General Public License as
- published by the Free Software Foundation version 3 as published by
- the Free Software Foundation. You may not use, modify or distribute
- this program under any other version of the GNU Affero General Public
- License.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU Affero General Public License for more details.
-
- You should have received a copy of the GNU Affero General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package dev.jaczerob.delfino.maplestory.net.server;
 
 import dev.jaczerob.delfino.maplestory.client.Character;
@@ -27,24 +6,19 @@ import dev.jaczerob.delfino.maplestory.client.SkillFactory;
 import dev.jaczerob.delfino.maplestory.client.inventory.manipulator.CashIdGenerator;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
 import dev.jaczerob.delfino.maplestory.constants.game.GameConstants;
-import dev.jaczerob.delfino.maplestory.constants.inventory.ItemConstants;
 import dev.jaczerob.delfino.maplestory.constants.net.OpcodeConstants;
 import dev.jaczerob.delfino.maplestory.constants.net.ServerConstants;
-import dev.jaczerob.delfino.maplestory.net.ChannelDependencies;
 import dev.jaczerob.delfino.maplestory.net.server.channel.Channel;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.session.IpAddresses;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.session.SessionCoordinator;
 import dev.jaczerob.delfino.maplestory.net.server.task.CharacterDiseaseTask;
-import dev.jaczerob.delfino.maplestory.net.server.task.CouponTask;
 import dev.jaczerob.delfino.maplestory.net.server.task.InvitationTask;
 import dev.jaczerob.delfino.maplestory.net.server.task.RespawnTask;
 import dev.jaczerob.delfino.maplestory.net.server.world.World;
 import dev.jaczerob.delfino.maplestory.server.CashShop.CashItemFactory;
-import dev.jaczerob.delfino.maplestory.server.ThreadManager;
 import dev.jaczerob.delfino.maplestory.server.TimerManager;
 import dev.jaczerob.delfino.maplestory.server.life.PlayerNPC;
 import dev.jaczerob.delfino.maplestory.server.quest.Quest;
-import dev.jaczerob.delfino.maplestory.service.NoteService;
 import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
 import dev.jaczerob.delfino.maplestory.tools.Pair;
 import dev.jaczerob.delfino.network.packets.Packet;
@@ -64,7 +38,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -86,11 +59,8 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 @DependsOn("channelPacketCreator")
 public class Server {
     private static final Logger log = LoggerFactory.getLogger(Server.class);
-    private static final Map<Integer, Integer> couponRates = new HashMap<>(30);
-    private static final List<Integer> activeCoupons = new LinkedList<>();
     public static long uptime = System.currentTimeMillis();
     private static Server INSTANCE = null;
-    private static ChannelDependencies channelDependencies;
 
     private final List<Map<Integer, String>> channels = new LinkedList<>();
     private final List<World> worlds = new ArrayList<>();
@@ -114,12 +84,10 @@ public class Server {
     private final AtomicLong currentTime = new AtomicLong(0);
     private final TimerManager timerManager;
     private final DatabaseConnection databaseConnection;
-    private final NoteService noteService;
     private long serverCurrentTime = 0;
     private boolean online = false;
 
     public Server(
-            final NoteService noteService,
             final TimerManager timerManager,
             final DatabaseConnection databaseConnection
     ) {
@@ -131,7 +99,6 @@ public class Server {
         this.lgnRLock = loginLock.readLock();
         this.lgnWLock = loginLock.writeLock();
 
-        this.noteService = noteService;
         this.timerManager = timerManager;
         this.databaseConnection = databaseConnection;
     }
@@ -147,16 +114,6 @@ public class Server {
         nextHour.set(Calendar.SECOND, 0);
 
         return Math.max(0, nextHour.getTimeInMillis() - System.currentTimeMillis());
-    }
-
-    public static long getTimeLeftForNextDay() {
-        Calendar nextDay = Calendar.getInstance();
-        nextDay.add(Calendar.DAY_OF_MONTH, 1);
-        nextDay.set(Calendar.HOUR_OF_DAY, 0);
-        nextDay.set(Calendar.MINUTE, 0);
-        nextDay.set(Calendar.SECOND, 0);
-
-        return Math.max(0, nextDay.getTimeInMillis() - System.currentTimeMillis());
     }
 
     public static void cleanNxcodeCoupons(Connection con) throws SQLException {
@@ -397,15 +354,6 @@ public class Server {
         }
     }
 
-    public Set<Integer> getOpenChannels(int world) {
-        wldRLock.lock();
-        try {
-            return new HashSet<>(channels.get(world).keySet());
-        } finally {
-            wldRLock.unlock();
-        }
-    }
-
     private String getIP(int world, int channel) {
         wldRLock.lock();
         try {
@@ -496,79 +444,6 @@ public class Server {
         }
     }
 
-    public Map<Integer, Integer> getCouponRates() {
-        return couponRates;
-    }
-
-    private void loadCouponRates(Connection c) throws SQLException {
-        try (PreparedStatement ps = c.prepareStatement("SELECT couponid, rate FROM nxcoupons");
-             ResultSet rs = ps.executeQuery()) {
-
-            while (rs.next()) {
-                int cid = rs.getInt("couponid");
-                int rate = rs.getInt("rate");
-
-                couponRates.put(cid, rate);
-            }
-        }
-    }
-
-    public List<Integer> getActiveCoupons() {
-        synchronized (activeCoupons) {
-            return activeCoupons;
-        }
-    }
-
-    public void commitActiveCoupons() {
-        for (World world : getWorlds()) {
-            for (Character chr : world.getPlayerStorage().getAllCharacters()) {
-                if (!chr.isLoggedin()) {
-                    continue;
-                }
-
-                chr.updateCouponRates();
-            }
-        }
-    }
-
-    public void toggleCoupon(Integer couponId) {
-        if (ItemConstants.isRateCoupon(couponId)) {
-            synchronized (activeCoupons) {
-                if (activeCoupons.contains(couponId)) {
-                    activeCoupons.remove(couponId);
-                } else {
-                    activeCoupons.add(couponId);
-                }
-
-                commitActiveCoupons();
-            }
-        }
-    }
-
-    public void updateActiveCoupons(Connection con) throws SQLException {
-        synchronized (activeCoupons) {
-            activeCoupons.clear();
-            Calendar c = Calendar.getInstance();
-
-            int weekDay = c.get(Calendar.DAY_OF_WEEK);
-            int hourDay = c.get(Calendar.HOUR_OF_DAY);
-
-            int weekdayMask = (1 << weekDay);
-            PreparedStatement ps = con.prepareStatement("SELECT couponid FROM nxcoupons WHERE (activeday & ?) = ? AND starthour <= ? AND endhour > ?");
-            ps.setInt(1, weekdayMask);
-            ps.setInt(2, weekdayMask);
-            ps.setInt(3, hourDay);
-            ps.setInt(4, hourDay);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    activeCoupons.add(rs.getInt("couponid"));
-                }
-            }
-
-        }
-    }
-
     public void runAnnouncePlayerDiseasesSchedule() {
         List<Client> processDiseaseAnnounceClients;
         disLock.lock();
@@ -613,12 +488,6 @@ public class Server {
         Instant beforeInit = Instant.now();
         log.info("Cosmic v{} starting up.", ServerConstants.VERSION);
 
-        if (YamlConfig.config.server.SHUTDOWNHOOK) {
-            Runtime.getRuntime().addShutdownHook(new Thread(shutdown(false)));
-        }
-
-        channelDependencies = registerChannelDependencies();
-
         final ExecutorService initExecutor = Executors.newFixedThreadPool(10);
         // Run slow operations asynchronously to make startup faster
         final List<Future<?>> futures = new ArrayList<>();
@@ -633,8 +502,6 @@ public class Server {
         try (Connection con = this.databaseConnection.getConnection()) {
             setAllMerchantsInactive(con);
             cleanNxcodeCoupons(con);
-            loadCouponRates(con);
-            updateActiveCoupons(con);
             CashIdGenerator.loadExistentCashIdsFromDb(con);
             applyAllNameChanges(con); // -- name changes can be missed by INSTANT_NAME_CHANGE --
             applyAllWorldTransfers(con);
@@ -644,8 +511,7 @@ public class Server {
             throw new IllegalStateException(sqle);
         }
 
-        ThreadManager.getInstance().start();
-        initializeTimelyTasks(channelDependencies);    // aggregated method for timely tasks thanks to lxconan
+        initializeTimelyTasks();    // aggregated method for timely tasks thanks to lxconan
 
         try {
             initWorld();
@@ -671,16 +537,10 @@ public class Server {
         OpcodeConstants.generateOpcodeNames();
     }
 
-    private ChannelDependencies registerChannelDependencies() {
-        return new ChannelDependencies(noteService);
-    }
-
-    private void initializeTimelyTasks(ChannelDependencies channelDependencies) {
-        this.timerManager.register(this.timerManager.purge(), YamlConfig.config.server.PURGING_INTERVAL);//Purging ftw...
-
+    private void initializeTimelyTasks() {
+        this.timerManager.register(this.timerManager::purge, YamlConfig.config.server.PURGING_INTERVAL);
         long timeLeft = getTimeLeftForNextHour();
         this.timerManager.register(new CharacterDiseaseTask(), YamlConfig.config.server.UPDATE_INTERVAL, YamlConfig.config.server.UPDATE_INTERVAL);
-        this.timerManager.register(new CouponTask(), YamlConfig.config.server.COUPON_INTERVAL, timeLeft);
         this.timerManager.register(new InvitationTask(), SECONDS.toMillis(30), SECONDS.toMillis(30));
         this.timerManager.register(new RespawnTask(), YamlConfig.config.server.RESPAWN_INTERVAL, YamlConfig.config.server.RESPAWN_INTERVAL);
     }
@@ -785,19 +645,5 @@ public class Server {
         } finally {
             lgnRLock.unlock();
         }
-    }
-
-    public final Runnable shutdown(final boolean restart) {//no player should be online when trying to shutdown!
-        return () -> shutdownInternal(restart);
-    }
-
-    private synchronized void shutdownInternal(boolean restart) {
-        log.info("{} the server!", restart ? "Restarting" : "Shutting down");
-
-        ThreadManager.getInstance().stop();
-        TimerManager.getInstance().purge();
-        TimerManager.getInstance().stop();
-
-        log.info("Worlds and channels are offline.");
     }
 }

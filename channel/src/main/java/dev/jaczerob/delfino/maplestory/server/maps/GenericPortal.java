@@ -23,7 +23,6 @@ package dev.jaczerob.delfino.maplestory.server.maps;
 
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Client;
-import dev.jaczerob.delfino.maplestory.constants.game.GameConstants;
 import dev.jaczerob.delfino.maplestory.constants.id.MapId;
 import dev.jaczerob.delfino.maplestory.scripting.portal.PortalScriptManager;
 import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
@@ -33,11 +32,11 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class GenericPortal implements Portal {
+    private final int type;
     private String name;
     private String target;
     private Point position;
     private int targetmap;
-    private final int type;
     private boolean status = true;
     private int id;
     private String scriptName;
@@ -62,9 +61,17 @@ public class GenericPortal implements Portal {
         return name;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
     @Override
     public Point getPosition() {
         return position;
+    }
+
+    public void setPosition(Point position) {
+        this.position = position;
     }
 
     @Override
@@ -72,9 +79,8 @@ public class GenericPortal implements Portal {
         return target;
     }
 
-    @Override
-    public void setPortalStatus(boolean newStatus) {
-        this.status = newStatus;
+    public void setTarget(String target) {
+        this.target = target;
     }
 
     @Override
@@ -83,8 +89,17 @@ public class GenericPortal implements Portal {
     }
 
     @Override
+    public void setPortalStatus(boolean newStatus) {
+        this.status = newStatus;
+    }
+
+    @Override
     public int getTargetMapId() {
         return targetmap;
+    }
+
+    public void setTargetMapId(int targetmapid) {
+        this.targetmap = targetmapid;
     }
 
     @Override
@@ -95,22 +110,6 @@ public class GenericPortal implements Portal {
     @Override
     public String getScriptName() {
         return scriptName;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setPosition(Point position) {
-        this.position = position;
-    }
-
-    public void setTarget(String target) {
-        this.target = target;
-    }
-
-    public void setTargetMapId(int targetmapid) {
-        this.targetmap = targetmapid;
     }
 
     @Override
@@ -142,17 +141,7 @@ public class GenericPortal implements Portal {
             }
         } else if (getTargetMapId() != MapId.NONE) {
             Character chr = c.getPlayer();
-            if (!(chr.getChalkboard() != null && GameConstants.isFreeMarketRoom(getTargetMapId()))) {
-                MapleMap to = c.getChannelServer().getMapFactory().getMap(getTargetMapId());
-                Portal pto = to.getPortal(getTarget());
-                if (pto == null) {// fallback for missing portals - no real life case anymore - interesting for not implemented areas
-                    pto = to.getPortal(0);
-                }
-                chr.changeMap(to, pto); //late resolving makes this harder but prevents us from loading the whole world at once
-                changed = true;
-            } else {
-                chr.dropMessage(5, "You cannot enter this map with the chalkboard opened.");
-            }
+            chr.dropMessage(5, "You cannot enter this map with the chalkboard opened.");
         }
         if (!changed) {
             c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
@@ -160,12 +149,12 @@ public class GenericPortal implements Portal {
     }
 
     @Override
-    public void setPortalState(boolean state) {
-        this.portalState = state;
+    public boolean getPortalState() {
+        return portalState;
     }
 
     @Override
-    public boolean getPortalState() {
-        return portalState;
+    public void setPortalState(boolean state) {
+        this.portalState = state;
     }
 }

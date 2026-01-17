@@ -1,5 +1,9 @@
 package dev.jaczerob.delfino.maplestory.server;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import org.springframework.stereotype.Component;
+
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionHandler;
@@ -9,6 +13,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+@Component
 public class ThreadManager {
     private static final ThreadManager instance = new ThreadManager();
     private ThreadPoolExecutor tpe;
@@ -24,6 +29,7 @@ public class ThreadManager {
         tpe.execute(r);
     }
 
+    @PostConstruct
     public void start() {
         RejectedExecutionHandler reh = new RejectedExecutionHandlerImpl();
         ThreadFactory tf = Executors.defaultThreadFactory();
@@ -31,6 +37,7 @@ public class ThreadManager {
         tpe = new ThreadPoolExecutor(20, 1000, 77, SECONDS, new ArrayBlockingQueue<>(50), tf, reh);
     }
 
+    @PreDestroy
     public void stop() {
         tpe.shutdown();
         try {

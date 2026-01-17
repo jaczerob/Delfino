@@ -2,6 +2,7 @@ package dev.jaczerob.delfino.maplestory.server;
 
 import dev.jaczerob.delfino.maplestory.net.server.Server;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -15,15 +16,14 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 public class TimerManager {
     private static final Logger log = LoggerFactory.getLogger(TimerManager.class);
     private static TimerManager INSTANCE = null;
-
-    public static TimerManager getInstance() {
-        return INSTANCE;
-    }
-
     private final ScheduledThreadPoolExecutor scheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(Runtime.getRuntime().availableProcessors(), Thread.ofVirtual().factory());
 
     public TimerManager() {
         this.scheduledThreadPoolExecutor.setRemoveOnCancelPolicy(true);
+    }
+
+    public static TimerManager getInstance() {
+        return INSTANCE;
     }
 
     @PostConstruct
@@ -32,15 +32,15 @@ public class TimerManager {
         log.info("Timer Manager initialized with {} threads.", this.scheduledThreadPoolExecutor.getCorePoolSize());
     }
 
-    public void stop() {
+    @PreDestroy
+    public void destroy() {
+        this.purge();
         this.scheduledThreadPoolExecutor.shutdownNow();
     }
 
-    public Runnable purge() {
-        return () -> {
-            Server.getInstance().forceUpdateCurrentTime();
-            this.scheduledThreadPoolExecutor.purge();
-        };
+    public void purge() {
+        Server.getInstance().forceUpdateCurrentTime();
+        this.scheduledThreadPoolExecutor.purge();
     }
 
     public ScheduledFuture<?> register(final Runnable runnable, final long repeatTime, final long delay) {
@@ -55,12 +55,7 @@ public class TimerManager {
         return this.scheduledThreadPoolExecutor.schedule(new LoggingSaveRunnable(runnable), delay, MILLISECONDS);
     }
 
-    private static class LoggingSaveRunnable implements Runnable {
-        private final Runnable runnable;
-
-        public LoggingSaveRunnable(final Runnable runnable) {
-            this.runnable = runnable;
-        }
+    private record LoggingSaveRunnable(Runnable runnable) implements Runnable {
 
         @Override
         public void run() {

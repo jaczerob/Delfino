@@ -303,7 +303,6 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
             }
 
             player.setWorldRates();
-            player.updateCouponRates();
 
             player.receivePartyMemberHP();
 

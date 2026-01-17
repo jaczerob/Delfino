@@ -32,7 +32,6 @@ import dev.jaczerob.delfino.maplestory.client.inventory.Pet;
 import dev.jaczerob.delfino.maplestory.client.status.MonsterStatus;
 import dev.jaczerob.delfino.maplestory.client.status.MonsterStatusEffect;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
-import dev.jaczerob.delfino.maplestory.constants.game.GameConstants;
 import dev.jaczerob.delfino.maplestory.constants.id.MapId;
 import dev.jaczerob.delfino.maplestory.constants.id.MobId;
 import dev.jaczerob.delfino.maplestory.constants.inventory.ItemConstants;
@@ -2266,11 +2265,7 @@ public class MapleMap {
         chr.removeSandboxItems();
 
         if (chr.getChalkboard() != null) {
-            if (!GameConstants.isFreeMarketRoom(mapid)) {
-                chr.sendPacket(ChannelPacketCreator.getInstance().useChalkboard(chr, false)); // update player's chalkboard when changing maps found thanks to Vcoc
-            } else {
-                chr.setChalkboard(null);
-            }
+            chr.sendPacket(ChannelPacketCreator.getInstance().useChalkboard(chr, false)); // update player's chalkboard when changing maps found thanks to Vcoc
         }
 
         if (chr.isHidden()) {

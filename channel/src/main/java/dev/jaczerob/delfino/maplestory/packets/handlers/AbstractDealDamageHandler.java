@@ -8,7 +8,6 @@ import dev.jaczerob.delfino.maplestory.client.autoban.AutobanFactory;
 import dev.jaczerob.delfino.maplestory.client.status.MonsterStatus;
 import dev.jaczerob.delfino.maplestory.client.status.MonsterStatusEffect;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
-import dev.jaczerob.delfino.maplestory.constants.game.GameConstants;
 import dev.jaczerob.delfino.maplestory.constants.id.ItemId;
 import dev.jaczerob.delfino.maplestory.constants.id.MapId;
 import dev.jaczerob.delfino.maplestory.constants.id.MobId;
@@ -210,9 +209,6 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
 
         if (ret.skill > 0) {
             ret.skilllevel = chr.getSkillLevel(ret.skill);
-            if (ret.skilllevel == 0 && GameConstants.isPqSkillMap(chr.getMapId()) && GameConstants.isPqSkill(ret.skill)) {
-                ret.skilllevel = 1;
-            }
         }
 
         ret.charge = 0;
@@ -371,9 +367,6 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
             }
 
             int skillLevel = chr.getSkillLevel(mySkill);
-            if (skillLevel == 0 && GameConstants.isPqSkillMap(chr.getMapId()) && GameConstants.isPqSkill(mySkill.getId())) {
-                skillLevel = 1;
-            }
 
             if (skillLevel == 0) {
                 return null;

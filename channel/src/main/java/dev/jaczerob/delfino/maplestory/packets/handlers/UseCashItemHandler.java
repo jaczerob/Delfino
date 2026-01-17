@@ -18,7 +18,6 @@ import dev.jaczerob.delfino.maplestory.client.processor.npc.DueyProcessor;
 import dev.jaczerob.delfino.maplestory.client.processor.stat.AssignAPProcessor;
 import dev.jaczerob.delfino.maplestory.client.processor.stat.AssignSPProcessor;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
-import dev.jaczerob.delfino.maplestory.constants.game.GameConstants;
 import dev.jaczerob.delfino.maplestory.constants.id.ItemId;
 import dev.jaczerob.delfino.maplestory.constants.id.MapId;
 import dev.jaczerob.delfino.maplestory.constants.inventory.ItemConstants;
@@ -390,12 +389,8 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
         } else if (itemType == 508) {   // thanks tmskdl12 for graduation banner; thanks ratency for first pointing lack of Kite handling
             Kite kite = new Kite(player, packet.readString(), itemId);
 
-            if (!GameConstants.isFreeMarketRoom(player.getMapId())) {
-                player.getMap().spawnKite(kite);
-                remove(client, position, itemId);
-            } else {
-                context.writeAndFlush(ChannelPacketCreator.getInstance().sendCannotSpawnKite());
-            }
+            player.getMap().spawnKite(kite);
+            remove(client, position, itemId);
         } else if (itemType == 509) {
             String sendTo = packet.readString();
             String msg = packet.readString();
@@ -468,12 +463,6 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
         } else if (itemType == 533) {
             DueyProcessor.dueySendTalk(client, true);
         } else if (itemType == 537) {
-            if (GameConstants.isFreeMarketRoom(player.getMapId())) {
-                player.dropMessage(5, "You cannot use the chalkboard here.");
-                player.sendPacket(ChannelPacketCreator.getInstance().enableActions());
-                return;
-            }
-
             player.setChalkboard(packet.readString());
             player.getMap().broadcastMessage(ChannelPacketCreator.getInstance().useChalkboard(player, false));
             player.sendPacket(ChannelPacketCreator.getInstance().enableActions());
