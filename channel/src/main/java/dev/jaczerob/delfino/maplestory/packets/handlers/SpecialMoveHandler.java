@@ -53,8 +53,8 @@ public final class SpecialMoveHandler extends AbstractPacketHandler {
             }
             skillLevel = 1;
             chr.setDojoEnergy(0);
-            client.sendPacket(ChannelPacketCreator.getInstance().getEnergy("energy", chr.getDojoEnergy()));
-            client.sendPacket(ChannelPacketCreator.getInstance().serverNotice(5, "As you used the secret skill, your energy bar has been reset."));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().getEnergy("energy", chr.getDojoEnergy()));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().serverNotice(5, "As you used the secret skill, your energy bar has been reset."));
         }
         if (skillLevel == 0 || skillLevel != __skillLevel) {
             return;
@@ -70,7 +70,7 @@ public final class SpecialMoveHandler extends AbstractPacketHandler {
                     cooldownTime /= 60;
                 }
 
-                client.sendPacket(ChannelPacketCreator.getInstance().skillCooldown(skillid, cooldownTime));
+                context.writeAndFlush(ChannelPacketCreator.getInstance().skillCooldown(skillid, cooldownTime));
                 chr.addCooldown(skillid, currentServerTime(), SECONDS.toMillis(cooldownTime));
             }
         }
@@ -94,7 +94,7 @@ public final class SpecialMoveHandler extends AbstractPacketHandler {
             }
             byte direction = packet.readByte();   // thanks MedicOP for pointing some 3rd-party related issues with Magnet
             chr.getMap().broadcastMessage(chr, ChannelPacketCreator.getInstance().showBuffEffect(chr.getId(), skillid, chr.getSkillLevel(skillid), 1, direction), false);
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         } else if (skillid == Brawler.MP_RECOVERY) {// MP Recovery
             Skill s = SkillFactory.getSkill(skillid);
@@ -134,10 +134,10 @@ public final class SpecialMoveHandler extends AbstractPacketHandler {
                     }
                 }
 
-                client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             }
         } else {
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
         }
     }
 }

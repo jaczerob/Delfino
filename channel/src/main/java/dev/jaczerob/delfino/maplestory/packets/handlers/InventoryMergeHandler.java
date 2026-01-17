@@ -51,7 +51,7 @@ public final class InventoryMergeHandler extends AbstractPacketHandler {
         chr.getAutobanManager().setTimestamp(2, Server.getInstance().getCurrentTimestamp(), 4);
 
         if (!YamlConfig.config.server.USE_ITEM_SORT) {
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
 
@@ -122,7 +122,7 @@ public final class InventoryMergeHandler extends AbstractPacketHandler {
             inventory.unlockInventory();
         }
 
-        client.sendPacket(ChannelPacketCreator.getInstance().finishedSort(inventoryType.getType()));
-        client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+        context.writeAndFlush(ChannelPacketCreator.getInstance().finishedSort(inventoryType.getType()));
+        context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
     }
 }

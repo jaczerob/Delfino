@@ -31,6 +31,30 @@ import java.sql.SQLException;
 public final class AcceptFamilyHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(AcceptFamilyHandler.class);
 
+    private static void insertNewFamilyRecord(int characterID, int familyID, int seniorID, boolean updateChar) {
+        try (Connection con = DatabaseConnection.getStaticConnection()) {
+            try (PreparedStatement ps = con.prepareStatement("INSERT INTO family_character (cid, familyid, seniorid) VALUES (?, ?, ?)")) {
+                ps.setInt(1, characterID);
+                ps.setInt(2, familyID);
+                ps.setInt(3, seniorID);
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                log.error("Could not save new family record for chrId {}", characterID, e);
+            }
+            if (updateChar) {
+                try (PreparedStatement ps = con.prepareStatement("UPDATE characters SET familyid = ? WHERE id = ?")) {
+                    ps.setInt(1, familyID);
+                    ps.setInt(2, characterID);
+                    ps.executeUpdate();
+                } catch (SQLException e) {
+                    log.error("Could not update 'characters' 'familyid' record for chrId {}", characterID, e);
+                }
+            }
+        } catch (SQLException e) {
+            log.error("Could not get connection to DB while inserting new family record", e);
+        }
+    }
+
     @Override
     public RecvOpcode getOpcode() {
         return RecvOpcode.ACCEPT_FAMILY;
@@ -106,37 +130,13 @@ public final class AcceptFamilyHandler extends AbstractPacketHandler {
                     }
                 }
                 client.getPlayer().getFamily().broadcast(ChannelPacketCreator.getInstance().sendFamilyJoinResponse(true, client.getPlayer().getName()), client.getPlayer().getId());
-                client.sendPacket(ChannelPacketCreator.getInstance().getSeniorMessage(inviter.getName()));
-                client.sendPacket(ChannelPacketCreator.getInstance().getFamilyInfo(chr.getFamilyEntry()));
+                context.writeAndFlush(ChannelPacketCreator.getInstance().getSeniorMessage(inviter.getName()));
+                context.writeAndFlush(ChannelPacketCreator.getInstance().getFamilyInfo(chr.getFamilyEntry()));
                 chr.getFamilyEntry().updateSeniorFamilyInfo(true);
             } else {
                 inviter.sendPacket(ChannelPacketCreator.getInstance().sendFamilyJoinResponse(false, client.getPlayer().getName()));
             }
         }
-        client.sendPacket(ChannelPacketCreator.getInstance().sendFamilyMessage(0, 0));
-    }
-
-    private static void insertNewFamilyRecord(int characterID, int familyID, int seniorID, boolean updateChar) {
-        try (Connection con = DatabaseConnection.getStaticConnection()) {
-            try (PreparedStatement ps = con.prepareStatement("INSERT INTO family_character (cid, familyid, seniorid) VALUES (?, ?, ?)")) {
-                ps.setInt(1, characterID);
-                ps.setInt(2, familyID);
-                ps.setInt(3, seniorID);
-                ps.executeUpdate();
-            } catch (SQLException e) {
-                log.error("Could not save new family record for chrId {}", characterID, e);
-            }
-            if (updateChar) {
-                try (PreparedStatement ps = con.prepareStatement("UPDATE characters SET familyid = ? WHERE id = ?")) {
-                    ps.setInt(1, familyID);
-                    ps.setInt(2, characterID);
-                    ps.executeUpdate();
-                } catch (SQLException e) {
-                    log.error("Could not update 'characters' 'familyid' record for chrId {}", characterID, e);
-                }
-            }
-        } catch (SQLException e) {
-            log.error("Could not get connection to DB while inserting new family record", e);
-        }
+        context.writeAndFlush(ChannelPacketCreator.getInstance().sendFamilyMessage(0, 0));
     }
 }

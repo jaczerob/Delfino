@@ -36,7 +36,7 @@ public final class WhisperHandler extends AbstractPacketHandler {
         Character target = client.getWorldServer().getPlayerStorage().getCharacterByName(name);
 
         if (target == null) {
-            client.sendPacket(ChannelPacketCreator.getInstance().getWhisperResult(name, false));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().getWhisperResult(name, false));
             return;
         }
 

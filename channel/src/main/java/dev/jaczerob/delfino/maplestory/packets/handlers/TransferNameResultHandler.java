@@ -42,6 +42,6 @@ public final class TransferNameResultHandler extends AbstractPacketHandler {
     @Override
     public void handlePacket(final InPacket packet, final Client client, final ChannelHandlerContext context) {
         String name = packet.readString();
-        client.sendPacket(ChannelPacketCreator.getInstance().sendNameTransferCheck(name, Character.canCreateChar(name)));
+        context.writeAndFlush(ChannelPacketCreator.getInstance().sendNameTransferCheck(name, Character.canCreateChar(name)));
     }
 }

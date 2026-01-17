@@ -29,7 +29,7 @@ public class FredrickHandler extends AbstractPacketHandler {
 
         switch (operation) {
             case 0x19: //Will never come...
-                //client.sendPacket(PacketCreator.getFredrick((byte) 0x24));
+                //context.writeAndFlush(PacketCreator.getFredrick((byte) 0x24));
                 break;
             case 0x1A:
                 fredrickProcessor.fredrickRetrieveItems(client);

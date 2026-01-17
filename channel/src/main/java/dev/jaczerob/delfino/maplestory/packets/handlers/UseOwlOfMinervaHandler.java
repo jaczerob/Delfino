@@ -67,6 +67,6 @@ public final class UseOwlOfMinervaHandler extends AbstractPacketHandler {
             }
         }
 
-        client.sendPacket(ChannelPacketCreator.getInstance().getOwlOpen(owlLeaderboards));
+        context.writeAndFlush(ChannelPacketCreator.getInstance().getOwlOpen(owlLeaderboards));
     }
 }

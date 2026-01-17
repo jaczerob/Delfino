@@ -60,11 +60,11 @@ public final class ReportHandler extends AbstractPacketHandler {
                     client.getPlayer().decreaseReports();
                     client.getPlayer().gainMeso(-300, true);
                 } else {
-                    client.sendPacket(ChannelPacketCreator.getInstance().reportResponse((byte) 4));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().reportResponse((byte) 4));
                     return;
                 }
             } else {
-                client.sendPacket(ChannelPacketCreator.getInstance().reportResponse((byte) 2));
+                context.writeAndFlush(ChannelPacketCreator.getInstance().reportResponse((byte) 2));
                 return;
             }
             Server.getInstance().broadcastGMMessage(client.getWorld(), ChannelPacketCreator.getInstance().serverNotice(6, victim + " was reported for: " + description));
@@ -79,7 +79,7 @@ public final class ReportHandler extends AbstractPacketHandler {
                     client.getPlayer().decreaseReports();
                     client.getPlayer().gainMeso(-300, true);
                 } else {
-                    client.sendPacket(ChannelPacketCreator.getInstance().reportResponse((byte) 4));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().reportResponse((byte) 4));
                     return;
                 }
             }

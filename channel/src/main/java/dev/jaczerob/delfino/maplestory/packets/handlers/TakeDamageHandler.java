@@ -286,7 +286,7 @@ public final class TakeDamageHandler extends AbstractPacketHandler {
         }
         if (MapId.isDojo(map.getId())) {
             chr.setDojoEnergy(chr.getDojoEnergy() + YamlConfig.config.server.DOJO_ENERGY_DMG);
-            client.sendPacket(ChannelPacketCreator.getInstance().getEnergy("energy", chr.getDojoEnergy()));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().getEnergy("energy", chr.getDojoEnergy()));
         }
 
         for (Character player : banishPlayers) {  // chill, if this list ever gets non-empty an attacker does exist, trust me :)

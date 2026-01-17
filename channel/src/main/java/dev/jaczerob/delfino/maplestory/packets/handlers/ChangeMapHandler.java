@@ -38,6 +38,7 @@ import dev.jaczerob.delfino.network.packets.InPacket;
 import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
@@ -57,12 +58,23 @@ public final class ChangeMapHandler extends AbstractPacketHandler {
     public void handlePacket(final InPacket packet, final Client client, final ChannelHandlerContext context) {
         Character chr = client.getPlayer();
 
+        final var lastMap = chr.getMap();
+        if (lastMap == null) {
+            MDC.put("player.map.last.id", "null");
+            MDC.put("player.map.last.name", "null");
+        } else {
+            MDC.put("player.map.last.id", String.valueOf(lastMap.getId()));
+            MDC.put("player.map.last.name", lastMap.getMapName());
+        }
+
+        log.debug("Player is transitioning maps");
+
         if (chr.isChangingMaps() || chr.isBanned()) {
             if (chr.isChangingMaps()) {
-                log.warn("Chr {} got stuck when changing maps. Last visited mapids: {}", chr.getName(), chr.getLastVisitedMapids());
+                log.warn("Character got stuck when changing maps");
             }
 
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
         if (chr.getTrade() != null) {
@@ -71,7 +83,7 @@ public final class ChangeMapHandler extends AbstractPacketHandler {
 
         boolean enteringMapFromCashShop = packet.available() == 0;
         if (enteringMapFromCashShop) {
-            enterFromCashShop(client);
+            enterFromCashShop(client, context);
             return;
         }
 
@@ -124,8 +136,8 @@ public final class ChangeMapHandler extends AbstractPacketHandler {
                             }
                         } else if (divi == 20100) {
                             if (targetMapId == MapId.LITH_HARBOUR) {
-                                client.sendPacket(ChannelPacketCreator.getInstance().lockUI(false));
-                                client.sendPacket(ChannelPacketCreator.getInstance().disableUI(false));
+                                context.writeAndFlush(ChannelPacketCreator.getInstance().lockUI(false));
+                                context.writeAndFlush(ChannelPacketCreator.getInstance().disableUI(false));
                                 warp = true;
                             }
                         } else if (divi == 9130401) { // Only allow warp if player is already in Intro map, or else = hack
@@ -154,8 +166,8 @@ public final class ChangeMapHandler extends AbstractPacketHandler {
             }
 
             if (portal != null && !portal.getPortalStatus()) {
-                client.sendPacket(ChannelPacketCreator.getInstance().blockedMessage(1));
-                client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                context.writeAndFlush(ChannelPacketCreator.getInstance().blockedMessage(1));
+                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                 return;
             }
 
@@ -167,13 +179,13 @@ public final class ChangeMapHandler extends AbstractPacketHandler {
 
             if (portal != null) {
                 if (portal.getPosition().distanceSq(chr.getPosition()) > 400000) {
-                    client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                     return;
                 }
 
                 portal.enterPortal(client);
             } else {
-                client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -181,7 +193,7 @@ public final class ChangeMapHandler extends AbstractPacketHandler {
 
     }
 
-    private void enterFromCashShop(Client client) {
+    private void enterFromCashShop(Client client, final ChannelHandlerContext context) {
         final Character chr = client.getPlayer();
 
         if (!chr.getCashShop().isOpened()) {
@@ -197,7 +209,7 @@ public final class ChangeMapHandler extends AbstractPacketHandler {
 
         chr.setSessionTransitionState();
         try {
-            client.sendPacket(ChannelPacketCreator.getInstance().getChannelChange(InetAddress.getByName(socket[0]), Integer.parseInt(socket[1])));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().getChannelChange(InetAddress.getByName(socket[0]), Integer.parseInt(socket[1])));
         } catch (UnknownHostException ex) {
             ex.printStackTrace();
         }

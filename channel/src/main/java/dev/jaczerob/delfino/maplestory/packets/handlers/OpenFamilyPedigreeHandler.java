@@ -46,7 +46,7 @@ public final class OpenFamilyPedigreeHandler extends AbstractPacketHandler {
         }
         Character target = client.getChannelServer().getPlayerStorage().getCharacterByName(packet.readString());
         if (target != null && target.getFamily() != null) {
-            client.sendPacket(ChannelPacketCreator.getInstance().showPedigree(target.getFamilyEntry()));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().showPedigree(target.getFamilyEntry()));
         }
     }
 }

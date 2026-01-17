@@ -52,19 +52,19 @@ public class PartySearchStartHandler extends AbstractPacketHandler {
         Character chr = client.getPlayer();
         if (min > max) {
             chr.dropMessage(1, "The min. value is higher than the max!");
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
 
         if (max - min > 30) {
             chr.dropMessage(1, "You can only search for party members within a range of 30 levels.");
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
 
         if (chr.getLevel() < min || chr.getLevel() > max) {
             chr.dropMessage(1, "The range of level for search has to include your own level.");
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
 

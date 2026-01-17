@@ -19,6 +19,6 @@ public final class UseDeathItemHandler extends AbstractPacketHandler {
     public void handlePacket(final InPacket packet, final Client client, final ChannelHandlerContext context) {
         int itemId = packet.readInt();
         client.getPlayer().setItemEffect(itemId);
-        client.sendPacket(ChannelPacketCreator.getInstance().itemEffect(client.getPlayer().getId(), itemId));
+        context.writeAndFlush(ChannelPacketCreator.getInstance().itemEffect(client.getPlayer().getId(), itemId));
     }
 }

@@ -32,7 +32,7 @@ public final class UseItemHandler extends AbstractPacketHandler {
         Character chr = client.getPlayer();
 
         if (!chr.isAlive()) {
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
@@ -43,30 +43,30 @@ public final class UseItemHandler extends AbstractPacketHandler {
         if (toUse != null && toUse.getQuantity() > 0 && toUse.getItemId() == itemId) {
             if (itemId == ItemId.ALL_CURE_POTION) {
                 chr.dispelDebuffs();
-                remove(client, slot);
+                remove(client, slot, context);
                 return;
             } else if (itemId == ItemId.EYEDROP) {
                 chr.dispelDebuff(Disease.DARKNESS);
-                remove(client, slot);
+                remove(client, slot, context);
                 return;
             } else if (itemId == ItemId.TONIC) {
                 chr.dispelDebuff(Disease.WEAKEN);
                 chr.dispelDebuff(Disease.SLOW);
-                remove(client, slot);
+                remove(client, slot, context);
                 return;
             } else if (itemId == ItemId.HOLY_WATER) {
                 chr.dispelDebuff(Disease.SEAL);
                 chr.dispelDebuff(Disease.CURSE);
-                remove(client, slot);
+                remove(client, slot, context);
                 return;
             } else if (ItemConstants.isTownScroll(itemId)) {
                 if (ii.getItemEffect(toUse.getItemId()).applyTo(chr)) {
-                    remove(client, slot);
+                    remove(client, slot, context);
                 }
                 return;
             }
 
-            remove(client, slot);
+            remove(client, slot, context);
 
             if (toUse.getItemId() != ItemId.HAPPY_BIRTHDAY) {
                 ii.getItemEffect(toUse.getItemId()).applyTo(chr);
@@ -79,8 +79,8 @@ public final class UseItemHandler extends AbstractPacketHandler {
         }
     }
 
-    private void remove(Client client, short slot) {
+    private void remove(Client client, short slot, ChannelHandlerContext context) {
         InventoryManipulator.removeFromSlot(client, InventoryType.USE, slot, (short) 1, false);
-        client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+        context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
     }
 }

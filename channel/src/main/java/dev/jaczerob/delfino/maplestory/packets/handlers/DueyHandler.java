@@ -20,7 +20,7 @@ public final class DueyHandler extends AbstractPacketHandler {
     @Override
     public void handlePacket(final InPacket packet, final Client client, final ChannelHandlerContext context) {
         if (!YamlConfig.config.server.USE_DUEY) {
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
 

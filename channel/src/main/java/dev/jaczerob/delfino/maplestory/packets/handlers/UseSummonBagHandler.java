@@ -49,7 +49,7 @@ public final class UseSummonBagHandler extends AbstractPacketHandler {
     public void handlePacket(final InPacket packet, final Client client, final ChannelHandlerContext context) {
         //[4A 00][6C 4C F2 02][02 00][63 0B 20 00]
         if (!client.getPlayer().isAlive()) {
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
         packet.readInt();
@@ -65,6 +65,6 @@ public final class UseSummonBagHandler extends AbstractPacketHandler {
                 }
             }
         }
-        client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+        context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
     }
 }

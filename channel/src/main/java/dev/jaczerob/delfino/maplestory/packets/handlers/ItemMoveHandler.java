@@ -24,7 +24,7 @@ public final class ItemMoveHandler extends AbstractPacketHandler {
     public void handlePacket(final InPacket packet, final Client client, final ChannelHandlerContext context) {
         packet.skip(4);
         if (client.getPlayer().getAutobanManager().getLastSpam(6) + 300 > currentServerTime()) {
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
 

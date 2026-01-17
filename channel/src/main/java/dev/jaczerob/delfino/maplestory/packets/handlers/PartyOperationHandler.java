@@ -56,7 +56,7 @@ public final class PartyOperationHandler extends AbstractPacketHandler {
                 if (res == InviteResultType.ACCEPTED) {
                     Party.joinParty(player, partyid, false);
                 } else {
-                    client.sendPacket(ChannelPacketCreator.getInstance().serverNotice(5, "You couldn't join the party due to an expired invitation request."));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().serverNotice(5, "You couldn't join the party due to an expired invitation request."));
                 }
                 break;
             }
@@ -65,11 +65,11 @@ public final class PartyOperationHandler extends AbstractPacketHandler {
                 Character invited = world.getPlayerStorage().getCharacterByName(name);
                 if (invited != null) {
                     if (invited.getLevel() < 10 && (!YamlConfig.config.server.USE_PARTY_FOR_STARTERS || player.getLevel() >= 10)) { //min requirement is level 10
-                        client.sendPacket(ChannelPacketCreator.getInstance().serverNotice(5, "The player you have invited does not meet the requirements."));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().serverNotice(5, "The player you have invited does not meet the requirements."));
                         return;
                     }
                     if (YamlConfig.config.server.USE_PARTY_FOR_STARTERS && invited.getLevel() >= 10 && player.getLevel() < 10) {    //trying to invite high level
-                        client.sendPacket(ChannelPacketCreator.getInstance().serverNotice(5, "The player you have invited does not meet the requirements."));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().serverNotice(5, "The player you have invited does not meet the requirements."));
                         return;
                     }
 
@@ -85,16 +85,16 @@ public final class PartyOperationHandler extends AbstractPacketHandler {
                             if (InviteCoordinator.createInvite(InviteType.PARTY, player, party.getId(), invited.getId())) {
                                 invited.sendPacket(ChannelPacketCreator.getInstance().partyInvite(player));
                             } else {
-                                client.sendPacket(ChannelPacketCreator.getInstance().partyStatusMessage(22, invited.getName()));
+                                context.writeAndFlush(ChannelPacketCreator.getInstance().partyStatusMessage(22, invited.getName()));
                             }
                         } else {
-                            client.sendPacket(ChannelPacketCreator.getInstance().partyStatusMessage(17));
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().partyStatusMessage(17));
                         }
                     } else {
-                        client.sendPacket(ChannelPacketCreator.getInstance().partyStatusMessage(16));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().partyStatusMessage(16));
                     }
                 } else {
-                    client.sendPacket(ChannelPacketCreator.getInstance().partyStatusMessage(19));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().partyStatusMessage(19));
                 }
                 break;
             }

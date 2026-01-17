@@ -1,6 +1,6 @@
 package dev.jaczerob.delfino.network.packets.logging;
 
-import dev.jaczerob.delfino.network.opcodes.OpcodeConstants;
+import dev.jaczerob.delfino.network.opcodes.RecvOpcode;
 import dev.jaczerob.delfino.network.packets.InPacket;
 import dev.jaczerob.delfino.network.packets.Packet;
 import dev.jaczerob.delfino.network.tools.HexTool;
@@ -27,23 +27,25 @@ public class InPacketLogger extends ChannelInboundHandlerAdapter implements Pack
     }
 
     @Override
-    public void log(Packet packet) {
-        final byte[] content = packet.getBytes();
-        final int packetLength = content.length;
+    public void log(final Packet packet) {
+        final var content = packet.getBytes();
+        final var packetLength = content.length;
 
         if (packetLength > LOG_CONTENT_THRESHOLD) {
-            log.debug(HexTool.toHexString(new byte[]{content[0], content[1]}) + "...");
+            log.debug(HexTool.toHexString(new byte[]{content[0], content[1]}) + " ...");
             return;
         }
 
-        final short opcode = LoggingUtil.readFirstShort(content);
-        final String opcodeHex = Integer.toHexString(opcode).toUpperCase();
-        final String opcodeName = getRecvOpcodeName(opcode);
-        final String prefix = opcodeName == null ? "<UnknownPacket> " : "";
-        log.debug("{}ClientSend:{} [{}] ({}) <HEX> {} <TEXT> {}", prefix, opcodeName, opcodeHex, packetLength, HexTool.toHexString(content), HexTool.toStringFromAscii(content));
-    }
+        final var opcodeValue = LoggingUtil.readFirstShort(content);
+        final var opcode = RecvOpcode.fromValue(opcodeValue);
 
-    private String getRecvOpcodeName(short opcode) {
-        return OpcodeConstants.getReceiveOpcodeName(opcode);
+        final var opcodeName = opcode == null ? "UNKNOWN_OPCODE" : opcode.name();
+        final var logOpcode = opcode == null || opcode.getLog();
+
+        if (!logOpcode) {
+            log.trace("Sending {} packet to client: {} ... {}", opcodeName, HexTool.toHexString(content), HexTool.toStringFromAscii(content));
+        } else {
+            log.debug("Sending {} packet to client: {} ... {}", opcodeName, HexTool.toHexString(content), HexTool.toStringFromAscii(content));
+        }
     }
 }

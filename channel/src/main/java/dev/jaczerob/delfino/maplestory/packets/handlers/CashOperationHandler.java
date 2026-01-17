@@ -40,6 +40,25 @@ public class CashOperationHandler extends AbstractPacketHandler {
         this.noteService = noteService;
     }
 
+    public static boolean checkBirthday(Client client, int idate) {
+        int year = idate / 10000;
+        int month = (idate - year * 10000) / 100;
+        int day = idate - year * 10000 - month * 100;
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(0);
+        cal.set(year, month - 1, day);
+        return client.checkBirthDate(cal);
+    }
+
+    private static boolean canBuy(Character chr, CashItem item, int cash) {
+        if (item != null && item.isOnSale() && item.getPrice() <= cash) {
+            log.debug("Chr {} bought cash item {} (SN {}) for {}", chr, ItemInformationProvider.getInstance().getName(item.getItemId()), item.getSN(), item.getPrice());
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     @Override
     public RecvOpcode getOpcode() {
         return RecvOpcode.CASHSHOP_OPERATION;
@@ -51,7 +70,7 @@ public class CashOperationHandler extends AbstractPacketHandler {
         CashShop cs = chr.getCashShop();
 
         if (!cs.isOpened()) {
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
 
@@ -85,7 +104,7 @@ public class CashOperationHandler extends AbstractPacketHandler {
                         Item item = cItem.toItem();
                         cs.gainCash(useNX, cItem, chr.getWorld());  // thanks Rohenn for noticing cash operations after item acquisition
                         cs.addToInventory(item);
-                        client.sendPacket(ChannelPacketCreator.getInstance().showBoughtCashItem(item, client.getAccID()));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().showBoughtCashItem(item, client.getAccID()));
                     } else { // Package
                         cs.gainCash(useNX, cItem, chr.getWorld());
 
@@ -93,9 +112,9 @@ public class CashOperationHandler extends AbstractPacketHandler {
                         for (Item item : cashPackage) {
                             cs.addToInventory(item);
                         }
-                        client.sendPacket(ChannelPacketCreator.getInstance().showBoughtCashPackage(cashPackage, client.getAccID()));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().showBoughtCashPackage(cashPackage, client.getAccID()));
                     }
-                    client.sendPacket(ChannelPacketCreator.getInstance().showCash(chr));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().showCash(chr));
                 } else if (action == 0x04) {//TODO check for gender
                     int birthday = packet.readInt();
                     CashItem cItem = CashItemFactory.getItem(packet.readInt());
@@ -106,19 +125,19 @@ public class CashOperationHandler extends AbstractPacketHandler {
                         return;
                     }
                     if (!checkBirthday(client, birthday)) {
-                        client.sendPacket(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0xC4));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0xC4));
                         return;
                     } else if (recipient == null) {
-                        client.sendPacket(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0xA9));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0xA9));
                         return;
                     } else if (recipient.get("accountid").equals(String.valueOf(client.getAccID()))) {
-                        client.sendPacket(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0xA8));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0xA8));
                         return;
                     }
                     cs.gainCash(4, cItem, chr.getWorld());
                     cs.gift(Integer.parseInt(recipient.get("id")), chr.getName(), message, cItem.getSN());
-                    client.sendPacket(ChannelPacketCreator.getInstance().showGiftSucceed(recipient.get("name"), cItem));
-                    client.sendPacket(ChannelPacketCreator.getInstance().showCash(chr));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().showGiftSucceed(recipient.get("name"), cItem));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().showCash(chr));
 
                     String noteMessage = chr.getName() + " has sent you a gift! Go check out the Cash Shop.";
                     noteService.sendNormal(noteMessage, chr.getName(), recipient.get("name"));
@@ -136,7 +155,7 @@ public class CashOperationHandler extends AbstractPacketHandler {
                             cs.addToWishList(sn);
                         }
                     }
-                    client.sendPacket(ChannelPacketCreator.getInstance().showWishList(chr, true));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().showWishList(chr, true));
                 } else if (action == 0x06) { // Increase Inventory Slots
                     packet.skip(1);
                     int cash = packet.readInt();
@@ -154,8 +173,8 @@ public class CashOperationHandler extends AbstractPacketHandler {
                         }
                         cs.gainCash(cash, -4000);
                         if (chr.gainSlots(type, qty, false)) {
-                            client.sendPacket(ChannelPacketCreator.getInstance().showBoughtInventorySlots(type, chr.getSlots(type)));
-                            client.sendPacket(ChannelPacketCreator.getInstance().showCash(chr));
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().showBoughtInventorySlots(type, chr.getSlots(type)));
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().showCash(chr));
                         } else {
                             log.warn("Could not add {} slots of type {} for chr {}", qty, type, Character.makeMapleReadable(chr.getName()));
                         }
@@ -173,8 +192,8 @@ public class CashOperationHandler extends AbstractPacketHandler {
                         }
                         cs.gainCash(cash, cItem, chr.getWorld());
                         if (chr.gainSlots(type, qty, false)) {
-                            client.sendPacket(ChannelPacketCreator.getInstance().showBoughtInventorySlots(type, chr.getSlots(type)));
-                            client.sendPacket(ChannelPacketCreator.getInstance().showCash(chr));
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().showBoughtInventorySlots(type, chr.getSlots(type)));
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().showCash(chr));
                         } else {
                             log.warn("Could not add {} slots of type {} for chr {}", qty, type, Character.makeMapleReadable(chr.getName()));
                         }
@@ -198,8 +217,8 @@ public class CashOperationHandler extends AbstractPacketHandler {
                             log.debug("Chr {} bought {} slots to their account storage.", client.getPlayer().getName(), qty);
                             chr.setUsedStorage();
 
-                            client.sendPacket(ChannelPacketCreator.getInstance().showBoughtStorageSlots(chr.getStorage().getSlots()));
-                            client.sendPacket(ChannelPacketCreator.getInstance().showCash(chr));
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().showBoughtStorageSlots(chr.getStorage().getSlots()));
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().showCash(chr));
                         } else {
                             log.warn("Could not add {} slots to {}'s account.", qty, Character.makeMapleReadable(chr.getName()));
                         }
@@ -220,8 +239,8 @@ public class CashOperationHandler extends AbstractPacketHandler {
                             log.debug("Chr {} bought {} slots to their account storage", client.getPlayer().getName(), qty);
                             chr.setUsedStorage();
 
-                            client.sendPacket(ChannelPacketCreator.getInstance().showBoughtStorageSlots(chr.getStorage().getSlots()));
-                            client.sendPacket(ChannelPacketCreator.getInstance().showCash(chr));
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().showBoughtStorageSlots(chr.getStorage().getSlots()));
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().showCash(chr));
                         } else {
                             log.warn("Could not add {} slots to {}'s account", qty, Character.makeMapleReadable(chr.getName()));
                         }
@@ -242,8 +261,8 @@ public class CashOperationHandler extends AbstractPacketHandler {
                     }
                     cs.gainCash(cash, cItem, chr.getWorld());
                     if (client.gainCharacterSlot()) {
-                        client.sendPacket(ChannelPacketCreator.getInstance().showBoughtCharacterSlot(client.getCharacterSlots()));
-                        client.sendPacket(ChannelPacketCreator.getInstance().showCash(chr));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().showBoughtCharacterSlot(client.getCharacterSlots()));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().showCash(chr));
                     } else {
                         log.warn("Could not add a chr slot to {}'s account", Character.makeMapleReadable(chr.getName()));
                         client.enableCSActions();
@@ -257,7 +276,7 @@ public class CashOperationHandler extends AbstractPacketHandler {
                     }
                     if (chr.getInventory(item.getInventoryType()).addItem(item) != -1) {
                         cs.removeFromInventory(item);
-                        client.sendPacket(ChannelPacketCreator.getInstance().takeFromCashInventory(item));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().takeFromCashInventory(item));
                     }
                 } else if (action == 0x0E) { // Put into Cash Inventory
                     int cashId = packet.readInt();
@@ -285,24 +304,24 @@ public class CashOperationHandler extends AbstractPacketHandler {
                     }
                     cs.addToInventory(item);
                     mi.removeSlot(item.getPosition());
-                    client.sendPacket(ChannelPacketCreator.getInstance().putIntoCashInventory(item, client.getAccID()));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().putIntoCashInventory(item, client.getAccID()));
                 } else if (action == 0x20) {
                     int serialNumber = packet.readInt();  // thanks GabrielSin for detecting a potential exploit with 1 meso cash items.
                     if (serialNumber / 10000000 != 8) {
-                        client.sendPacket(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0xC0));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0xC0));
                         return;
                     }
 
                     CashItem item = CashItemFactory.getItem(serialNumber);
                     if (item == null || !item.isOnSale()) {
-                        client.sendPacket(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0xC0));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0xC0));
                         return;
                     }
 
                     int itemId = item.getItemId();
                     int itemPrice = item.getPrice();
                     if (itemPrice <= 0) {
-                        client.sendPacket(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0xC0));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0xC0));
                         return;
                     }
 
@@ -310,14 +329,14 @@ public class CashOperationHandler extends AbstractPacketHandler {
                         if (chr.canHold(itemId)) {
                             chr.gainMeso(-itemPrice, false);
                             InventoryManipulator.addById(client, itemId, (short) 1, "", -1);
-                            client.sendPacket(ChannelPacketCreator.getInstance().showBoughtQuestItem(itemId));
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().showBoughtQuestItem(itemId));
                         }
                     }
-                    client.sendPacket(ChannelPacketCreator.getInstance().showCash(client.getPlayer()));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().showCash(client.getPlayer()));
                 } else if (action == 0x2E) { //name change
                     CashItem cItem = CashItemFactory.getItem(packet.readInt());
                     if (cItem == null || !canBuy(chr, cItem, cs.getCash(CashShop.NX_PREPAID))) {
-                        client.sendPacket(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0));
                         client.enableCSActions();
                         return;
                     }
@@ -325,28 +344,28 @@ public class CashOperationHandler extends AbstractPacketHandler {
                         packet.readString(); //old name
                         String newName = packet.readString();
                         if (!Character.canCreateChar(newName) || chr.getLevel() < 10) { //(longest ban duration isn't tracked currently)
-                            client.sendPacket(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0));
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0));
                             client.enableCSActions();
                             return;
                         } else if (client.getTempBanCalendar() != null && (client.getTempBanCalendar().getTimeInMillis() + DAYS.toMillis(30)) > Calendar.getInstance().getTimeInMillis()) {
-                            client.sendPacket(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0));
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0));
                             client.enableCSActions();
                             return;
                         }
                         if (chr.registerNameChange(newName)) { //success
                             Item item = cItem.toItem();
-                            client.sendPacket(ChannelPacketCreator.getInstance().showNameChangeSuccess(item, client.getAccID()));
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().showNameChangeSuccess(item, client.getAccID()));
                             cs.gainCash(4, cItem, chr.getWorld());
                             cs.addToInventory(item);
                         } else {
-                            client.sendPacket(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0));
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0));
                         }
                     }
                     client.enableCSActions();
                 } else if (action == 0x31) { //world transfer
                     CashItem cItem = CashItemFactory.getItem(packet.readInt());
                     if (cItem == null || !canBuy(chr, cItem, cs.getCash(CashShop.NX_PREPAID))) {
-                        client.sendPacket(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0));
                         client.enableCSActions();
                         return;
                     }
@@ -355,21 +374,21 @@ public class CashOperationHandler extends AbstractPacketHandler {
 
                         int worldTransferError = chr.checkWorldTransferEligibility();
                         if (worldTransferError != 0 || newWorldSelection >= Server.getInstance().getWorldsSize() || Server.getInstance().getWorldsSize() <= 1) {
-                            client.sendPacket(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0));
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0));
                             return;
                         } else if (newWorldSelection == client.getWorld()) {
-                            client.sendPacket(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0xDC));
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0xDC));
                             return;
                         } else if (client.getAvailableCharacterWorldSlots(newWorldSelection) < 1 || Server.getInstance().getAccountWorldCharacterCount(client.getAccID(), newWorldSelection) >= 3) {
-                            client.sendPacket(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0xDF));
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0xDF));
                             return;
                         } else if (chr.registerWorldTransfer(newWorldSelection)) {
                             Item item = cItem.toItem();
-                            client.sendPacket(ChannelPacketCreator.getInstance().showWorldTransferSuccess(item, client.getAccID()));
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().showWorldTransferSuccess(item, client.getAccID()));
                             cs.gainCash(4, cItem, chr.getWorld());
                             cs.addToInventory(item);
                         } else {
-                            client.sendPacket(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0));
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0));
                         }
                     }
                     client.enableCSActions();
@@ -380,26 +399,7 @@ public class CashOperationHandler extends AbstractPacketHandler {
                 client.releaseClient();
             }
         } else {
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
-        }
-    }
-
-    public static boolean checkBirthday(Client client, int idate) {
-        int year = idate / 10000;
-        int month = (idate - year * 10000) / 100;
-        int day = idate - year * 10000 - month * 100;
-        Calendar cal = Calendar.getInstance();
-        cal.setTimeInMillis(0);
-        cal.set(year, month - 1, day);
-        return client.checkBirthDate(cal);
-    }
-
-    private static boolean canBuy(Character chr, CashItem item, int cash) {
-        if (item != null && item.isOnSale() && item.getPrice() <= cash) {
-            log.debug("Chr {} bought cash item {} (SN {}) for {}", chr, ItemInformationProvider.getInstance().getName(item.getItemId()), item.getSN(), item.getPrice());
-            return true;
-        } else {
-            return false;
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
         }
     }
 }

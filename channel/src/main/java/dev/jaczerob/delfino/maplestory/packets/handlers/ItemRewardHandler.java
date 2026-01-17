@@ -44,7 +44,7 @@ public final class ItemRewardHandler extends AbstractPacketHandler {
         Pair<Integer, List<RewardItem>> rewards = ii.getItemReward(itemId);
         for (RewardItem reward : rewards.getRight()) {
             if (!InventoryManipulator.checkSpace(client, reward.itemid, reward.quantity, "")) {
-                client.sendPacket(ChannelPacketCreator.getInstance().getShowInventoryFull());
+                context.writeAndFlush(ChannelPacketCreator.getInstance().getShowInventoryFull());
                 break;
             }
             if (Randomizer.nextInt(rewards.getLeft()) < reward.prob) {//Is it even possible to get an item with prob 1?
@@ -68,6 +68,6 @@ public final class ItemRewardHandler extends AbstractPacketHandler {
                 break;
             }
         }
-        client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+        context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
     }
 }

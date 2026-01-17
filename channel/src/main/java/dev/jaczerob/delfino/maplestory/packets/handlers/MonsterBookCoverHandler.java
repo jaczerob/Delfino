@@ -19,7 +19,7 @@ public final class MonsterBookCoverHandler extends AbstractPacketHandler {
         int id = packet.readInt();
         if (id == 0 || id / 10000 == 238) {
             client.getPlayer().setMonsterBookCover(id);
-            client.sendPacket(ChannelPacketCreator.getInstance().changeCover(id));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().changeCover(id));
         }
     }
 }

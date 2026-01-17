@@ -51,7 +51,7 @@ public final class AllianceOperationHandler extends AbstractPacketHandler {
         Character chr = client.getPlayer();
 
         if (chr.getGuild() == null) {
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
 
@@ -62,18 +62,18 @@ public final class AllianceOperationHandler extends AbstractPacketHandler {
         byte b = packet.readByte();
         if (alliance == null) {
             if (b != 4) {
-                client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                 return;
             }
         } else {
             if (b == 4) {
                 chr.dropMessage(5, "Your guild is already registered on a guild alliance.");
-                client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                 return;
             }
 
             if (chr.getMGC().getAllianceRank() > 2 || !alliance.getGuilds().contains(chr.getGuildId())) {
-                client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                 return;
             }
         }

@@ -42,29 +42,29 @@ public final class RPSActionHandler extends AbstractPacketHandler {
                         if (chr.getMeso() >= 1000) {
                             chr.setRPS(new RockPaperScissor(client, mode));
                         } else {
-                            client.sendPacket(ChannelPacketCreator.getInstance().rpsMesoError(-1));
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().rpsMesoError(-1));
                         }
                         break;
                     case 1: // answer
                         if (rps == null || !rps.answer(client, packet.readByte())) {
-                            client.sendPacket(ChannelPacketCreator.getInstance().rpsMode((byte) 0x0D));// 13
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().rpsMode((byte) 0x0D));// 13
                         }
                         break;
                     case 2: // time over
                         if (rps == null || !rps.timeOut(client)) {
-                            client.sendPacket(ChannelPacketCreator.getInstance().rpsMode((byte) 0x0D));
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().rpsMode((byte) 0x0D));
                         }
                         break;
                     case 3: // continue
                         if (rps == null || !rps.nextRound(client)) {
-                            client.sendPacket(ChannelPacketCreator.getInstance().rpsMode((byte) 0x0D));
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().rpsMode((byte) 0x0D));
                         }
                         break;
                     case 4: // leave
                         if (rps != null) {
                             rps.dispose(client);
                         } else {
-                            client.sendPacket(ChannelPacketCreator.getInstance().rpsMode((byte) 0x0D));
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().rpsMode((byte) 0x0D));
                         }
                         break;
                 }

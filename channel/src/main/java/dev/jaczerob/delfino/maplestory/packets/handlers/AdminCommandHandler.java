@@ -70,7 +70,7 @@ public final class AdminCommandHandler extends AbstractPacketHandler {
                         client.getPlayer().getMap().spawnMonsterOnGroundBelow(LifeFactory.getMonster(toSpawnChild[0]), client.getPlayer().getPosition());
                     }
                 }
-                client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                 break;
             case 0x01: { // /d (inv)
                 byte type = packet.readByte();
@@ -106,11 +106,11 @@ public final class AdminCommandHandler extends AbstractPacketHandler {
                         target.block(type, duration, description);
                         target.sendPolice(duration, reason, 6000);
                     }
-                    client.sendPacket(ChannelPacketCreator.getInstance().getGMEffect(4, (byte) 0));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().getGMEffect(4, (byte) 0));
                 } else if (Character.ban(victim, reason, false)) {
-                    client.sendPacket(ChannelPacketCreator.getInstance().getGMEffect(4, (byte) 0));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().getGMEffect(4, (byte) 0));
                 } else {
-                    client.sendPacket(ChannelPacketCreator.getInstance().getGMEffect(6, (byte) 1));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().getGMEffect(6, (byte) 1));
                 }
                 break;
             case 0x10: // /h, information added by vana -- <and tele mode f1> ... hide ofcourse
@@ -173,9 +173,9 @@ public final class AdminCommandHandler extends AbstractPacketHandler {
                 target = client.getChannelServer().getPlayerStorage().getCharacterByName(victim);
                 if (target != null) {
                     target.getClient().sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, message));
-                    client.sendPacket(ChannelPacketCreator.getInstance().getGMEffect(0x1E, (byte) 1));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().getGMEffect(0x1E, (byte) 1));
                 } else {
-                    client.sendPacket(ChannelPacketCreator.getInstance().getGMEffect(0x1E, (byte) 0));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().getGMEffect(0x1E, (byte) 0));
                 }
                 break;
             case 0x24:// /Artifact Ranking

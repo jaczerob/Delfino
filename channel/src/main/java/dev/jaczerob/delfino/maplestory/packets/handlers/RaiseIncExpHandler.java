@@ -49,7 +49,7 @@ public class RaiseIncExpHandler extends AbstractPacketHandler {
                 Character chr = client.getPlayer();
                 Quest quest = Quest.getInstanceFromInfoNumber(infoNumber);
                 if (!chr.getQuest(quest).getStatus().equals(QuestStatus.Status.STARTED)) {
-                    client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                     return;
                 }
 
@@ -71,7 +71,7 @@ public class RaiseIncExpHandler extends AbstractPacketHandler {
                 int nextValue = Math.min(consumables.get(consId) + client.getAbstractPlayerInteraction().getQuestProgressInt(questid, infoNumber), consItem.exp * consItem.grade);
                 client.getAbstractPlayerInteraction().setQuestProgress(questid, infoNumber, nextValue);
 
-                client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             } finally {
                 client.releaseClient();
             }

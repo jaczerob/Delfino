@@ -32,26 +32,26 @@ public final class FamilyAddHandler extends AbstractPacketHandler {
         Character addChr = client.getChannelServer().getPlayerStorage().getCharacterByName(toAdd);
         Character chr = client.getPlayer();
         if (addChr == null) {
-            client.sendPacket(ChannelPacketCreator.getInstance().sendFamilyMessage(65, 0));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().sendFamilyMessage(65, 0));
         } else if (addChr == chr) { //only possible through packet editing/client editing i think?
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
         } else if (addChr.getMap() != chr.getMap() || (addChr.isHidden()) && chr.gmLevel() < addChr.gmLevel()) {
-            client.sendPacket(ChannelPacketCreator.getInstance().sendFamilyMessage(69, 0));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().sendFamilyMessage(69, 0));
         } else if (addChr.getLevel() <= 10) {
-            client.sendPacket(ChannelPacketCreator.getInstance().sendFamilyMessage(77, 0));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().sendFamilyMessage(77, 0));
         } else if (Math.abs(addChr.getLevel() - chr.getLevel()) > 20) {
-            client.sendPacket(ChannelPacketCreator.getInstance().sendFamilyMessage(72, 0));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().sendFamilyMessage(72, 0));
         } else if (addChr.getFamily() != null && addChr.getFamily() == chr.getFamily()) { //same family
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
         } else if (InviteCoordinator.hasInvite(InviteType.FAMILY, addChr.getId())) {
-            client.sendPacket(ChannelPacketCreator.getInstance().sendFamilyMessage(73, 0));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().sendFamilyMessage(73, 0));
         } else if (chr.getFamily() != null && addChr.getFamily() != null && addChr.getFamily().getTotalGenerations() + chr.getFamily().getTotalGenerations() > YamlConfig.config.server.FAMILY_MAX_GENERATIONS) {
-            client.sendPacket(ChannelPacketCreator.getInstance().sendFamilyMessage(76, 0));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().sendFamilyMessage(76, 0));
         } else {
             InviteCoordinator.createInvite(InviteType.FAMILY, chr, addChr, addChr.getId());
             addChr.getClient().sendPacket(ChannelPacketCreator.getInstance().sendFamilyInvite(chr.getId(), chr.getName()));
             chr.dropMessage("The invite has been sent.");
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
         }
     }
 }

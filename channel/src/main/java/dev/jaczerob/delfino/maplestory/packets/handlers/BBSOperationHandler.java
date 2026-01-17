@@ -42,87 +42,21 @@ import java.sql.SQLException;
 public final class BBSOperationHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(BBSOperationHandler.class);
 
-    private String correctLength(String in, int maxSize) {
-        return in.length() > maxSize ? in.substring(0, maxSize) : in;
-    }
-
-    @Override
-    public RecvOpcode getOpcode() {
-        return RecvOpcode.BBS_OPERATION;
-    }
-
-    @Override
-    public void handlePacket(final InPacket packet, final Client client, final ChannelHandlerContext context) {
-        if (client.getPlayer().getGuildId() < 1) {
-            return;
-        }
-        byte mode = packet.readByte();
-        int localthreadid = 0;
-        switch (mode) {
-            case 0:
-                boolean bEdit = packet.readByte() == 1;
-                if (bEdit) {
-                    localthreadid = packet.readInt();
-                }
-                boolean bNotice = packet.readByte() == 1;
-                String title = correctLength(packet.readString(), 25);
-                String text = correctLength(packet.readString(), 600);
-                int icon = packet.readInt();
-                if (icon >= 0x64 && icon <= 0x6a) {
-                    if (!client.getPlayer().haveItemWithId(5290000 + icon - 0x64, false)) {
-                        return;
-                    }
-                } else if (icon < 0 || icon > 3) {
-                    return;
-                }
-                if (!bEdit) {
-                    newBBSThread(client, title, text, icon, bNotice);
-                } else {
-                    editBBSThread(client, title, text, icon, localthreadid);
-                }
-                break;
-            case 1:
-                localthreadid = packet.readInt();
-                deleteBBSThread(client, localthreadid);
-                break;
-            case 2:
-                int start = packet.readInt();
-                listBBSThreads(client, start * 10);
-                break;
-            case 3: // list thread + reply, following by id (int)
-                localthreadid = packet.readInt();
-                displayThread(client, localthreadid);
-                break;
-            case 4: // reply
-                localthreadid = packet.readInt();
-                text = correctLength(packet.readString(), 25);
-                newBBSReply(client, localthreadid, text);
-                break;
-            case 5: // delete reply
-                packet.readInt(); // we don't use this
-                int replyid = packet.readInt();
-                deleteBBSReply(client, replyid);
-                break;
-            default:
-                //System.out.println("Unhandled BBS mode: " + slea.toString());
-        }
-    }
-
-    private static void listBBSThreads(Client client, int start) {
+    private void listBBSThreads(Client client, int start, ChannelHandlerContext context) {
         try (Connection con = DatabaseConnection.getStaticConnection();
              PreparedStatement ps = con.prepareStatement("SELECT * FROM bbs_threads WHERE guildid = ? ORDER BY localthreadid DESC",
                      ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
 
             ps.setInt(1, client.getPlayer().getGuildId());
             try (ResultSet rs = ps.executeQuery()) {
-                client.sendPacket(GuildPackets.BBSThreadList(rs, start));
+                context.writeAndFlush(GuildPackets.BBSThreadList(rs, start));
             }
         } catch (SQLException se) {
             se.printStackTrace();
         }
     }
 
-    private static void newBBSReply(Client client, int localthreadid, String text) {
+    private void newBBSReply(Client client, int localthreadid, String text, ChannelHandlerContext context) {
         if (client.getPlayer().getGuildId() <= 0) {
             return;
         }
@@ -154,13 +88,13 @@ public final class BBSOperationHandler extends AbstractPacketHandler {
                 ps.executeUpdate();
             }
 
-            displayThread(client, localthreadid);
+            displayThread(client, localthreadid, context);
         } catch (SQLException se) {
             se.printStackTrace();
         }
     }
 
-    private static void editBBSThread(Client client, String title, String text, int icon, int localthreadid) {
+    private void editBBSThread(Client client, String title, String text, int icon, int localthreadid, ChannelHandlerContext context) {
         Character chr = client.getPlayer();
         if (chr.getGuildId() < 1) {
             return;
@@ -178,13 +112,13 @@ public final class BBSOperationHandler extends AbstractPacketHandler {
             ps.setBoolean(8, chr.getGuildRank() < 3);
             ps.execute();
 
-            displayThread(client, localthreadid);
+            displayThread(client, localthreadid, context);
         } catch (SQLException se) {
             se.printStackTrace();
         }
     }
 
-    private static void newBBSThread(Client client, String title, String text, int icon, boolean bNotice) {
+    private void newBBSThread(Client client, String title, String text, int icon, boolean bNotice, ChannelHandlerContext context) {
         Character chr = client.getPlayer();
         if (chr.getGuildId() <= 0) {
             return;
@@ -212,14 +146,14 @@ public final class BBSOperationHandler extends AbstractPacketHandler {
                 ps.executeUpdate();
             }
 
-            displayThread(client, nextId);
+            displayThread(client, nextId, context);
         } catch (SQLException se) {
             se.printStackTrace();
         }
 
     }
 
-    public static void deleteBBSThread(Client client, int localthreadid) {
+    public void deleteBBSThread(Client client, int localthreadid) {
         Character mc = client.getPlayer();
         if (mc.getGuildId() <= 0) {
             return;
@@ -259,7 +193,7 @@ public final class BBSOperationHandler extends AbstractPacketHandler {
         }
     }
 
-    public static void deleteBBSReply(Client client, int replyid) {
+    public void deleteBBSReply(Client client, int replyid, ChannelHandlerContext context) {
         Character mc = client.getPlayer();
         if (mc.getGuildId() <= 0) {
             return;
@@ -294,17 +228,17 @@ public final class BBSOperationHandler extends AbstractPacketHandler {
                 ps.executeUpdate();
             }
 
-            displayThread(client, threadid, false);
+            displayThread(client, threadid, false, context);
         } catch (SQLException se) {
             se.printStackTrace();
         }
     }
 
-    public static void displayThread(Client client, int threadid) {
-        displayThread(client, threadid, true);
+    public void displayThread(Client client, int threadid, ChannelHandlerContext context) {
+        displayThread(client, threadid, true, context);
     }
 
-    public static void displayThread(Client client, int threadid, boolean bIsThreadIdLocal) {
+    public void displayThread(Client client, int threadid, boolean bIsThreadIdLocal, ChannelHandlerContext context) {
         Character mc = client.getPlayer();
         if (mc.getGuildId() <= 0) {
             return;
@@ -325,13 +259,79 @@ public final class BBSOperationHandler extends AbstractPacketHandler {
                         ps2.setInt(1, !bIsThreadIdLocal ? threadid : threadRS.getInt("threadid"));
                         repliesRS = ps2.executeQuery();
                     }
-                    client.sendPacket(GuildPackets.showThread(bIsThreadIdLocal ? threadid : threadRS.getInt("localthreadid"), threadRS, repliesRS));
+                    context.writeAndFlush(GuildPackets.showThread(bIsThreadIdLocal ? threadid : threadRS.getInt("localthreadid"), threadRS, repliesRS));
                 }
             }
         } catch (SQLException se) {
             log.error("Error displaying thread", se);
         } catch (RuntimeException re) {//btw we get this everytime for some reason, but replies work!
             log.error("The number of reply rows does not match the replycount in thread.", re);
+        }
+    }
+
+    private String correctLength(String in, int maxSize) {
+        return in.length() > maxSize ? in.substring(0, maxSize) : in;
+    }
+
+    @Override
+    public RecvOpcode getOpcode() {
+        return RecvOpcode.BBS_OPERATION;
+    }
+
+    @Override
+    public void handlePacket(final InPacket packet, final Client client, final ChannelHandlerContext context) {
+        if (client.getPlayer().getGuildId() < 1) {
+            return;
+        }
+        byte mode = packet.readByte();
+        int localthreadid = 0;
+        switch (mode) {
+            case 0:
+                boolean bEdit = packet.readByte() == 1;
+                if (bEdit) {
+                    localthreadid = packet.readInt();
+                }
+                boolean bNotice = packet.readByte() == 1;
+                String title = correctLength(packet.readString(), 25);
+                String text = correctLength(packet.readString(), 600);
+                int icon = packet.readInt();
+                if (icon >= 0x64 && icon <= 0x6a) {
+                    if (!client.getPlayer().haveItemWithId(5290000 + icon - 0x64, false)) {
+                        return;
+                    }
+                } else if (icon < 0 || icon > 3) {
+                    return;
+                }
+                if (!bEdit) {
+                    newBBSThread(client, title, text, icon, bNotice, context);
+                } else {
+                    editBBSThread(client, title, text, icon, localthreadid, context);
+                }
+                break;
+            case 1:
+                localthreadid = packet.readInt();
+                deleteBBSThread(client, localthreadid);
+                break;
+            case 2:
+                int start = packet.readInt();
+                listBBSThreads(client, start * 10, context);
+                break;
+            case 3: // list thread + reply, following by id (int)
+                localthreadid = packet.readInt();
+                displayThread(client, localthreadid, context);
+                break;
+            case 4: // reply
+                localthreadid = packet.readInt();
+                text = correctLength(packet.readString(), 25);
+                newBBSReply(client, localthreadid, text, context);
+                break;
+            case 5: // delete reply
+                packet.readInt(); // we don't use this
+                int replyid = packet.readInt();
+                deleteBBSReply(client, replyid, context);
+                break;
+            default:
+                //System.out.println("Unhandled BBS mode: " + slea.toString());
         }
     }
 }

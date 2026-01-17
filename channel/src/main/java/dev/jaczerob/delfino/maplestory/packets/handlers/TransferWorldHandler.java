@@ -50,18 +50,18 @@ public final class TransferWorldHandler extends AbstractPacketHandler {
         packet.readInt(); //cid
         int birthday = packet.readInt();
         if (!CashOperationHandler.checkBirthday(client, birthday)) {
-            client.sendPacket(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0xC4));
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0xC4));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
         Character chr = client.getPlayer();
         if (!YamlConfig.config.server.ALLOW_CASHSHOP_WORLD_TRANSFER || Server.getInstance().getWorldsSize() <= 1) {
-            client.sendPacket(ChannelPacketCreator.getInstance().sendWorldTransferRules(9, client));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().sendWorldTransferRules(9, client));
             return;
         }
         int worldTransferError = chr.checkWorldTransferEligibility();
         if (worldTransferError != 0) {
-            client.sendPacket(ChannelPacketCreator.getInstance().sendWorldTransferRules(worldTransferError, client));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().sendWorldTransferRules(worldTransferError, client));
             return;
         }
         try (Connection con = DatabaseConnection.getStaticConnection();
@@ -71,10 +71,10 @@ public final class TransferWorldHandler extends AbstractPacketHandler {
             while (rs.next()) {
                 Timestamp completedTimestamp = rs.getTimestamp("completionTime");
                 if (completedTimestamp == null) { //has pending world transfer
-                    client.sendPacket(ChannelPacketCreator.getInstance().sendWorldTransferRules(6, client));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().sendWorldTransferRules(6, client));
                     return;
                 } else if (completedTimestamp.getTime() + YamlConfig.config.server.WORLD_TRANSFER_COOLDOWN > System.currentTimeMillis()) {
-                    client.sendPacket(ChannelPacketCreator.getInstance().sendWorldTransferRules(7, client));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().sendWorldTransferRules(7, client));
                     return;
                 }
             }
@@ -82,6 +82,6 @@ public final class TransferWorldHandler extends AbstractPacketHandler {
             e.printStackTrace();
             return;
         }
-        client.sendPacket(ChannelPacketCreator.getInstance().sendWorldTransferRules(0, client));
+        context.writeAndFlush(ChannelPacketCreator.getInstance().sendWorldTransferRules(0, client));
     }
 }

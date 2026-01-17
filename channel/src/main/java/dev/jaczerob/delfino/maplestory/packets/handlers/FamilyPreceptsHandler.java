@@ -31,7 +31,7 @@ public class FamilyPreceptsHandler extends AbstractPacketHandler {
         }
         family.setMessage(newPrecepts, true);
         //family.broadcastFamilyInfoUpdate(); //probably don't need to broadcast for this?
-        client.sendPacket(ChannelPacketCreator.getInstance().getFamilyInfo(client.getPlayer().getFamilyEntry()));
+        context.writeAndFlush(ChannelPacketCreator.getInstance().getFamilyInfo(client.getPlayer().getFamilyEntry()));
     }
 
 }

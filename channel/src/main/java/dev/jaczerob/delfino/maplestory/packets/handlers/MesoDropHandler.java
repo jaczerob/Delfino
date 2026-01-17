@@ -25,7 +25,7 @@ public final class MesoDropHandler extends AbstractPacketHandler {
     public void handlePacket(final InPacket packet, final Client client, final ChannelHandlerContext context) {
         Character player = client.getPlayer();
         if (!player.isAlive()) {
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
         packet.skip(4);
@@ -41,14 +41,14 @@ public final class MesoDropHandler extends AbstractPacketHandler {
                 if (meso <= player.getMeso() && meso > 9 && meso < 50001) {
                     player.gainMeso(-meso, false, true, false);
                 } else {
-                    client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                     return;
                 }
             } finally {
                 client.releaseClient();
             }
         } else {
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
 

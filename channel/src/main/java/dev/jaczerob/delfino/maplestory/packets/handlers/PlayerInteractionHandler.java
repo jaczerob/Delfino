@@ -35,72 +35,7 @@ import java.util.Arrays;
  */
 @Component
 public final class PlayerInteractionHandler extends AbstractPacketHandler {
-    @Override
-    public RecvOpcode getOpcode() {
-        return RecvOpcode.PLAYER_INTERACTION;
-    }
-
     private static final Logger log = LoggerFactory.getLogger(PlayerInteractionHandler.class);
-
-    public enum Action {
-        CREATE(0),
-        INVITE(2),
-        DECLINE(3),
-        VISIT(4),
-        ROOM(5),
-        CHAT(6),
-        CHAT_THING(8),
-        EXIT(0xA),
-        OPEN_STORE(0xB),
-        OPEN_CASH(0xE),
-        SET_ITEMS(0xF),
-        SET_MESO(0x10),
-        CONFIRM(0x11),
-        TRANSACTION(0x14),
-        ADD_ITEM(0x16),
-        BUY(0x17),
-        UPDATE_MERCHANT(0x19),
-        UPDATE_PLAYERSHOP(0x1A),
-        REMOVE_ITEM(0x1B),
-        BAN_PLAYER(0x1C),
-        MERCHANT_THING(0x1D),
-        OPEN_THING(0x1E),
-        PUT_ITEM(0x21),
-        MERCHANT_BUY(0x22),
-        TAKE_ITEM_BACK(0x26),
-        MAINTENANCE_OFF(0x27),
-        MERCHANT_ORGANIZE(0x28),
-        CLOSE_MERCHANT(0x29),
-        REAL_CLOSE_MERCHANT(0x2A),
-        MERCHANT_MESO(0x2B),
-        SOMETHING(0x2D),
-        VIEW_VISITORS(0x2E),
-        VIEW_BLACKLIST(0x2F),
-        ADD_TO_BLACKLIST(0x30),
-        REMOVE_FROM_BLACKLIST(0x31),
-        REQUEST_TIE(0x32),
-        ANSWER_TIE(0x33),
-        GIVE_UP(0x34),
-        EXIT_AFTER_GAME(0x38),
-        CANCEL_EXIT_AFTER_GAME(0x39),
-        READY(0x3A),
-        UN_READY(0x3B),
-        EXPEL(0x3C),
-        START(0x3D),
-        GET_RESULT(0x3E),
-        SKIP(0x3F),
-        MOVE_OMOK(0x40),
-        SELECT_CARD(0x44);
-        final byte code;
-
-        Action(int code) {
-            this.code = (byte) code;
-        }
-
-        public byte getCode() {
-            return code;
-        }
-    }
 
     private static int establishMiniroomStatus(Character chr, boolean isMinigame) {
         if (isMinigame && FieldLimit.CANNOTMINIGAME.check(chr.getMap().getFieldLimit())) {
@@ -114,10 +49,57 @@ public final class PlayerInteractionHandler extends AbstractPacketHandler {
         return 0;
     }
 
+    private static boolean isTradeOpen(Character chr) {
+        if (chr.getTrade() != null) {   // thanks to Rien dev team
+            //Apparently there is a dupe exploit that causes racing conditions when saving/retrieving from the db with stuff like trade open.
+            chr.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            return true;
+        }
+
+        return false;
+    }
+
+    private static boolean canPlaceStore(Character chr) {
+        try {
+            for (MapObject mmo : chr.getMap().getMapObjectsInRange(chr.getPosition(), 23000, Arrays.asList(MapObjectType.HIRED_MERCHANT, MapObjectType.PLAYER))) {
+                if (mmo instanceof Character mc) {
+                    if (mc.getId() == chr.getId()) {
+                        continue;
+                    }
+
+                    PlayerShop shop = mc.getPlayerShop();
+                    if (shop != null && shop.isOwner(mc)) {
+                        chr.sendPacket(ChannelPacketCreator.getInstance().getMiniRoomError(13));
+                        return false;
+                    }
+                } else {
+                    chr.sendPacket(ChannelPacketCreator.getInstance().getMiniRoomError(13));
+                    return false;
+                }
+            }
+
+            Point cpos = chr.getPosition();
+            Portal portal = chr.getMap().findClosestTeleportPortal(cpos);
+            if (portal != null && portal.getPosition().distance(cpos) < 120.0) {
+                chr.sendPacket(ChannelPacketCreator.getInstance().getMiniRoomError(10));
+                return false;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return true;
+    }
+
+    @Override
+    public RecvOpcode getOpcode() {
+        return RecvOpcode.PLAYER_INTERACTION;
+    }
+
     @Override
     public void handlePacket(final InPacket packet, final Client client, final ChannelHandlerContext context) {
         if (!client.tryacquireClient()) {    // thanks GabrielSin for pointing dupes within player interactions
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
 
@@ -239,7 +221,7 @@ public final class PlayerInteractionHandler extends AbstractPacketHandler {
                         chr.getMap().addMapObject(shop);
                         shop.sendShop(client);
                         client.getWorldServer().registerPlayerShop(shop);
-                        //client.sendPacket(PacketCreator.getPlayerShopRemoveVisitor(1));
+                        //context.writeAndFlush(PacketCreator.getPlayerShopRemoveVisitor(1));
                     } else if (ItemConstants.isHiredMerchant(itemId)) {
                         HiredMerchant merchant = new HiredMerchant(chr, desc, itemId);
                         chr.setHiredMerchant(merchant);
@@ -337,11 +319,11 @@ public final class PlayerInteractionHandler extends AbstractPacketHandler {
                     packet.readShort();
                     int birthday = packet.readInt();
                     if (!CashOperationHandler.checkBirthday(client, birthday)) { // birthday check here found thanks to lucasziron
-                        client.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "Please check again the birthday date."));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().serverNotice(1, "Please check again the birthday date."));
                         return;
                     }
 
-                    client.sendPacket(ChannelPacketCreator.getInstance().hiredMerchantOwnerMaintenanceLeave());
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().hiredMerchantOwnerMaintenanceLeave());
                 }
 
                 if (!canPlaceStore(chr)) {    // thanks Ari for noticing player shops overlapping on opening time
@@ -471,30 +453,30 @@ public final class PlayerInteractionHandler extends AbstractPacketHandler {
 
                 if (targetSlot < 1 || targetSlot > 9) {
                     log.warn("[Hack] Chr {} Trying to dupe on trade slot.", chr.getName());
-                    client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                     return;
                 }
 
                 if (item == null) {
-                    client.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "Invalid item description."));
-                    client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().serverNotice(1, "Invalid item description."));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                     return;
                 }
 
                 if (ii.isUnmerchable(item.getItemId())) {
                     if (ItemConstants.isPet(item.getItemId())) {
-                        client.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "Pets are not allowed to be traded."));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().serverNotice(1, "Pets are not allowed to be traded."));
                     } else {
-                        client.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "Cash items are not allowed to be traded."));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().serverNotice(1, "Cash items are not allowed to be traded."));
                     }
 
-                    client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                     return;
                 }
 
                 if (quantity < 1 || quantity > item.getQuantity()) {
-                    client.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "You don't have enough quantity of the item."));
-                    client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().serverNotice(1, "You don't have enough quantity of the item."));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                     return;
                 }
 
@@ -503,8 +485,8 @@ public final class PlayerInteractionHandler extends AbstractPacketHandler {
                     if ((quantity <= item.getQuantity() && quantity >= 0) || ItemConstants.isRechargeable(item.getItemId())) {
                         if (ii.isDropRestricted(item.getItemId())) { // ensure that undroppable items do not make it to the trade window
                             if (!KarmaManipulator.hasKarmaFlag(item)) {
-                                client.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "That item is untradeable."));
-                                client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                                context.writeAndFlush(ChannelPacketCreator.getInstance().serverNotice(1, "That item is untradeable."));
+                                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                                 return;
                             }
                         }
@@ -514,8 +496,8 @@ public final class PlayerInteractionHandler extends AbstractPacketHandler {
                         try {
                             Item checkItem = chr.getInventory(ivType).getItem(pos);
                             if (checkItem != item || checkItem.getPosition() != item.getPosition()) {
-                                client.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "Invalid item description."));
-                                client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                                context.writeAndFlush(ChannelPacketCreator.getInstance().serverNotice(1, "Invalid item description."));
+                                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                                 return;
                             }
 
@@ -555,17 +537,17 @@ public final class PlayerInteractionHandler extends AbstractPacketHandler {
                 Item ivItem = chr.getInventory(ivType).getItem(slot);
 
                 if (ivItem == null || ivItem.isUntradeable()) {
-                    client.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "Could not perform shop operation with that item."));
-                    client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().serverNotice(1, "Could not perform shop operation with that item."));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                     return;
                 } else if (ItemInformationProvider.getInstance().isUnmerchable(ivItem.getItemId())) {
                     if (ItemConstants.isPet(ivItem.getItemId())) {
-                        client.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "Pets are not allowed to be sold on the Player Store."));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().serverNotice(1, "Pets are not allowed to be sold on the Player Store."));
                     } else {
-                        client.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "Cash items are not allowed to be sold on the Player Store."));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().serverNotice(1, "Cash items are not allowed to be sold on the Player Store."));
                     }
 
-                    client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                     return;
                 }
 
@@ -575,8 +557,8 @@ public final class PlayerInteractionHandler extends AbstractPacketHandler {
                     perBundle = 1;
                     bundles = 1;
                 } else if (ivItem.getQuantity() < (bundles * perBundle)) {     // thanks GabrielSin for finding a dupe here
-                    client.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "Could not perform shop operation with that item."));
-                    client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().serverNotice(1, "Could not perform shop operation with that item."));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                     return;
                 }
 
@@ -598,7 +580,7 @@ public final class PlayerInteractionHandler extends AbstractPacketHandler {
                 HiredMerchant merchant = chr.getHiredMerchant();
                 if (shop != null && shop.isOwner(chr)) {
                     if (shop.isOpen() || !shop.addItem(shopItem)) { // thanks Vcoc for pointing an exploit with unlimited shop slots
-                        client.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "You can't sell it anymore."));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().serverNotice(1, "You can't sell it anymore."));
                         return;
                     }
 
@@ -608,15 +590,15 @@ public final class PlayerInteractionHandler extends AbstractPacketHandler {
                         InventoryManipulator.removeFromSlot(client, ivType, slot, (short) (bundles * perBundle), true);
                     }
 
-                    client.sendPacket(ChannelPacketCreator.getInstance().getPlayerShopItemUpdate(shop));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().getPlayerShopItemUpdate(shop));
                 } else if (merchant != null && merchant.isOwner(chr)) {
                     if (ivType.equals(InventoryType.CASH) && merchant.isPublished()) {
-                        client.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "Cash items are only allowed to be sold when first opening the store."));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().serverNotice(1, "Cash items are only allowed to be sold when first opening the store."));
                         return;
                     }
 
                     if (merchant.isOpen() || !merchant.addItem(shopItem)) { // thanks Vcoc for pointing an exploit with unlimited shop slots
-                        client.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "You can't sell it anymore."));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().serverNotice(1, "You can't sell it anymore."));
                         return;
                     }
 
@@ -626,7 +608,7 @@ public final class PlayerInteractionHandler extends AbstractPacketHandler {
                         InventoryManipulator.removeFromSlot(client, ivType, slot, (short) (bundles * perBundle), true);
                     }
 
-                    client.sendPacket(ChannelPacketCreator.getInstance().updateHiredMerchant(merchant, chr));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().updateHiredMerchant(merchant, chr));
 
                     if (YamlConfig.config.server.USE_ENFORCE_MERCHANT_SAVE) {
                         chr.saveCharToDB(false);
@@ -638,7 +620,7 @@ public final class PlayerInteractionHandler extends AbstractPacketHandler {
                         ex.printStackTrace();
                     }
                 } else {
-                    client.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "You can't sell without owning a shop."));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().serverNotice(1, "You can't sell without owning a shop."));
                 }
             } else if (mode == Action.REMOVE_ITEM.getCode()) {
                 if (isTradeOpen(chr)) {
@@ -648,7 +630,7 @@ public final class PlayerInteractionHandler extends AbstractPacketHandler {
                 PlayerShop shop = chr.getPlayerShop();
                 if (shop != null && shop.isOwner(chr)) {
                     if (shop.isOpen()) {
-                        client.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "You can't take it with the store open."));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().serverNotice(1, "You can't take it with the store open."));
                         return;
                     }
 
@@ -675,14 +657,14 @@ public final class PlayerInteractionHandler extends AbstractPacketHandler {
                 if (merchant == null || !merchant.isOwner(chr)) {
                     return;
                 }
-                client.sendPacket(ChannelPacketCreator.getInstance().viewMerchantVisitorHistory(merchant.getVisitorHistory()));
+                context.writeAndFlush(ChannelPacketCreator.getInstance().viewMerchantVisitorHistory(merchant.getVisitorHistory()));
             } else if (mode == Action.VIEW_BLACKLIST.getCode()) {
                 HiredMerchant merchant = chr.getHiredMerchant();
                 if (merchant == null || !merchant.isOwner(chr)) {
                     return;
                 }
 
-                client.sendPacket(ChannelPacketCreator.getInstance().viewMerchantBlacklist(merchant.getBlacklist()));
+                context.writeAndFlush(ChannelPacketCreator.getInstance().viewMerchantBlacklist(merchant.getBlacklist()));
             } else if (mode == Action.ADD_TO_BLACKLIST.getCode()) {
                 HiredMerchant merchant = chr.getHiredMerchant();
                 if (merchant == null || !merchant.isOwner(chr)) {
@@ -710,7 +692,7 @@ public final class PlayerInteractionHandler extends AbstractPacketHandler {
                     merchant.closeOwnerMerchant(chr);
                     return;
                 }
-                client.sendPacket(ChannelPacketCreator.getInstance().updateHiredMerchant(merchant, chr));
+                context.writeAndFlush(ChannelPacketCreator.getInstance().updateHiredMerchant(merchant, chr));
 
             } else if (mode == Action.BUY.getCode() || mode == Action.MERCHANT_BUY.getCode()) {
                 if (isTradeOpen(chr)) {
@@ -743,7 +725,7 @@ public final class PlayerInteractionHandler extends AbstractPacketHandler {
                 HiredMerchant merchant = chr.getHiredMerchant();
                 if (merchant != null && merchant.isOwner(chr)) {
                     if (merchant.isOpen()) {
-                        client.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "You can't take it with the store open."));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().serverNotice(1, "You can't take it with the store open."));
                         return;
                     }
 
@@ -785,7 +767,7 @@ public final class PlayerInteractionHandler extends AbstractPacketHandler {
                 }
 
                 chr.setHiredMerchant(null);
-                client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             } else if (mode == Action.BAN_PLAYER.getCode()) {
                 packet.skip(1);
 
@@ -819,45 +801,63 @@ public final class PlayerInteractionHandler extends AbstractPacketHandler {
         }
     }
 
-    private static boolean isTradeOpen(Character chr) {
-        if (chr.getTrade() != null) {   // thanks to Rien dev team
-            //Apparently there is a dupe exploit that causes racing conditions when saving/retrieving from the db with stuff like trade open.
-            chr.sendPacket(ChannelPacketCreator.getInstance().enableActions());
-            return true;
+    public enum Action {
+        CREATE(0),
+        INVITE(2),
+        DECLINE(3),
+        VISIT(4),
+        ROOM(5),
+        CHAT(6),
+        CHAT_THING(8),
+        EXIT(0xA),
+        OPEN_STORE(0xB),
+        OPEN_CASH(0xE),
+        SET_ITEMS(0xF),
+        SET_MESO(0x10),
+        CONFIRM(0x11),
+        TRANSACTION(0x14),
+        ADD_ITEM(0x16),
+        BUY(0x17),
+        UPDATE_MERCHANT(0x19),
+        UPDATE_PLAYERSHOP(0x1A),
+        REMOVE_ITEM(0x1B),
+        BAN_PLAYER(0x1C),
+        MERCHANT_THING(0x1D),
+        OPEN_THING(0x1E),
+        PUT_ITEM(0x21),
+        MERCHANT_BUY(0x22),
+        TAKE_ITEM_BACK(0x26),
+        MAINTENANCE_OFF(0x27),
+        MERCHANT_ORGANIZE(0x28),
+        CLOSE_MERCHANT(0x29),
+        REAL_CLOSE_MERCHANT(0x2A),
+        MERCHANT_MESO(0x2B),
+        SOMETHING(0x2D),
+        VIEW_VISITORS(0x2E),
+        VIEW_BLACKLIST(0x2F),
+        ADD_TO_BLACKLIST(0x30),
+        REMOVE_FROM_BLACKLIST(0x31),
+        REQUEST_TIE(0x32),
+        ANSWER_TIE(0x33),
+        GIVE_UP(0x34),
+        EXIT_AFTER_GAME(0x38),
+        CANCEL_EXIT_AFTER_GAME(0x39),
+        READY(0x3A),
+        UN_READY(0x3B),
+        EXPEL(0x3C),
+        START(0x3D),
+        GET_RESULT(0x3E),
+        SKIP(0x3F),
+        MOVE_OMOK(0x40),
+        SELECT_CARD(0x44);
+        final byte code;
+
+        Action(int code) {
+            this.code = (byte) code;
         }
 
-        return false;
-    }
-
-    private static boolean canPlaceStore(Character chr) {
-        try {
-            for (MapObject mmo : chr.getMap().getMapObjectsInRange(chr.getPosition(), 23000, Arrays.asList(MapObjectType.HIRED_MERCHANT, MapObjectType.PLAYER))) {
-                if (mmo instanceof Character mc) {
-                    if (mc.getId() == chr.getId()) {
-                        continue;
-                    }
-
-                    PlayerShop shop = mc.getPlayerShop();
-                    if (shop != null && shop.isOwner(mc)) {
-                        chr.sendPacket(ChannelPacketCreator.getInstance().getMiniRoomError(13));
-                        return false;
-                    }
-                } else {
-                    chr.sendPacket(ChannelPacketCreator.getInstance().getMiniRoomError(13));
-                    return false;
-                }
-            }
-
-            Point cpos = chr.getPosition();
-            Portal portal = chr.getMap().findClosestTeleportPortal(cpos);
-            if (portal != null && portal.getPosition().distance(cpos) < 120.0) {
-                chr.sendPacket(ChannelPacketCreator.getInstance().getMiniRoomError(10));
-                return false;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        public byte getCode() {
+            return code;
         }
-
-        return true;
     }
 }

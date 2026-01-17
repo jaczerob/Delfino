@@ -44,7 +44,7 @@ public final class CancelDebuffHandler extends AbstractPacketHandler {//TIP: BAD
          List<Disease> disease_ = new ArrayList<Disease>();
          disease_.add(disease);
          diseases_.add(disease);
-         client.sendPacket(PacketCreator.cancelDebuff(disease_));
+         context.writeAndFlush(PacketCreator.cancelDebuff(disease_));
          client.getPlayer().getMap().broadcastMessage(client.getPlayer(), PacketCreator.cancelForeignDebuff(client.getPlayer().getId(), disease_), false);
          }
          for (Disease disease : diseases_) {

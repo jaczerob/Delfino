@@ -39,7 +39,7 @@ public final class FamilyUseHandler extends AbstractPacketHandler {
         if (entry.getReputation() < cost || entry.isEntitlementUsed(type)) {
             return; // shouldn't even be able to request it
         }
-        client.sendPacket(ChannelPacketCreator.getInstance().getFamilyInfo(entry));
+        context.writeAndFlush(ChannelPacketCreator.getInstance().getFamilyInfo(entry));
         Character victim;
         if (type == FamilyEntitlement.FAMILY_REUINION || type == FamilyEntitlement.SUMMON_FAMILY) {
             victim = client.getChannelServer().getPlayerStorage().getCharacterByName(packet.readString());
@@ -55,7 +55,7 @@ public final class FamilyUseHandler extends AbstractPacketHandler {
                                 client.getPlayer().changeMap(victim.getMap(), victim.getMap().getPortal(0));
                                 useEntitlement(entry, type);
                             } else {
-                                client.sendPacket(ChannelPacketCreator.getInstance().sendFamilyMessage(75, 0)); // wrong message, but close enough. (client should check this first anyway)
+                                context.writeAndFlush(ChannelPacketCreator.getInstance().sendFamilyMessage(75, 0)); // wrong message, but close enough. (client should check this first anyway)
                                 return;
                             }
                         } else {
@@ -63,20 +63,20 @@ public final class FamilyUseHandler extends AbstractPacketHandler {
                                     && (ownMap.getForcedReturnId() == MapId.NONE || MapId.isMapleIsland(ownMap.getId()))) {
 
                                 if (InviteCoordinator.hasInvite(InviteType.FAMILY_SUMMON, victim.getId())) {
-                                    client.sendPacket(ChannelPacketCreator.getInstance().sendFamilyMessage(74, 0));
+                                    context.writeAndFlush(ChannelPacketCreator.getInstance().sendFamilyMessage(74, 0));
                                     return;
                                 }
                                 InviteCoordinator.createInvite(InviteType.FAMILY_SUMMON, client.getPlayer(), victim, victim.getId(), client.getPlayer().getMap());
                                 victim.sendPacket(ChannelPacketCreator.getInstance().sendFamilySummonRequest(client.getPlayer().getFamily().getName(), client.getPlayer().getName()));
                                 useEntitlement(entry, type);
                             } else {
-                                client.sendPacket(ChannelPacketCreator.getInstance().sendFamilyMessage(75, 0));
+                                context.writeAndFlush(ChannelPacketCreator.getInstance().sendFamilyMessage(75, 0));
                                 return;
                             }
                         }
                     }
                 } else {
-                    client.sendPacket(ChannelPacketCreator.getInstance().sendFamilyMessage(67, 0));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().sendFamilyMessage(67, 0));
                 }
             }
         } else if (type == FamilyEntitlement.FAMILY_BONDING) {

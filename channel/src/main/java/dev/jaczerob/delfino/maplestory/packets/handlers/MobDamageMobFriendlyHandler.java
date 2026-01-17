@@ -96,6 +96,6 @@ public final class MobDamageMobFriendlyHandler extends AbstractPacketHandler {
         }
 
         map.broadcastMessage(ChannelPacketCreator.getInstance().MobDamageMobFriendly(monster, damage, remainingHp), monster.getPosition());
-        client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+        context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
     }
 }

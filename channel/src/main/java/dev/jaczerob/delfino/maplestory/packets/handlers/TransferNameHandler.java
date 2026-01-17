@@ -52,20 +52,20 @@ public final class TransferNameHandler extends AbstractPacketHandler {
         packet.readInt(); //cid
         int birthday = packet.readInt();
         if (!CashOperationHandler.checkBirthday(client, birthday)) {
-            client.sendPacket(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0xC4));
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().showCashShopMessage((byte) 0xC4));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
         if (!YamlConfig.config.server.ALLOW_CASHSHOP_NAME_CHANGE) {
-            client.sendPacket(ChannelPacketCreator.getInstance().sendNameTransferRules(4));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().sendNameTransferRules(4));
             return;
         }
         Character chr = client.getPlayer();
         if (chr.getLevel() < 10) {
-            client.sendPacket(ChannelPacketCreator.getInstance().sendNameTransferRules(4));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().sendNameTransferRules(4));
             return;
         } else if (client.getTempBanCalendar() != null && client.getTempBanCalendar().getTimeInMillis() + DAYS.toMillis(30) < Calendar.getInstance().getTimeInMillis()) {
-            client.sendPacket(ChannelPacketCreator.getInstance().sendNameTransferRules(2));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().sendNameTransferRules(2));
             return;
         }
         //sql queries
@@ -76,10 +76,10 @@ public final class TransferNameHandler extends AbstractPacketHandler {
             while (rs.next()) {
                 Timestamp completedTimestamp = rs.getTimestamp("completionTime");
                 if (completedTimestamp == null) { //has pending name request
-                    client.sendPacket(ChannelPacketCreator.getInstance().sendNameTransferRules(1));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().sendNameTransferRules(1));
                     return;
                 } else if (completedTimestamp.getTime() + YamlConfig.config.server.NAME_CHANGE_COOLDOWN > System.currentTimeMillis()) {
-                    client.sendPacket(ChannelPacketCreator.getInstance().sendNameTransferRules(3));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().sendNameTransferRules(3));
                     return;
                 }
             }
@@ -87,6 +87,6 @@ public final class TransferNameHandler extends AbstractPacketHandler {
             e.printStackTrace();
             return;
         }
-        client.sendPacket(ChannelPacketCreator.getInstance().sendNameTransferRules(0));
+        context.writeAndFlush(ChannelPacketCreator.getInstance().sendNameTransferRules(0));
     }
 }

@@ -28,7 +28,7 @@ public final class DoorHandler extends AbstractPacketHandler {
 
         Character chr = client.getPlayer();
         if (chr.isChangingMaps() || chr.isBanned()) {
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
 
@@ -41,7 +41,7 @@ public final class DoorHandler extends AbstractPacketHandler {
             }
         }
 
-        client.sendPacket(ChannelPacketCreator.getInstance().blockedMessage(6));
-        client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+        context.writeAndFlush(ChannelPacketCreator.getInstance().blockedMessage(6));
+        context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
     }
 }

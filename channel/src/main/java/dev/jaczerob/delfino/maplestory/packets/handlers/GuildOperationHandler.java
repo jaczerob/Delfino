@@ -53,7 +53,7 @@ public final class GuildOperationHandler extends AbstractPacketHandler {
         int allianceId = -1;
         switch (type) {
             case 0x00:
-                //client.sendPacket(PacketCreator.showGuildInfo(mc));
+                //context.writeAndFlush(PacketCreator.showGuildInfo(mc));
                 break;
             case 0x02:
                 if (mc.getGuildId() > 0) {
@@ -103,7 +103,7 @@ public final class GuildOperationHandler extends AbstractPacketHandler {
                 String targetName = packet.readString();
                 GuildResponse mgr = Guild.sendInvitation(client, targetName);
                 if (mgr != null) {
-                    client.sendPacket(mgr.getPacket(targetName));
+                    context.writeAndFlush(mgr.getPacket(targetName));
                 } else {
                 } // already sent invitation, do nothing
 
@@ -135,7 +135,7 @@ public final class GuildOperationHandler extends AbstractPacketHandler {
                     return;
                 }
 
-                client.sendPacket(GuildPackets.showGuildInfo(mc));
+                context.writeAndFlush(GuildPackets.showGuildInfo(mc));
 
                 allianceId = mc.getGuild().getAllianceId();
                 if (allianceId > 0) {
@@ -156,10 +156,10 @@ public final class GuildOperationHandler extends AbstractPacketHandler {
 
                 allianceId = mc.getGuild().getAllianceId();
 
-                client.sendPacket(GuildPackets.updateGP(mc.getGuildId(), 0));
+                context.writeAndFlush(GuildPackets.updateGP(mc.getGuildId(), 0));
                 Server.getInstance().leaveGuild(mc.getMGC());
 
-                client.sendPacket(GuildPackets.showGuildInfo(null));
+                context.writeAndFlush(GuildPackets.showGuildInfo(null));
                 if (allianceId > 0) {
                     Server.getInstance().getAlliance(allianceId).updateAlliancePackets(mc);
                 }
@@ -214,7 +214,7 @@ public final class GuildOperationHandler extends AbstractPacketHandler {
                     return;
                 }
                 if (mc.getMeso() < YamlConfig.config.server.CHANGE_EMBLEM_COST) {
-                    client.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "You do not have " + GameConstants.numberWithCommas(YamlConfig.config.server.CHANGE_EMBLEM_COST) + " mesos to change the Guild emblem."));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().serverNotice(1, "You do not have " + GameConstants.numberWithCommas(YamlConfig.config.server.CHANGE_EMBLEM_COST) + " mesos to change the Guild emblem."));
                     return;
                 }
                 short bg = packet.readShort();

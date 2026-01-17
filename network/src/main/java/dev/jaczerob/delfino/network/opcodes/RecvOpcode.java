@@ -157,7 +157,7 @@ public enum RecvOpcode {
     MOB_DAMAGE_MOB_FRIENDLY(0xC0),
     MONSTER_BOMB(0xC1),
     MOB_DAMAGE_MOB(0xC2),
-    NPC_ACTION(0xC5),
+    NPC_ACTION(0xC5, false),
     ITEM_PICKUP(0xCA),
     DAMAGE_REACTOR(0xCD),
     TOUCHING_REACTOR(0xCE),
@@ -182,22 +182,30 @@ public enum RecvOpcode {
     USE_HAMMER(0x104);
 
     private final int code;
+    private final boolean log;
 
     RecvOpcode(final int code) {
-        this.code = code;
+        this(code, true);
     }
 
-    public static RecvOpcode getByValue(final int value) {
-        for (final var recvOpcode : values()) {
-            if (recvOpcode.getValue() == value) {
+    RecvOpcode(final int code, final boolean log) {
+        this.code = code;
+        this.log = log;
+    }
+
+    public static RecvOpcode fromValue(final int value) {
+        for (final var recvOpcode : values())
+            if (recvOpcode.getValue() == value)
                 return recvOpcode;
-            }
-        }
 
         return null;
     }
 
     public int getValue() {
         return code;
+    }
+
+    public boolean getLog() {
+        return log;
     }
 }

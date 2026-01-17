@@ -79,7 +79,7 @@ public final class RangedAttackHandler extends AbstractDealDamageHandler {
 
         if (MapId.isDojo(chr.getMap().getId()) && attack.numAttacked > 0) {
             chr.setDojoEnergy(chr.getDojoEnergy() + YamlConfig.config.server.DOJO_ENERGY_ATK);
-            client.sendPacket(ChannelPacketCreator.getInstance().getEnergy("energy", chr.getDojoEnergy()));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().getEnergy("energy", chr.getDojoEnergy()));
         }
 
         if (attack.skill == Buccaneer.ENERGY_ORB || attack.skill == ThunderBreaker.SPARK || attack.skill == Shadower.TAUNT || attack.skill == NightLord.TAUNT) {
@@ -124,7 +124,7 @@ public final class RangedAttackHandler extends AbstractDealDamageHandler {
                 effect = attack.getAttackEffect(chr, null);
                 bulletCount = effect.getBulletCount();
                 if (effect.getCooldown() > 0) {
-                    client.sendPacket(ChannelPacketCreator.getInstance().skillCooldown(attack.skill, effect.getCooldown()));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().skillCooldown(attack.skill, effect.getCooldown()));
                 }
 
                 if (attack.skill == 4111004) {   // shadow meso
@@ -238,7 +238,7 @@ public final class RangedAttackHandler extends AbstractDealDamageHandler {
                         if (chr.skillIsCooling(attack.skill)) {
                             return;
                         } else {
-                            client.sendPacket(ChannelPacketCreator.getInstance().skillCooldown(attack.skill, effect_.getCooldown()));
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().skillCooldown(attack.skill, effect_.getCooldown()));
                             chr.addCooldown(attack.skill, currentServerTime(), SECONDS.toMillis(effect_.getCooldown()));
                         }
                     }

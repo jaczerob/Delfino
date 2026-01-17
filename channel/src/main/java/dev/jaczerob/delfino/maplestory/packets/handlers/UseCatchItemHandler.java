@@ -44,6 +44,10 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public final class UseCatchItemHandler extends AbstractPacketHandler {
+    private static void killMonster(Monster mob) {
+        mob.getMap().killMonster(mob, null, false, (short) 0);
+    }
+
     @Override
     public RecvOpcode getOpcode() {
         return RecvOpcode.USE_CATCH_ITEM;
@@ -74,7 +78,7 @@ public final class UseCatchItemHandler extends AbstractPacketHandler {
                     InventoryManipulator.removeById(client, InventoryType.USE, itemId, 1, true, true);
                     InventoryManipulator.addById(client, ItemId.HOG, (short) 1, "", -1);
                 }
-                client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                 break;
             case ItemId.POUCH:
                 if (mob.getId() == MobId.GHOST) {
@@ -86,10 +90,10 @@ public final class UseCatchItemHandler extends AbstractPacketHandler {
                             InventoryManipulator.addById(client, ItemId.GHOST_SACK, (short) 1, "", -1);
                         } else {
                             abm.spam(10);
-                            client.sendPacket(ChannelPacketCreator.getInstance().catchMessage(0));
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().catchMessage(0));
                         }
                     }
-                    client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                 }
                 break;
             case ItemId.ARPQ_ELEMENT_ROCK:
@@ -112,10 +116,10 @@ public final class UseCatchItemHandler extends AbstractPacketHandler {
 
                             abm.spam(10);
                         } else {
-                            client.sendPacket(ChannelPacketCreator.getInstance().catchMessage(0));
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().catchMessage(0));
                         }
                     }
-                    client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                 }
                 break;
             case ItemId.MAGIC_CANE:
@@ -126,10 +130,10 @@ public final class UseCatchItemHandler extends AbstractPacketHandler {
                         InventoryManipulator.removeById(client, InventoryType.USE, itemId, 1, true, true);
                         InventoryManipulator.addById(client, ItemId.TAMED_RUDOLPH, (short) 1, "", -1);
                     } else {
-                        client.sendPacket(ChannelPacketCreator.getInstance().catchMessage(0));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().catchMessage(0));
                     }
                 }
-                client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                 break;
             case ItemId.TRANSPARENT_MARBLE_1:
                 if (mob.getId() == MobId.KING_SLIME_DOJO) {
@@ -139,10 +143,10 @@ public final class UseCatchItemHandler extends AbstractPacketHandler {
                         InventoryManipulator.removeById(client, InventoryType.USE, itemId, 1, true, true);
                         InventoryManipulator.addById(client, ItemId.MONSTER_MARBLE_1, (short) 1, "", -1);
                     } else {
-                        client.sendPacket(ChannelPacketCreator.getInstance().catchMessage(0));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().catchMessage(0));
                     }
                 }
-                client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                 break;
             case ItemId.TRANSPARENT_MARBLE_2:
                 if (mob.getId() == MobId.FAUST_DOJO) {
@@ -152,10 +156,10 @@ public final class UseCatchItemHandler extends AbstractPacketHandler {
                         InventoryManipulator.removeById(client, InventoryType.USE, itemId, 1, true, true);
                         InventoryManipulator.addById(client, ItemId.MONSTER_MARBLE_2, (short) 1, "", -1);
                     } else {
-                        client.sendPacket(ChannelPacketCreator.getInstance().catchMessage(0));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().catchMessage(0));
                     }
                 }
-                client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                 break;
             case ItemId.TRANSPARENT_MARBLE_3:
                 if (mob.getId() == MobId.MUSHMOM_DOJO) {
@@ -165,10 +169,10 @@ public final class UseCatchItemHandler extends AbstractPacketHandler {
                         InventoryManipulator.removeById(client, InventoryType.USE, itemId, 1, true, true);
                         InventoryManipulator.addById(client, ItemId.MONSTER_MARBLE_3, (short) 1, "", -1);
                     } else {
-                        client.sendPacket(ChannelPacketCreator.getInstance().catchMessage(0));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().catchMessage(0));
                     }
                 }
-                client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                 break;
             case ItemId.EPQ_PURIFICATION_MARBLE:
                 if (mob.getId() == MobId.POISON_FLOWER) {
@@ -178,10 +182,10 @@ public final class UseCatchItemHandler extends AbstractPacketHandler {
                         InventoryManipulator.removeById(client, InventoryType.USE, itemId, 1, true, true);
                         InventoryManipulator.addById(client, ItemId.EPQ_MONSTER_MARBLE, (short) 1, "", -1);
                     } else {
-                        client.sendPacket(ChannelPacketCreator.getInstance().catchMessage(0));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().catchMessage(0));
                     }
                 }
-                client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                 break;
             case ItemId.FISH_NET:
                 if (mob.getId() == MobId.P_JUNIOR) {
@@ -194,7 +198,7 @@ public final class UseCatchItemHandler extends AbstractPacketHandler {
                     } else {
                         chr.message("You cannot use the Fishing Net yet.");
                     }
-                    client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                 }
                 break;
             default:
@@ -217,20 +221,16 @@ public final class UseCatchItemHandler extends AbstractPacketHandler {
                         } else if (mob.getId() != MobId.P_JUNIOR) {
                             if (mobHp != 0) {
                                 abm.spam(10);
-                                client.sendPacket(ChannelPacketCreator.getInstance().catchMessage(0));
+                                context.writeAndFlush(ChannelPacketCreator.getInstance().catchMessage(0));
                             }
                         } else {
                             chr.message("You cannot use the Fishing Net yet.");
                         }
                     }
                 }
-                client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
 
                 // System.out.println("UseCatchItemHandler: \r\n" + slea.toString());
         }
-    }
-
-    private static void killMonster(Monster mob) {
-        mob.getMap().killMonster(mob, null, false, (short) 0);
     }
 }

@@ -21,10 +21,17 @@
  */
 package dev.jaczerob.delfino.maplestory.server;
 
-import dev.jaczerob.delfino.maplestory.client.*;
 import dev.jaczerob.delfino.maplestory.client.Character;
+import dev.jaczerob.delfino.maplestory.client.Client;
+import dev.jaczerob.delfino.maplestory.client.Job;
+import dev.jaczerob.delfino.maplestory.client.Skill;
+import dev.jaczerob.delfino.maplestory.client.SkillFactory;
 import dev.jaczerob.delfino.maplestory.client.autoban.AutobanFactory;
-import dev.jaczerob.delfino.maplestory.client.inventory.*;
+import dev.jaczerob.delfino.maplestory.client.inventory.Equip;
+import dev.jaczerob.delfino.maplestory.client.inventory.Inventory;
+import dev.jaczerob.delfino.maplestory.client.inventory.InventoryType;
+import dev.jaczerob.delfino.maplestory.client.inventory.Item;
+import dev.jaczerob.delfino.maplestory.client.inventory.WeaponType;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
 import dev.jaczerob.delfino.maplestory.constants.id.ItemId;
 import dev.jaczerob.delfino.maplestory.constants.inventory.EquipSlot;
@@ -33,12 +40,21 @@ import dev.jaczerob.delfino.maplestory.constants.skills.Assassin;
 import dev.jaczerob.delfino.maplestory.constants.skills.Gunslinger;
 import dev.jaczerob.delfino.maplestory.constants.skills.NightWalker;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
-import dev.jaczerob.delfino.maplestory.provider.*;
+import dev.jaczerob.delfino.maplestory.provider.Data;
+import dev.jaczerob.delfino.maplestory.provider.DataDirectoryEntry;
+import dev.jaczerob.delfino.maplestory.provider.DataFileEntry;
+import dev.jaczerob.delfino.maplestory.provider.DataProvider;
+import dev.jaczerob.delfino.maplestory.provider.DataProviderFactory;
+import dev.jaczerob.delfino.maplestory.provider.DataTool;
 import dev.jaczerob.delfino.maplestory.provider.wz.WZFiles;
 import dev.jaczerob.delfino.maplestory.server.MakerItemFactory.MakerItemCreateEntry;
 import dev.jaczerob.delfino.maplestory.server.life.LifeFactory;
 import dev.jaczerob.delfino.maplestory.server.life.MonsterInformationProvider;
-import dev.jaczerob.delfino.maplestory.tools.*;
+import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
+import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
+import dev.jaczerob.delfino.maplestory.tools.Pair;
+import dev.jaczerob.delfino.maplestory.tools.Randomizer;
+import dev.jaczerob.delfino.maplestory.tools.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,8 +62,16 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * @author Matze
@@ -55,11 +79,6 @@ import java.util.Map.Entry;
 public class ItemInformationProvider {
     private static final Logger log = LoggerFactory.getLogger(ItemInformationProvider.class);
     private final static ItemInformationProvider instance = new ItemInformationProvider();
-
-    public static ItemInformationProvider getInstance() {
-        return instance;
-    }
-
     protected DataProvider itemData;
     protected DataProvider equipData;
     protected DataProvider stringData;
@@ -116,7 +135,6 @@ public class ItemInformationProvider {
     protected Map<Integer, Data> skillUpgradeInfoCache = new HashMap<>();
     protected Map<Integer, Pair<Integer, Set<Integer>>> cashPetFoodCache = new HashMap<>();
     protected Map<Integer, QuestConsItem> questItemConsCache = new HashMap<>();
-
     private ItemInformationProvider() {
         loadCardIdData();
         itemData = DataProviderFactory.getDataProvider(WZFiles.ITEM);
@@ -134,6 +152,170 @@ public class ItemInformationProvider {
         isPartyQuestItemCache.put(0, false);
     }
 
+    public static ItemInformationProvider getInstance() {
+        return instance;
+    }
+
+    private static short getExtraSlotMaxFromPlayer(Client c, int itemId) {
+        short ret = 0;
+
+        // thanks GMChuck for detecting player sensitive data being cached into getSlotMax
+        if (ItemConstants.isThrowingStar(itemId)) {
+            if (c.getPlayer().getJob().isA(Job.NIGHTWALKER1)) {
+                ret += c.getPlayer().getSkillLevel(SkillFactory.getSkill(NightWalker.CLAW_MASTERY)) * 10;
+            } else {
+                ret += c.getPlayer().getSkillLevel(SkillFactory.getSkill(Assassin.CLAW_MASTERY)) * 10;
+            }
+        } else if (ItemConstants.isBullet(itemId)) {
+            ret += c.getPlayer().getSkillLevel(SkillFactory.getSkill(Gunslinger.GUN_MASTERY)) * 10;
+        }
+
+        return ret;
+    }
+
+    private static double getRoundedUnitPrice(double unitPrice, int max) {
+        double intPart = Math.floor(unitPrice);
+        double fractPart = unitPrice - intPart;
+        if (fractPart == 0.0) {
+            return intPart;
+        }
+
+        double fractMask = 0.0;
+        double lastFract, curFract = 1.0;
+        int i = 1;
+
+        do {
+            lastFract = curFract;
+            curFract /= 2;
+
+            if (fractPart == curFract) {
+                break;
+            } else if (fractPart > curFract) {
+                fractMask += curFract;
+                fractPart -= curFract;
+            }
+
+            i++;
+        } while (i <= max);
+
+        if (i > max) {
+            lastFract = curFract;
+            curFract = 0.0;
+        }
+
+        if (Math.abs(fractPart - curFract) < Math.abs(fractPart - lastFract)) {
+            return intPart + fractMask + curFract;
+        } else {
+            return intPart + fractMask + lastFract;
+        }
+    }
+
+    private static double testYourLuck(double prop, int dices) {   // revamped testYourLuck author: David A.
+        return Math.pow(1.0 - prop, dices);
+    }
+
+    public static boolean rollSuccessChance(double propPercent) {
+        return Math.random() >= testYourLuck(propPercent / 100.0, YamlConfig.config.server.SCROLL_CHANCE_ROLLS);
+    }
+
+    private static short getMaximumShortMaxIfOverflow(int value1, int value2) {
+        return (short) Math.min(Short.MAX_VALUE, Math.max(value1, value2));
+    }
+
+    private static short getShortMaxIfOverflow(int value) {
+        return (short) Math.min(Short.MAX_VALUE, value);
+    }
+
+    private static short chscrollRandomizedStat(int range) {
+        return (short) Randomizer.rand(-range, range);
+    }
+
+    public static void improveEquipStats(Equip nEquip, Map<String, Integer> stats) {
+        for (Entry<String, Integer> stat : stats.entrySet()) {
+            switch (stat.getKey()) {
+                case "STR":
+                    nEquip.setStr(getShortMaxIfOverflow(nEquip.getStr() + stat.getValue().intValue()));
+                    break;
+                case "DEX":
+                    nEquip.setDex(getShortMaxIfOverflow(nEquip.getDex() + stat.getValue().intValue()));
+                    break;
+                case "INT":
+                    nEquip.setInt(getShortMaxIfOverflow(nEquip.getInt() + stat.getValue().intValue()));
+                    break;
+                case "LUK":
+                    nEquip.setLuk(getShortMaxIfOverflow(nEquip.getLuk() + stat.getValue().intValue()));
+                    break;
+                case "PAD":
+                    nEquip.setWatk(getShortMaxIfOverflow(nEquip.getWatk() + stat.getValue().intValue()));
+                    break;
+                case "PDD":
+                    nEquip.setWdef(getShortMaxIfOverflow(nEquip.getWdef() + stat.getValue().intValue()));
+                    break;
+                case "MAD":
+                    nEquip.setMatk(getShortMaxIfOverflow(nEquip.getMatk() + stat.getValue().intValue()));
+                    break;
+                case "MDD":
+                    nEquip.setMdef(getShortMaxIfOverflow(nEquip.getMdef() + stat.getValue().intValue()));
+                    break;
+                case "ACC":
+                    nEquip.setAcc(getShortMaxIfOverflow(nEquip.getAcc() + stat.getValue().intValue()));
+                    break;
+                case "EVA":
+                    nEquip.setAvoid(getShortMaxIfOverflow(nEquip.getAvoid() + stat.getValue().intValue()));
+                    break;
+                case "Speed":
+                    nEquip.setSpeed(getShortMaxIfOverflow(nEquip.getSpeed() + stat.getValue().intValue()));
+                    break;
+                case "Jump":
+                    nEquip.setJump(getShortMaxIfOverflow(nEquip.getJump() + stat.getValue().intValue()));
+                    break;
+                case "MHP":
+                    nEquip.setHp(getShortMaxIfOverflow(nEquip.getHp() + stat.getValue().intValue()));
+                    break;
+                case "MMP":
+                    nEquip.setMp(getShortMaxIfOverflow(nEquip.getMp() + stat.getValue().intValue()));
+                    break;
+                case "afterImage":
+                    break;
+            }
+        }
+    }
+
+    private static short getRandStat(short defaultValue, int maxRange) {
+        if (defaultValue == 0) {
+            return 0;
+        }
+        int lMaxRange = (int) Math.min(Math.ceil(defaultValue * 0.1), maxRange);
+        return (short) ((defaultValue - lMaxRange) + Math.floor(Randomizer.nextDouble() * (lMaxRange * 2 + 1)));
+    }
+
+    private static short getRandUpgradedStat(short defaultValue, int maxRange) {
+        if (defaultValue == 0) {
+            return 0;
+        }
+        int lMaxRange = maxRange;
+        return (short) (defaultValue + Math.floor(Randomizer.nextDouble() * (lMaxRange + 1)));
+    }
+
+    private static int getCrystalForLevel(int level) {
+        int range = (level - 1) / 10;
+
+        if (range < 5) {
+            return ItemId.BASIC_MONSTER_CRYSTAL_1;
+        } else if (range > 11) {
+            return ItemId.ADVANCED_MONSTER_CRYSTAL_3;
+        } else {
+            return switch (range) {
+                case 5 -> ItemId.BASIC_MONSTER_CRYSTAL_2;
+                case 6 -> ItemId.BASIC_MONSTER_CRYSTAL_3;
+                case 7 -> ItemId.INTERMEDIATE_MONSTER_CRYSTAL_1;
+                case 8 -> ItemId.INTERMEDIATE_MONSTER_CRYSTAL_2;
+                case 9 -> ItemId.INTERMEDIATE_MONSTER_CRYSTAL_3;
+                case 10 -> ItemId.ADVANCED_MONSTER_CRYSTAL_1;
+                default -> ItemId.ADVANCED_MONSTER_CRYSTAL_2;
+            };
+        }
+    }
 
     public List<Pair<Integer, String>> getAllItems() {
         if (!itemNameCache.isEmpty()) {
@@ -320,23 +502,6 @@ public class ItemInformationProvider {
         return list;
     }
 
-    private static short getExtraSlotMaxFromPlayer(Client c, int itemId) {
-        short ret = 0;
-
-        // thanks GMChuck for detecting player sensitive data being cached into getSlotMax
-        if (ItemConstants.isThrowingStar(itemId)) {
-            if (c.getPlayer().getJob().isA(Job.NIGHTWALKER1)) {
-                ret += c.getPlayer().getSkillLevel(SkillFactory.getSkill(NightWalker.CLAW_MASTERY)) * 10;
-            } else {
-                ret += c.getPlayer().getSkillLevel(SkillFactory.getSkill(Assassin.CLAW_MASTERY)) * 10;
-            }
-        } else if (ItemConstants.isBullet(itemId)) {
-            ret += c.getPlayer().getSkillLevel(SkillFactory.getSkill(Gunslinger.GUN_MASTERY)) * 10;
-        }
-
-        return ret;
-    }
-
     public short getSlotMax(Client c, int itemId) {
         Short slotMax = slotMaxCache.get(itemId);
         if (slotMax != null) {
@@ -377,43 +542,6 @@ public class ItemInformationProvider {
         pEntry = DataTool.getInt(pData);
         getMesoCache.put(itemId, pEntry);
         return pEntry;
-    }
-
-    private static double getRoundedUnitPrice(double unitPrice, int max) {
-        double intPart = Math.floor(unitPrice);
-        double fractPart = unitPrice - intPart;
-        if (fractPart == 0.0) {
-            return intPart;
-        }
-
-        double fractMask = 0.0;
-        double lastFract, curFract = 1.0;
-        int i = 1;
-
-        do {
-            lastFract = curFract;
-            curFract /= 2;
-
-            if (fractPart == curFract) {
-                break;
-            } else if (fractPart > curFract) {
-                fractMask += curFract;
-                fractPart -= curFract;
-            }
-
-            i++;
-        } while (i <= max);
-
-        if (i > max) {
-            lastFract = curFract;
-            curFract = 0.0;
-        }
-
-        if (Math.abs(fractPart - curFract) < Math.abs(fractPart - lastFract)) {
-            return intPart + fractMask + curFract;
-        } else {
-            return intPart + fractMask + lastFract;
-        }
     }
 
     private Pair<Integer, Double> getItemPriceData(int itemId) {
@@ -596,26 +724,6 @@ public class ItemInformationProvider {
             return WeaponType.NOT_A_WEAPON;
         }
         return type[cat - 30];
-    }
-
-    private static double testYourLuck(double prop, int dices) {   // revamped testYourLuck author: David A.
-        return Math.pow(1.0 - prop, dices);
-    }
-
-    public static boolean rollSuccessChance(double propPercent) {
-        return Math.random() >= testYourLuck(propPercent / 100.0, YamlConfig.config.server.SCROLL_CHANCE_ROLLS);
-    }
-
-    private static short getMaximumShortMaxIfOverflow(int value1, int value2) {
-        return (short) Math.min(Short.MAX_VALUE, Math.max(value1, value2));
-    }
-
-    private static short getShortMaxIfOverflow(int value) {
-        return (short) Math.min(Short.MAX_VALUE, value);
-    }
-
-    private static short chscrollRandomizedStat(int range) {
-        return (short) Randomizer.rand(-range, range);
     }
 
     public void scrollOptionEquipWithChaos(Equip nEquip, int range, boolean option) {
@@ -1110,57 +1218,6 @@ public class ItemInformationProvider {
         return equip;
     }
 
-    public static void improveEquipStats(Equip nEquip, Map<String, Integer> stats) {
-        for (Entry<String, Integer> stat : stats.entrySet()) {
-            switch (stat.getKey()) {
-                case "STR":
-                    nEquip.setStr(getShortMaxIfOverflow(nEquip.getStr() + stat.getValue().intValue()));
-                    break;
-                case "DEX":
-                    nEquip.setDex(getShortMaxIfOverflow(nEquip.getDex() + stat.getValue().intValue()));
-                    break;
-                case "INT":
-                    nEquip.setInt(getShortMaxIfOverflow(nEquip.getInt() + stat.getValue().intValue()));
-                    break;
-                case "LUK":
-                    nEquip.setLuk(getShortMaxIfOverflow(nEquip.getLuk() + stat.getValue().intValue()));
-                    break;
-                case "PAD":
-                    nEquip.setWatk(getShortMaxIfOverflow(nEquip.getWatk() + stat.getValue().intValue()));
-                    break;
-                case "PDD":
-                    nEquip.setWdef(getShortMaxIfOverflow(nEquip.getWdef() + stat.getValue().intValue()));
-                    break;
-                case "MAD":
-                    nEquip.setMatk(getShortMaxIfOverflow(nEquip.getMatk() + stat.getValue().intValue()));
-                    break;
-                case "MDD":
-                    nEquip.setMdef(getShortMaxIfOverflow(nEquip.getMdef() + stat.getValue().intValue()));
-                    break;
-                case "ACC":
-                    nEquip.setAcc(getShortMaxIfOverflow(nEquip.getAcc() + stat.getValue().intValue()));
-                    break;
-                case "EVA":
-                    nEquip.setAvoid(getShortMaxIfOverflow(nEquip.getAvoid() + stat.getValue().intValue()));
-                    break;
-                case "Speed":
-                    nEquip.setSpeed(getShortMaxIfOverflow(nEquip.getSpeed() + stat.getValue().intValue()));
-                    break;
-                case "Jump":
-                    nEquip.setJump(getShortMaxIfOverflow(nEquip.getJump() + stat.getValue().intValue()));
-                    break;
-                case "MHP":
-                    nEquip.setHp(getShortMaxIfOverflow(nEquip.getHp() + stat.getValue().intValue()));
-                    break;
-                case "MMP":
-                    nEquip.setMp(getShortMaxIfOverflow(nEquip.getMp() + stat.getValue().intValue()));
-                    break;
-                case "afterImage":
-                    break;
-            }
-        }
-    }
-
     public Item getEquipById(int equipId) {
         return getEquipById(equipId, -1);
     }
@@ -1217,14 +1274,6 @@ public class ItemInformationProvider {
         return nEquip.copy();
     }
 
-    private static short getRandStat(short defaultValue, int maxRange) {
-        if (defaultValue == 0) {
-            return 0;
-        }
-        int lMaxRange = (int) Math.min(Math.ceil(defaultValue * 0.1), maxRange);
-        return (short) ((defaultValue - lMaxRange) + Math.floor(Randomizer.nextDouble() * (lMaxRange * 2 + 1)));
-    }
-
     public Equip randomizeStats(Equip equip) {
         equip.setStr(getRandStat(equip.getStr(), 5));
         equip.setDex(getRandStat(equip.getDex(), 5));
@@ -1241,14 +1290,6 @@ public class ItemInformationProvider {
         equip.setHp(getRandStat(equip.getHp(), 10));
         equip.setMp(getRandStat(equip.getMp(), 10));
         return equip;
-    }
-
-    private static short getRandUpgradedStat(short defaultValue, int maxRange) {
-        if (defaultValue == 0) {
-            return 0;
-        }
-        int lMaxRange = maxRange;
-        return (short) (defaultValue + Math.floor(Randomizer.nextDouble() * (lMaxRange + 1)));
     }
 
     public Equip randomizeUpgradeStats(Equip equip) {
@@ -1797,8 +1838,7 @@ public class ItemInformationProvider {
     public boolean canWearEquipment(Character chr, Equip equip, int dst) {
         int id = equip.getItemId();
 
-        if (ItemId.isWeddingRing(id) && chr.hasJustMarried()) {
-            chr.dropMessage(5, "The Wedding Ring cannot be equipped on this map.");  // will dc everyone due to doubled couple effect
+        if (ItemId.isWeddingRing(id)) {
             return false;
         }
 
@@ -1970,26 +2010,6 @@ public class ItemInformationProvider {
         }
 
         return list;
-    }
-
-    private static int getCrystalForLevel(int level) {
-        int range = (level - 1) / 10;
-
-        if (range < 5) {
-            return ItemId.BASIC_MONSTER_CRYSTAL_1;
-        } else if (range > 11) {
-            return ItemId.ADVANCED_MONSTER_CRYSTAL_3;
-        } else {
-            return switch (range) {
-                case 5 -> ItemId.BASIC_MONSTER_CRYSTAL_2;
-                case 6 -> ItemId.BASIC_MONSTER_CRYSTAL_3;
-                case 7 -> ItemId.INTERMEDIATE_MONSTER_CRYSTAL_1;
-                case 8 -> ItemId.INTERMEDIATE_MONSTER_CRYSTAL_2;
-                case 9 -> ItemId.INTERMEDIATE_MONSTER_CRYSTAL_3;
-                case 10 -> ItemId.ADVANCED_MONSTER_CRYSTAL_1;
-                default -> ItemId.ADVANCED_MONSTER_CRYSTAL_2;
-            };
-        }
     }
 
     public Pair<String, Integer> getMakerReagentStatUpgrade(int itemId) {
@@ -2261,6 +2281,24 @@ public class ItemInformationProvider {
         return qcItem;
     }
 
+    public static final class RewardItem {
+
+        public int itemid, period;
+        public short prob, quantity;
+        public String effect, worldmsg;
+    }
+
+    public static final class QuestConsItem {
+
+        public int questid, exp, grade;
+        public Map<Integer, Integer> items;
+
+        public Integer getItemRequirement(int itemid) {
+            return items.get(itemid);
+        }
+
+    }
+
     public class ScriptedItem {
 
         private final boolean runOnPickup;
@@ -2284,23 +2322,5 @@ public class ItemInformationProvider {
         public boolean runOnPickup() {
             return runOnPickup;
         }
-    }
-
-    public static final class RewardItem {
-
-        public int itemid, period;
-        public short prob, quantity;
-        public String effect, worldmsg;
-    }
-
-    public static final class QuestConsItem {
-
-        public int questid, exp, grade;
-        public Map<Integer, Integer> items;
-
-        public Integer getItemRequirement(int itemid) {
-            return items.get(itemid);
-        }
-
     }
 }

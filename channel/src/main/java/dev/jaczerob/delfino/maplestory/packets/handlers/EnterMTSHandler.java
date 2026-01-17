@@ -37,29 +37,29 @@ public final class EnterMTSHandler extends AbstractPacketHandler {
         Character chr = client.getPlayer();
 
         if (!YamlConfig.config.server.USE_MTS) {
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
 
         if (MiniDungeonInfo.isDungeonMap(chr.getMapId())) {
-            client.sendPacket(ChannelPacketCreator.getInstance().serverNotice(5, "Changing channels or entering Cash Shop or MTS are disabled when inside a Mini-Dungeon."));
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().serverNotice(5, "Changing channels or entering Cash Shop or MTS are disabled when inside a Mini-Dungeon."));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
 
         if (FieldLimit.CANNOTMIGRATE.check(chr.getMap().getFieldLimit())) {
             chr.dropMessage(1, "You can't do it here in this map.");
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
 
         if (!chr.isAlive()) {
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
         if (chr.getLevel() < 10) {
-            client.sendPacket(ChannelPacketCreator.getInstance().blockedMessage2(5));
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().blockedMessage2(5));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
 
@@ -87,14 +87,14 @@ public final class EnterMTSHandler extends AbstractPacketHandler {
         client.getChannelServer().removePlayer(chr);
         chr.getMap().removePlayer(client.getPlayer());
         try {
-            client.sendPacket(ChannelPacketCreator.getInstance().openCashShop(client, true));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().openCashShop(client, true));
         } catch (Exception ex) {
             ex.printStackTrace();
         }
         chr.getCashShop().open(true);// xD
         client.enableCSActions();
-        client.sendPacket(ChannelPacketCreator.getInstance().MTSWantedListingOver(0, 0));
-        client.sendPacket(ChannelPacketCreator.getInstance().showMTSCash(client.getPlayer()));
+        context.writeAndFlush(ChannelPacketCreator.getInstance().MTSWantedListingOver(0, 0));
+        context.writeAndFlush(ChannelPacketCreator.getInstance().showMTSCash(client.getPlayer()));
         List<MTSItemInfo> items = new ArrayList<>();
         int pages = 0;
         try (Connection con = DatabaseConnection.getStaticConnection()) {
@@ -148,9 +148,9 @@ public final class EnterMTSHandler extends AbstractPacketHandler {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        client.sendPacket(ChannelPacketCreator.getInstance().sendMTS(items, 1, 0, 0, pages));
-        client.sendPacket(ChannelPacketCreator.getInstance().transferInventory(getTransfer(chr.getId())));
-        client.sendPacket(ChannelPacketCreator.getInstance().notYetSoldInv(getNotYetSold(chr.getId())));
+        context.writeAndFlush(ChannelPacketCreator.getInstance().sendMTS(items, 1, 0, 0, pages));
+        context.writeAndFlush(ChannelPacketCreator.getInstance().transferInventory(getTransfer(chr.getId())));
+        context.writeAndFlush(ChannelPacketCreator.getInstance().notYetSoldInv(getNotYetSold(chr.getId())));
     }
 
     private List<MTSItemInfo> getNotYetSold(int cid) {

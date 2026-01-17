@@ -43,10 +43,42 @@ import java.util.List;
  */
 
 class PairedQuicksort {
-    private int i = 0;
-    private int j = 0;
     private final ArrayList<Integer> intersect;
     ItemInformationProvider ii = ItemInformationProvider.getInstance();
+    private int i = 0;
+    private int j = 0;
+
+    public PairedQuicksort(ArrayList<Item> A, int primarySort, int secondarySort) {
+        intersect = new ArrayList<>();
+
+        if (A.size() > 0) {
+            MapleQuicksort(0, A.size() - 1, A, primarySort);
+
+            if (A.get(0).getInventoryType().equals(InventoryType.USE)) {   // thanks KDA & Vcoc for suggesting stronger projectiles coming before weaker ones
+                reverseSortSublist(A, BinarySearchElement(A, 206));  // arrows
+                reverseSortSublist(A, BinarySearchElement(A, 207));  // stars
+                reverseSortSublist(A, BinarySearchElement(A, 233));  // bullets
+            }
+        }
+
+        intersect.add(0);
+        for (int ind = 1; ind < A.size(); ind++) {
+            if (A.get(ind - 1).getItemId() != A.get(ind).getItemId()) {
+                intersect.add(ind);
+            }
+        }
+        intersect.add(A.size());
+
+        for (int ind = 0; ind < intersect.size() - 1; ind++) {
+            if (intersect.get(ind + 1) > intersect.get(ind)) {
+                MapleQuicksort(intersect.get(ind), intersect.get(ind + 1) - 1, A, secondarySort);
+            }
+        }
+    }
+
+    private static int getItemSubtype(Item it) {
+        return it.getItemId() / 10000;
+    }
 
     private void PartitionByItemId(int Esq, int Dir, ArrayList<Item> A) {
         Item x, w;
@@ -212,10 +244,6 @@ class PairedQuicksort {
         }
     }
 
-    private static int getItemSubtype(Item it) {
-        return it.getItemId() / 10000;
-    }
-
     private int[] BinarySearchElement(ArrayList<Item> A, int rangeId) {
         int st = 0, en = A.size() - 1;
 
@@ -257,34 +285,6 @@ class PairedQuicksort {
             PartitionByProjectileAtk(range[0], range[1], A);
         }
     }
-
-    public PairedQuicksort(ArrayList<Item> A, int primarySort, int secondarySort) {
-        intersect = new ArrayList<>();
-
-        if (A.size() > 0) {
-            MapleQuicksort(0, A.size() - 1, A, primarySort);
-
-            if (A.get(0).getInventoryType().equals(InventoryType.USE)) {   // thanks KDA & Vcoc for suggesting stronger projectiles coming before weaker ones
-                reverseSortSublist(A, BinarySearchElement(A, 206));  // arrows
-                reverseSortSublist(A, BinarySearchElement(A, 207));  // stars
-                reverseSortSublist(A, BinarySearchElement(A, 233));  // bullets
-            }
-        }
-
-        intersect.add(0);
-        for (int ind = 1; ind < A.size(); ind++) {
-            if (A.get(ind - 1).getItemId() != A.get(ind).getItemId()) {
-                intersect.add(ind);
-            }
-        }
-        intersect.add(A.size());
-
-        for (int ind = 0; ind < intersect.size() - 1; ind++) {
-            if (intersect.get(ind + 1) > intersect.get(ind)) {
-                MapleQuicksort(intersect.get(ind), intersect.get(ind + 1) - 1, A, secondarySort);
-            }
-        }
-    }
 }
 
 @Component
@@ -301,7 +301,7 @@ public final class InventorySortHandler extends AbstractPacketHandler {
         chr.getAutobanManager().setTimestamp(3, Server.getInstance().getCurrentTimestamp(), 4);
 
         if (!YamlConfig.config.server.USE_ITEM_SORT) {
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
 
@@ -342,8 +342,8 @@ public final class InventorySortHandler extends AbstractPacketHandler {
             inventory.unlockInventory();
         }
 
-        client.sendPacket(ChannelPacketCreator.getInstance().modifyInventory(true, mods));
-        client.sendPacket(ChannelPacketCreator.getInstance().finishedSort2(invType));
-        client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+        context.writeAndFlush(ChannelPacketCreator.getInstance().modifyInventory(true, mods));
+        context.writeAndFlush(ChannelPacketCreator.getInstance().finishedSort2(invType));
+        context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
     }
 }

@@ -50,6 +50,10 @@ import java.util.List;
 public final class MoveLifeHandler extends AbstractMovementPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(MoveLifeHandler.class);
 
+    private static boolean inRangeInclusive(Byte pVal, Integer pMin, Integer pMax) {
+        return !(pVal < pMin) || (pVal > pMax);
+    }
+
     @Override
     public RecvOpcode getOpcode() {
         return RecvOpcode.MOVE_LIFE;
@@ -151,9 +155,9 @@ public final class MoveLifeHandler extends AbstractMovementPacketHandler {
         }
 
         if (nextUse != null) {
-            client.sendPacket(ChannelPacketCreator.getInstance().moveMonsterResponse(objectid, moveid, mobMp, aggro, nextSkillId, nextSkillLevel));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().moveMonsterResponse(objectid, moveid, mobMp, aggro, nextSkillId, nextSkillLevel));
         } else {
-            client.sendPacket(ChannelPacketCreator.getInstance().moveMonsterResponse(objectid, moveid, mobMp, aggro));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().moveMonsterResponse(objectid, moveid, mobMp, aggro));
         }
 
 
@@ -180,9 +184,5 @@ public final class MoveLifeHandler extends AbstractMovementPacketHandler {
                 chr.changeMapBanish(monster.getBanish());
             }
         }
-    }
-
-    private static boolean inRangeInclusive(Byte pVal, Integer pMin, Integer pMax) {
-        return !(pVal < pMin) || (pVal > pMax);
     }
 }

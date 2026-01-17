@@ -48,7 +48,7 @@ public final class GeneralChatHandler extends AbstractPacketHandler {
         String s = packet.readString();
         Character chr = client.getPlayer();
         if (chr.getAutobanManager().getLastSpam(7) + 200 > currentServerTime()) {
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
         if (s.length() > Byte.MAX_VALUE && !chr.isGM()) {
@@ -57,7 +57,7 @@ public final class GeneralChatHandler extends AbstractPacketHandler {
             client.disconnect(true, false);
             return;
         }
-        
+
         char heading = s.charAt(0);
         if (heading == '/') {
             return;

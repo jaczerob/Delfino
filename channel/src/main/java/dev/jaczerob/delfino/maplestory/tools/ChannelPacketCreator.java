@@ -1496,24 +1496,7 @@ public class ChannelPacketCreator {
     }
 
     private void addMarriageRingLook(Client target, final OutPacket p, Character chr) {
-        Ring ring = chr.getMarriageRing();
-
-        if (ring == null || !ring.equipped()) {
-            p.writeByte(0);
-        } else {
-            p.writeByte(1);
-
-            Character targetChr = target.getPlayer();
-            if (targetChr != null && targetChr.getPartnerId() == chr.getId()) {
-                p.writeInt(0);
-                p.writeInt(0);
-            } else {
-                p.writeInt(chr.getId());
-                p.writeInt(ring.getPartnerChrId());
-            }
-
-            p.writeInt(ring.getItemId());
-        }
+        p.writeByte(0);
     }
 
     private void addAnnounceBox(final OutPacket p, PlayerShop shop, int availability) {
@@ -1993,7 +1976,7 @@ public class ChannelPacketCreator {
         p.writeByte(chr.getLevel());
         p.writeShort(chr.getJob().getId());
         p.writeShort(chr.getFame());
-        p.writeByte(chr.getMarriageRing() != null ? 1 : 0);
+        p.writeByte(0);
         String guildName = "";
         String allianceName = "";
         if (chr.getGuildId() > 0) {
@@ -5479,46 +5462,9 @@ public class ChannelPacketCreator {
     }
 
     private void addRingInfo(OutPacket p, Character chr) {
-        p.writeShort(chr.getCrushRings().size());
-        for (Ring ring : chr.getCrushRings()) {
-            p.writeInt(ring.getPartnerChrId());
-            p.writeFixedString(getRightPaddedStr(ring.getPartnerName(), '\0', 13));
-            p.writeInt(ring.getRingId());
-            p.writeInt(0);
-            p.writeInt(ring.getPartnerRingId());
-            p.writeInt(0);
-        }
-        p.writeShort(chr.getFriendshipRings().size());
-        for (Ring ring : chr.getFriendshipRings()) {
-            p.writeInt(ring.getPartnerChrId());
-            p.writeFixedString(getRightPaddedStr(ring.getPartnerName(), '\0', 13));
-            p.writeInt(ring.getRingId());
-            p.writeInt(0);
-            p.writeInt(ring.getPartnerRingId());
-            p.writeInt(0);
-            p.writeInt(ring.getItemId());
-        }
-
-        if (chr.getPartnerId() > 0) {
-            Ring marriageRing = chr.getMarriageRing();
-
-            p.writeShort(1);
-            p.writeInt(chr.getRelationshipId());
-            p.writeInt(chr.getGender() == 0 ? chr.getId() : chr.getPartnerId());
-            p.writeInt(chr.getGender() == 0 ? chr.getPartnerId() : chr.getId());
-            p.writeShort((marriageRing != null) ? 3 : 1);
-            if (marriageRing != null) {
-                p.writeInt(marriageRing.getItemId());
-                p.writeInt(marriageRing.getItemId());
-            } else {
-                p.writeInt(ItemId.WEDDING_RING_MOONSTONE);
-                p.writeInt(ItemId.WEDDING_RING_MOONSTONE);
-            }
-            p.writeFixedString(StringUtil.getRightPaddedStr(chr.getGender() == 0 ? chr.getName() : Character.getNameById(chr.getPartnerId()), '\0', 13));
-            p.writeFixedString(StringUtil.getRightPaddedStr(chr.getGender() == 0 ? Character.getNameById(chr.getPartnerId()) : chr.getName(), '\0', 13));
-        } else {
-            p.writeShort(0);
-        }
+        p.writeShort(0);
+        p.writeShort(0);
+        p.writeShort(0);
     }
 
     public Packet finishedSort(int inv) {

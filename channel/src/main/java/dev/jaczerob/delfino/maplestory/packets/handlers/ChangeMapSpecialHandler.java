@@ -25,11 +25,11 @@ public final class ChangeMapSpecialHandler extends AbstractPacketHandler {
         packet.readShort();
         Portal portal = client.getPlayer().getMap().getPortal(startwp);
         if (portal == null || client.getPlayer().portalDelay() > currentServerTime() || client.getPlayer().getBlockedPortals().contains(portal.getScriptName())) {
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
         if (client.getPlayer().isChangingMaps() || client.getPlayer().isBanned()) {
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
         if (client.getPlayer().getTrade() != null) {

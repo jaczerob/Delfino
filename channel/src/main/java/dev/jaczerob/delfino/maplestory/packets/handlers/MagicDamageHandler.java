@@ -62,7 +62,7 @@ public final class MagicDamageHandler extends AbstractDealDamageHandler {
 
         if (MapId.isDojo(chr.getMap().getId()) && attack.numAttacked > 0) {
             chr.setDojoEnergy(chr.getDojoEnergy() + +YamlConfig.config.server.DOJO_ENERGY_ATK);
-            client.sendPacket(ChannelPacketCreator.getInstance().getEnergy("energy", chr.getDojoEnergy()));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().getEnergy("energy", chr.getDojoEnergy()));
         }
 
         int charge = (attack.skill == Evan.FIRE_BREATH || attack.skill == Evan.ICE_BREATH || attack.skill == FPArchMage.BIG_BANG || attack.skill == ILArchMage.BIG_BANG || attack.skill == Bishop.BIG_BANG) ? attack.charge : -1;
@@ -77,7 +77,7 @@ public final class MagicDamageHandler extends AbstractDealDamageHandler {
             if (chr.skillIsCooling(attack.skill)) {
                 return;
             } else {
-                client.sendPacket(ChannelPacketCreator.getInstance().skillCooldown(attack.skill, effect_.getCooldown()));
+                context.writeAndFlush(ChannelPacketCreator.getInstance().skillCooldown(attack.skill, effect_.getCooldown()));
                 chr.addCooldown(attack.skill, currentServerTime(), SECONDS.toMillis(effect_.getCooldown()));
             }
         }

@@ -1,9 +1,12 @@
 package dev.jaczerob.delfino.maplestory.packets.handlers;
 
-import dev.jaczerob.delfino.maplestory.client.*;
+import dev.jaczerob.delfino.maplestory.client.BuddyList;
 import dev.jaczerob.delfino.maplestory.client.BuddyList.BuddyAddResult;
 import dev.jaczerob.delfino.maplestory.client.BuddyList.BuddyOperation;
+import dev.jaczerob.delfino.maplestory.client.BuddylistEntry;
 import dev.jaczerob.delfino.maplestory.client.Character;
+import dev.jaczerob.delfino.maplestory.client.CharacterNameAndId;
+import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.net.server.world.World;
 import dev.jaczerob.delfino.maplestory.packets.AbstractPacketHandler;
 import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
@@ -20,28 +23,15 @@ import java.sql.SQLException;
 
 @Component
 public class BuddylistModifyHandler extends AbstractPacketHandler {
-    private static class CharacterIdNameBuddyCapacity extends CharacterNameAndId {
-        private final int buddyCapacity;
-
-        public CharacterIdNameBuddyCapacity(int id, String name, int buddyCapacity) {
-            super(id, name);
-            this.buddyCapacity = buddyCapacity;
-        }
-
-        public int getBuddyCapacity() {
-            return buddyCapacity;
-        }
-    }
-
     @Override
     public RecvOpcode getOpcode() {
         return RecvOpcode.BUDDYLIST_MODIFY;
     }
 
-    private void nextPendingRequest(Client client) {
+    private void nextPendingRequest(Client client, ChannelHandlerContext context) {
         CharacterNameAndId pendingBuddyRequest = client.getPlayer().getBuddylist().pollPendingRequest();
         if (pendingBuddyRequest != null) {
-            client.sendPacket(ChannelPacketCreator.getInstance().requestBuddylistAdd(pendingBuddyRequest.getId(), client.getPlayer().getId(), pendingBuddyRequest.getName()));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().requestBuddylistAdd(pendingBuddyRequest.getId(), client.getPlayer().getId(), pendingBuddyRequest.getName()));
         }
     }
 
@@ -75,9 +65,9 @@ public class BuddylistModifyHandler extends AbstractPacketHandler {
             }
             BuddylistEntry ble = buddylist.get(addName);
             if (ble != null && !ble.isVisible() && group.equals(ble.getGroup())) {
-                client.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "You already have \"" + ble.getName() + "\" on your Buddylist"));
+                context.writeAndFlush(ChannelPacketCreator.getInstance().serverNotice(1, "You already have \"" + ble.getName() + "\" on your Buddylist"));
             } else if (buddylist.isFull() && ble == null) {
-                client.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "Your buddylist is already full"));
+                context.writeAndFlush(ChannelPacketCreator.getInstance().serverNotice(1, "Your buddylist is already full"));
             } else if (ble == null) {
                 try {
                     World world = client.getWorldServer();
@@ -122,7 +112,7 @@ public class BuddylistModifyHandler extends AbstractPacketHandler {
                             }
                         }
                         if (buddyAddResult == BuddyAddResult.BUDDYLIST_FULL) {
-                            client.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "\"" + addName + "\"'s Buddylist is full"));
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().serverNotice(1, "\"" + addName + "\"'s Buddylist is full"));
                         } else {
                             int displayChannel;
                             displayChannel = -1;
@@ -139,17 +129,17 @@ public class BuddylistModifyHandler extends AbstractPacketHandler {
                                 }
                             }
                             buddylist.put(new BuddylistEntry(charWithId.getName(), group, otherCid, displayChannel, true));
-                            client.sendPacket(ChannelPacketCreator.getInstance().updateBuddylist(buddylist.getBuddies()));
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().updateBuddylist(buddylist.getBuddies()));
                         }
                     } else {
-                        client.sendPacket(ChannelPacketCreator.getInstance().serverNotice(1, "A character called \"" + addName + "\" does not exist"));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().serverNotice(1, "A character called \"" + addName + "\" does not exist"));
                     }
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
             } else {
                 ble.changeGroup(group);
-                client.sendPacket(ChannelPacketCreator.getInstance().updateBuddylist(buddylist.getBuddies()));
+                context.writeAndFlush(ChannelPacketCreator.getInstance().updateBuddylist(buddylist.getBuddies()));
             }
         } else if (mode == 2) { // accept buddy
             int otherCid = packet.readInt();
@@ -174,14 +164,14 @@ public class BuddylistModifyHandler extends AbstractPacketHandler {
                     }
                     if (otherName != null) {
                         buddylist.put(new BuddylistEntry(otherName, "Default Group", otherCid, channel, true));
-                        client.sendPacket(ChannelPacketCreator.getInstance().updateBuddylist(buddylist.getBuddies()));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().updateBuddylist(buddylist.getBuddies()));
                         notifyRemoteChannel(client, channel, otherCid, BuddyOperation.ADDED);
                     }
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
             }
-            nextPendingRequest(client);
+            nextPendingRequest(client, context);
         } else if (mode == 3) { // delete
             int otherCid = packet.readInt();
             player.deleteBuddy(otherCid);
@@ -192,6 +182,19 @@ public class BuddylistModifyHandler extends AbstractPacketHandler {
         Character player = client.getPlayer();
         if (remoteChannel != -1) {
             client.getWorldServer().buddyChanged(otherCid, player.getId(), player.getName(), client.getChannel(), operation);
+        }
+    }
+
+    private static class CharacterIdNameBuddyCapacity extends CharacterNameAndId {
+        private final int buddyCapacity;
+
+        public CharacterIdNameBuddyCapacity(int id, String name, int buddyCapacity) {
+            super(id, name);
+            this.buddyCapacity = buddyCapacity;
+        }
+
+        public int getBuddyCapacity() {
+            return buddyCapacity;
         }
     }
 }

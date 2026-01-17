@@ -28,7 +28,7 @@ public final class SkillBookHandler extends AbstractPacketHandler {
     @Override
     public void handlePacket(final InPacket packet, final Client client, final ChannelHandlerContext context) {
         if (!client.getPlayer().isAlive()) {
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
 

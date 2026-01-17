@@ -25,8 +25,12 @@ import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.client.Skill;
 import dev.jaczerob.delfino.maplestory.client.SkillFactory;
-import dev.jaczerob.delfino.maplestory.client.inventory.*;
+import dev.jaczerob.delfino.maplestory.client.inventory.Equip;
 import dev.jaczerob.delfino.maplestory.client.inventory.Equip.ScrollResult;
+import dev.jaczerob.delfino.maplestory.client.inventory.Inventory;
+import dev.jaczerob.delfino.maplestory.client.inventory.InventoryType;
+import dev.jaczerob.delfino.maplestory.client.inventory.Item;
+import dev.jaczerob.delfino.maplestory.client.inventory.ModifyInventory;
 import dev.jaczerob.delfino.maplestory.client.inventory.manipulator.InventoryManipulator;
 import dev.jaczerob.delfino.maplestory.constants.id.ItemId;
 import dev.jaczerob.delfino.maplestory.constants.inventory.ItemConstants;
@@ -47,6 +51,27 @@ import java.util.List;
  */
 @Component
 public final class ScrollHandler extends AbstractPacketHandler {
+    private static boolean canScroll(int scrollid, int itemid) {
+        int sid = scrollid / 100;
+
+        switch (sid) {
+            case 20492: //scroll for accessory (pendant, belt, ring)
+                return canScroll(ItemId.RING_STR_100_SCROLL, itemid) || canScroll(ItemId.DRAGON_STONE_SCROLL, itemid) ||
+                        canScroll(ItemId.BELT_STR_100_SCROLL, itemid);
+
+            default:
+                return (scrollid / 100) % 100 == (itemid / 10000) % 100;
+        }
+    }
+
+    private void announceCannotScroll(Client client, boolean legendarySpirit, ChannelHandlerContext context) {
+        if (legendarySpirit) {
+            context.writeAndFlush(ChannelPacketCreator.getInstance().getScrollEffect(client.getPlayer().getId(), ScrollResult.FAIL, false, false));
+        } else {
+            context.writeAndFlush(ChannelPacketCreator.getInstance().getInventoryFull());
+        }
+    }
+
     @Override
     public RecvOpcode getOpcode() {
         return RecvOpcode.USE_UPGRADE_SCROLL;
@@ -81,16 +106,16 @@ public final class ScrollHandler extends AbstractPacketHandler {
                 Item wscroll = null;
 
                 if (ItemConstants.isCleanSlate(scroll.getItemId()) && !ii.canUseCleanSlate(toScroll)) {
-                    announceCannotScroll(client, legendarySpirit);
+                    announceCannotScroll(client, legendarySpirit, context);
                     return;
                 } else if (!ItemConstants.isModifierScroll(scroll.getItemId()) && toScroll.getUpgradeSlots() < 1) {
-                    announceCannotScroll(client, legendarySpirit);   // thanks onechord for noticing zero upgrade slots freezing Legendary Scroll UI
+                    announceCannotScroll(client, legendarySpirit, context);   // thanks onechord for noticing zero upgrade slots freezing Legendary Scroll UI
                     return;
                 }
 
                 List<Integer> scrollReqs = ii.getScrollReqs(scroll.getItemId());
                 if (scrollReqs.size() > 0 && !scrollReqs.contains(toScroll.getItemId())) {
-                    announceCannotScroll(client, legendarySpirit);
+                    announceCannotScroll(client, legendarySpirit, context);
                     return;
                 }
                 if (whiteScroll) {
@@ -102,7 +127,7 @@ public final class ScrollHandler extends AbstractPacketHandler {
 
                 if (!ItemConstants.isChaosScroll(scroll.getItemId()) && !ItemConstants.isCleanSlate(scroll.getItemId())) {
                     if (!canScroll(scroll.getItemId(), toScroll.getItemId())) {
-                        announceCannotScroll(client, legendarySpirit);
+                        announceCannotScroll(client, legendarySpirit, context);
                         return;
                     }
                 }
@@ -118,13 +143,13 @@ public final class ScrollHandler extends AbstractPacketHandler {
                 useInventory.lockInventory();
                 try {
                     if (scroll.getQuantity() < 1) {
-                        announceCannotScroll(client, legendarySpirit);
+                        announceCannotScroll(client, legendarySpirit, context);
                         return;
                     }
 
                     if (whiteScroll && !ItemConstants.isCleanSlate(scroll.getItemId())) {
                         if (wscroll.getQuantity() < 1) {
-                            announceCannotScroll(client, legendarySpirit);
+                            announceCannotScroll(client, legendarySpirit, context);
                             return;
                         }
 
@@ -171,7 +196,7 @@ public final class ScrollHandler extends AbstractPacketHandler {
                     mods.add(new ModifyInventory(3, scrolled));
                     mods.add(new ModifyInventory(0, scrolled));
                 }
-                client.sendPacket(ChannelPacketCreator.getInstance().modifyInventory(true, mods));
+                context.writeAndFlush(ChannelPacketCreator.getInstance().modifyInventory(true, mods));
                 chr.getMap().broadcastMessage(ChannelPacketCreator.getInstance().getScrollEffect(chr.getId(), scrollSuccess, legendarySpirit, whiteScroll));
                 if (equipSlot < 0 && (scrollSuccess == ScrollResult.SUCCESS || scrollSuccess == ScrollResult.CURSE)) {
                     chr.equipChanged();
@@ -179,27 +204,6 @@ public final class ScrollHandler extends AbstractPacketHandler {
             } finally {
                 client.releaseClient();
             }
-        }
-    }
-
-    private static void announceCannotScroll(Client client, boolean legendarySpirit) {
-        if (legendarySpirit) {
-            client.sendPacket(ChannelPacketCreator.getInstance().getScrollEffect(client.getPlayer().getId(), ScrollResult.FAIL, false, false));
-        } else {
-            client.sendPacket(ChannelPacketCreator.getInstance().getInventoryFull());
-        }
-    }
-
-    private static boolean canScroll(int scrollid, int itemid) {
-        int sid = scrollid / 100;
-
-        switch (sid) {
-            case 20492: //scroll for accessory (pendant, belt, ring)
-                return canScroll(ItemId.RING_STR_100_SCROLL, itemid) || canScroll(ItemId.DRAGON_STONE_SCROLL, itemid) ||
-                        canScroll(ItemId.BELT_STR_100_SCROLL, itemid);
-
-            default:
-                return (scrollid / 100) % 100 == (itemid / 10000) % 100;
         }
     }
 }

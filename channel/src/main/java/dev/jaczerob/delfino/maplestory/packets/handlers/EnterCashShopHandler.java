@@ -48,13 +48,13 @@ public class EnterCashShopHandler extends AbstractPacketHandler {
             Character mc = client.getPlayer();
 
             if (mc.cannotEnterCashShop()) {
-                client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                 return;
             }
 
             if (MiniDungeonInfo.isDungeonMap(mc.getMapId())) {
-                client.sendPacket(ChannelPacketCreator.getInstance().serverNotice(5, "Changing channels or entering Cash Shop or MTS are disabled when inside a Mini-Dungeon."));
-                client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                context.writeAndFlush(ChannelPacketCreator.getInstance().serverNotice(5, "Changing channels or entering Cash Shop or MTS are disabled when inside a Mini-Dungeon."));
+                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                 return;
             }
 
@@ -81,11 +81,11 @@ public class EnterCashShopHandler extends AbstractPacketHandler {
             mc.forfeitExpirableQuests();
             mc.cancelQuestExpirationTask();
 
-            client.sendPacket(ChannelPacketCreator.getInstance().openCashShop(client, false));
-            client.sendPacket(ChannelPacketCreator.getInstance().showCashInventory(client));
-            client.sendPacket(ChannelPacketCreator.getInstance().showGifts(mc.getCashShop().loadGifts()));
-            client.sendPacket(ChannelPacketCreator.getInstance().showWishList(mc, false));
-            client.sendPacket(ChannelPacketCreator.getInstance().showCash(mc));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().openCashShop(client, false));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().showCashInventory(client));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().showGifts(mc.getCashShop().loadGifts()));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().showWishList(mc, false));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().showCash(mc));
 
             client.getChannelServer().removePlayer(mc);
             mc.getMap().removePlayer(mc);

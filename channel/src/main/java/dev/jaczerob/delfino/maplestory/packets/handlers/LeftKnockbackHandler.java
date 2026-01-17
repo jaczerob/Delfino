@@ -19,7 +19,7 @@ public class LeftKnockbackHandler extends AbstractPacketHandler {
     }
 
     public void handlePacket(InPacket packet, final Client client, final ChannelHandlerContext context) {
-        client.sendPacket(ChannelPacketCreator.getInstance().leftKnockBack());
-        client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+        context.writeAndFlush(ChannelPacketCreator.getInstance().leftKnockBack());
+        context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
     }
 }

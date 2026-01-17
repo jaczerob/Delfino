@@ -32,7 +32,7 @@ public final class PetLootHandler extends AbstractPacketHandler {
         int petIndex = chr.getPetIndex(packet.readInt());
         Pet pet = chr.getPet(petIndex);
         if (pet == null || !pet.isSummoned()) {
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
 
@@ -43,27 +43,27 @@ public final class PetLootHandler extends AbstractPacketHandler {
             MapItem mapitem = (MapItem) ob;
             if (mapitem.getMeso() > 0) {
                 if (!chr.isEquippedMesoMagnet()) {
-                    client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                     return;
                 }
 
                 if (chr.isEquippedPetItemIgnore()) {
                     final Set<Integer> petIgnore = chr.getExcludedItems();
                     if (!petIgnore.isEmpty() && petIgnore.contains(Integer.MAX_VALUE)) {
-                        client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                         return;
                     }
                 }
             } else {
                 if (!chr.isEquippedItemPouch()) {
-                    client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                     return;
                 }
 
                 if (chr.isEquippedPetItemIgnore()) {
                     final Set<Integer> petIgnore = chr.getExcludedItems();
                     if (!petIgnore.isEmpty() && petIgnore.contains(mapitem.getItem().getItemId())) {
-                        client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                         return;
                     }
                 }
@@ -71,7 +71,7 @@ public final class PetLootHandler extends AbstractPacketHandler {
 
             chr.pickupItem(ob, petIndex);
         } catch (NullPointerException | ClassCastException e) {
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
         }
     }
 }

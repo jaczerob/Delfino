@@ -46,7 +46,7 @@ public final class CloseRangeDamageHandler extends AbstractDealDamageHandler {
         }
         if (MapId.isDojo(chr.getMap().getId()) && attack.numAttacked > 0) {
             chr.setDojoEnergy(chr.getDojoEnergy() + YamlConfig.config.server.DOJO_ENERGY_ATK);
-            client.sendPacket(ChannelPacketCreator.getInstance().getEnergy("energy", chr.getDojoEnergy()));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().getEnergy("energy", chr.getDojoEnergy()));
         }
 
         chr.getMap().broadcastMessage(chr, ChannelPacketCreator.getInstance().closeRangeAttack(chr, attack.skill, attack.skilllevel,
@@ -100,7 +100,7 @@ public final class CloseRangeDamageHandler extends AbstractDealDamageHandler {
                         List<Pair<BuffStat, Integer>> stat = Collections.singletonList(new Pair<>(BuffStat.COMBO, neworbcount));
                         chr.setBuffedValue(BuffStat.COMBO, neworbcount);
                         duration -= (int) (currentServerTime() - chr.getBuffedStarttime(BuffStat.COMBO));
-                        client.sendPacket(ChannelPacketCreator.getInstance().giveBuff(oid, duration, stat));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().giveBuff(oid, duration, stat));
                         chr.getMap().broadcastMessage(chr, ChannelPacketCreator.getInstance().giveForeignBuff(chr.getId(), stat), false);
                     }
                 }
@@ -142,8 +142,8 @@ public final class CloseRangeDamageHandler extends AbstractDealDamageHandler {
             }
 
             chr.setDojoEnergy(0);
-            client.sendPacket(ChannelPacketCreator.getInstance().getEnergy("energy", chr.getDojoEnergy()));
-            client.sendPacket(ChannelPacketCreator.getInstance().serverNotice(5, "As you used the secret skill, your energy bar has been reset."));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().getEnergy("energy", chr.getDojoEnergy()));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().serverNotice(5, "As you used the secret skill, your energy bar has been reset."));
         } else if (attack.skill > 0) {
             Skill skill = SkillFactory.getSkill(attack.skill);
             StatEffect effect_ = skill.getEffect(chr.getSkillLevel(skill));
@@ -151,7 +151,7 @@ public final class CloseRangeDamageHandler extends AbstractDealDamageHandler {
                 if (chr.skillIsCooling(attack.skill)) {
                     return;
                 } else {
-                    client.sendPacket(ChannelPacketCreator.getInstance().skillCooldown(attack.skill, effect_.getCooldown()));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().skillCooldown(attack.skill, effect_.getCooldown()));
                     chr.addCooldown(attack.skill, currentServerTime(), SECONDS.toMillis(effect_.getCooldown()));
                 }
             }

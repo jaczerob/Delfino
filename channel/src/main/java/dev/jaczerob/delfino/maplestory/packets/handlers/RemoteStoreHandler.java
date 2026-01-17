@@ -15,6 +15,13 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class RemoteStoreHandler extends AbstractPacketHandler {
+    private static HiredMerchant getMerchant(Client client) {
+        if (client.getPlayer().hasMerchant()) {
+            return client.getWorldServer().getHiredMerchant(client.getPlayer().getId());
+        }
+        return null;
+    }
+
     @Override
     public RecvOpcode getOpcode() {
         return RecvOpcode.REMOTE_STORE;
@@ -28,19 +35,12 @@ public class RemoteStoreHandler extends AbstractPacketHandler {
             if (hm.getChannel() == chr.getClient().getChannel()) {
                 hm.visitShop(chr);
             } else {
-                client.sendPacket(ChannelPacketCreator.getInstance().remoteChannelChange((byte) (hm.getChannel() - 1)));
+                context.writeAndFlush(ChannelPacketCreator.getInstance().remoteChannelChange((byte) (hm.getChannel() - 1)));
             }
             return;
         } else {
             chr.dropMessage(1, "You don't have a Merchant open.");
         }
-        client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
-    }
-
-    private static HiredMerchant getMerchant(Client client) {
-        if (client.getPlayer().hasMerchant()) {
-            return client.getWorldServer().getHiredMerchant(client.getPlayer().getId());
-        }
-        return null;
+        context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
     }
 }

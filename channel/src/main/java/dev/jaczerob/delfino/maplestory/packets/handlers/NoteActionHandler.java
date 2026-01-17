@@ -36,7 +36,7 @@ public final class NoteActionHandler extends AbstractPacketHandler {
             String charname = packet.readString();
             String message = packet.readString();
             if (client.getPlayer().getCashShop().isOpened()) {
-                client.sendPacket(ChannelPacketCreator.getInstance().showCashInventory(client));
+                context.writeAndFlush(ChannelPacketCreator.getInstance().showCashInventory(client));
             }
 
             boolean sendNoteSuccess = noteService.sendWithFame(message, client.getPlayer().getName(), charname);

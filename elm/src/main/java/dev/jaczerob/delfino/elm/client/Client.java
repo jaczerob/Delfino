@@ -65,7 +65,7 @@ public class Client extends ChannelInboundHandlerAdapter {
         }
 
         final var opcodeValue = inPacket.readShort();
-        final var opcode = RecvOpcode.getByValue(opcodeValue);
+        final var opcode = RecvOpcode.fromValue(opcodeValue);
         if (opcode == null) {
             log.warn("Unknown opcode 0x{} received", Integer.toHexString(opcodeValue));
             return;

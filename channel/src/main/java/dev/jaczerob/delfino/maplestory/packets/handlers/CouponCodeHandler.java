@@ -29,11 +29,6 @@ import java.util.Map.Entry;
 public final class CouponCodeHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(CouponCodeHandler.class);
 
-    @Override
-    public RecvOpcode getOpcode() {
-        return RecvOpcode.COUPON_CODE;
-    }
-
     private static List<Pair<Integer, Pair<Integer, Integer>>> getNXCodeItems(Character chr, Connection con, int codeid) throws SQLException {
         Map<Integer, Integer> couponItems = new HashMap<>();
         Map<Integer, Integer> couponPoints = new HashMap<>(5);
@@ -162,6 +157,11 @@ public final class CouponCodeHandler extends AbstractPacketHandler {
     }
 
     @Override
+    public RecvOpcode getOpcode() {
+        return RecvOpcode.COUPON_CODE;
+    }
+
+    @Override
     public void handlePacket(final InPacket packet, final Client client, final ChannelHandlerContext context) {
         packet.skip(2);
         String code = packet.readString();
@@ -171,7 +171,7 @@ public final class CouponCodeHandler extends AbstractPacketHandler {
                 Pair<Integer, List<Pair<Integer, Pair<Integer, Integer>>>> codeRes = getNXCodeResult(client.getPlayer(), code.toUpperCase());
                 int type = codeRes.getLeft();
                 if (type < 0) {
-                    client.sendPacket(ChannelPacketCreator.getInstance().showCashShopMessage((byte) parseCouponResult(type)));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().showCashShopMessage((byte) parseCouponResult(type)));
                 } else {
                     List<Item> cashItems = new LinkedList<>();
                     List<Pair<Integer, Integer>> items = new LinkedList<>();
@@ -243,9 +243,9 @@ public final class CouponCodeHandler extends AbstractPacketHandler {
                         }
                     }
                     if (nxCredit != 0 || nxPrepaid != 0) { //coupon packet can only show maple points (afaik)
-                        client.sendPacket(ChannelPacketCreator.getInstance().showBoughtQuestItem(0));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().showBoughtQuestItem(0));
                     } else {
-                        client.sendPacket(ChannelPacketCreator.getInstance().showCouponRedeemedItems(client.getAccID(), maplePoints, mesos, cashItems, items));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().showCouponRedeemedItems(client.getAccID(), maplePoints, mesos, cashItems, items));
                     }
                     client.enableCSActions();
                 }

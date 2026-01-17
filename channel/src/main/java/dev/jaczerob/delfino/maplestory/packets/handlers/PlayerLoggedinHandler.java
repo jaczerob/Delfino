@@ -21,9 +21,21 @@
  */
 package dev.jaczerob.delfino.maplestory.packets.handlers;
 
-import dev.jaczerob.delfino.maplestory.client.*;
+import dev.jaczerob.delfino.maplestory.client.BuddyList;
+import dev.jaczerob.delfino.maplestory.client.BuddylistEntry;
 import dev.jaczerob.delfino.maplestory.client.Character;
-import dev.jaczerob.delfino.maplestory.client.inventory.*;
+import dev.jaczerob.delfino.maplestory.client.CharacterNameAndId;
+import dev.jaczerob.delfino.maplestory.client.Client;
+import dev.jaczerob.delfino.maplestory.client.Disease;
+import dev.jaczerob.delfino.maplestory.client.Family;
+import dev.jaczerob.delfino.maplestory.client.FamilyEntry;
+import dev.jaczerob.delfino.maplestory.client.Mount;
+import dev.jaczerob.delfino.maplestory.client.SkillFactory;
+import dev.jaczerob.delfino.maplestory.client.inventory.Equip;
+import dev.jaczerob.delfino.maplestory.client.inventory.Inventory;
+import dev.jaczerob.delfino.maplestory.client.inventory.InventoryType;
+import dev.jaczerob.delfino.maplestory.client.inventory.Item;
+import dev.jaczerob.delfino.maplestory.client.inventory.Pet;
 import dev.jaczerob.delfino.maplestory.client.keybind.KeyBinding;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
 import dev.jaczerob.delfino.maplestory.constants.game.GameConstants;
@@ -54,8 +66,13 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
@@ -69,7 +86,7 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
         this.noteService = noteService;
     }
 
-    private static void showDueyNotification(Client client, Character player) {
+    private static void showDueyNotification(Client client, Character player, ChannelHandlerContext context) {
         try (Connection con = DatabaseConnection.getStaticConnection();
              PreparedStatement ps = con.prepareStatement("SELECT Type FROM dueypackages WHERE ReceiverId = ? AND Checked = 1 ORDER BY Type DESC")) {
             ps.setInt(1, player.getId());
@@ -80,7 +97,7 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
                         ps2.setInt(1, player.getId());
                         ps2.executeUpdate();
 
-                        client.sendPacket(ChannelPacketCreator.getInstance().sendDueyParcelNotification(rs.getInt("Type") == 1));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().sendDueyParcelNotification(rs.getInt("Type") == 1));
                     }
                 }
             }
@@ -136,7 +153,7 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
 
         if (!client.tryacquireClient()) {
             // thanks MedicOP for assisting on concurrency protection here
-            client.sendPacket(ChannelPacketCreator.getInstance().getAfterLoginError(10));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().getAfterLoginError(10));
         }
 
         try {
@@ -207,7 +224,7 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
 //                        if (state == Client.LOGIN_LOGGEDIN) {
 //                            client.disconnect(true, false);
 //                        } else {
-//                            client.sendPacket(ChannelPacketCreator.getInstance().getAfterLoginError(7));
+//                            context.writeAndFlush(ChannelPacketCreator.getInstance().getAfterLoginError(7));
 //                        }
 //
 //                        return;
@@ -219,7 +236,7 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
             } else {
                 client.setPlayer(null);
                 client.setAccID(0);
-                client.sendPacket(ChannelPacketCreator.getInstance().getAfterLoginError(10));
+                context.writeAndFlush(ChannelPacketCreator.getInstance().getAfterLoginError(10));
                 return;
             }
 
@@ -244,7 +261,7 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
                 player.silentApplyDiseases(diseases);
             }
 
-            client.sendPacket(ChannelPacketCreator.getInstance().getCharInfo(player));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().getCharInfo(player));
             if (!player.isHidden()) {
                 if (player.isGM() && YamlConfig.config.server.USE_AUTOHIDE_GM) {
                     player.toggleHide(true);
@@ -272,9 +289,9 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
                 ble.setChannel(onlineBuddy.getChannel());
                 bl.put(ble);
             }
-            client.sendPacket(ChannelPacketCreator.getInstance().updateBuddylist(bl.getBuddies()));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().updateBuddylist(bl.getBuddies()));
 
-            client.sendPacket(ChannelPacketCreator.getInstance().loadFamily(player));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().loadFamily(player));
             if (player.getFamilyId() > 0) {
                 Family f = wserv.getFamily(player.getFamilyId());
                 if (f != null) {
@@ -283,17 +300,17 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
                         familyEntry.setCharacter(player);
                         player.setFamilyEntry(familyEntry);
 
-                        client.sendPacket(ChannelPacketCreator.getInstance().getFamilyInfo(familyEntry));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().getFamilyInfo(familyEntry));
                         familyEntry.announceToSenior(ChannelPacketCreator.getInstance().sendFamilyLoginNotice(player.getName(), true), true);
                     } else {
                         log.error("Chr {}'s family doesn't have an entry for them. (familyId {})", player.getName(), f.getID());
                     }
                 } else {
                     log.error("Chr {} has an invalid family ID ({})", player.getName(), player.getFamilyId());
-                    client.sendPacket(ChannelPacketCreator.getInstance().getFamilyInfo(null));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().getFamilyInfo(null));
                 }
             } else {
-                client.sendPacket(ChannelPacketCreator.getInstance().getFamilyInfo(null));
+                context.writeAndFlush(ChannelPacketCreator.getInstance().getFamilyInfo(null));
             }
 
             if (player.getGuildId() > 0) {
@@ -306,7 +323,7 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
                     playerGuild.getMGC(player.getId()).setCharacter(player);
                     player.setMGC(playerGuild.getMGC(player.getId()));
                     server.setGuildMemberOnline(player, true, client.getChannel());
-                    client.sendPacket(GuildPackets.showGuildInfo(player));
+                    context.writeAndFlush(GuildPackets.showGuildInfo(player));
                     int allianceId = player.getGuild().getAllianceId();
                     if (allianceId > 0) {
                         Alliance newAlliance = server.getAlliance(allianceId);
@@ -319,8 +336,8 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
                             }
                         }
                         if (newAlliance != null) {
-                            client.sendPacket(GuildPackets.updateAllianceInfo(newAlliance, client.getWorld()));
-                            client.sendPacket(GuildPackets.allianceNotice(newAlliance.getId(), newAlliance.getNotice()));
+                            context.writeAndFlush(GuildPackets.updateAllianceInfo(newAlliance, client.getWorld()));
+                            context.writeAndFlush(GuildPackets.allianceNotice(newAlliance.getId(), newAlliance.getNotice()));
 
                             if (newcomer) {
                                 server.allianceMessage(allianceId, GuildPackets.allianceMemberOnline(player, true), player.getId(), -1);
@@ -336,7 +353,7 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
                 PartyCharacter pchar = player.getMPC();
 
                 //Use this in case of enabling party HPbar HUD when logging in, however "you created a party" will appear on chat.
-                //client.sendPacket(PacketCreator.partyCreated(pchar));
+                //context.writeAndFlush(PacketCreator.partyCreated(pchar));
 
                 pchar.setChannel(client.getChannel());
                 pchar.setMapId(player.getMapId());
@@ -355,16 +372,16 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
                 eqpInv.unlockInventory();
             }
 
-            client.sendPacket(ChannelPacketCreator.getInstance().updateBuddylist(player.getBuddylist().getBuddies()));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().updateBuddylist(player.getBuddylist().getBuddies()));
 
             CharacterNameAndId pendingBuddyRequest = client.getPlayer().getBuddylist().pollPendingRequest();
             if (pendingBuddyRequest != null) {
-                client.sendPacket(ChannelPacketCreator.getInstance().requestBuddylistAdd(pendingBuddyRequest.getId(), client.getPlayer().getId(), pendingBuddyRequest.getName()));
+                context.writeAndFlush(ChannelPacketCreator.getInstance().requestBuddylistAdd(pendingBuddyRequest.getId(), client.getPlayer().getId(), pendingBuddyRequest.getName()));
             }
 
-            client.sendPacket(ChannelPacketCreator.getInstance().updateGender(player));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().updateGender(player));
             player.checkMessenger();
-            client.sendPacket(ChannelPacketCreator.getInstance().enableReport());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableReport());
             player.changeSkillLevel(SkillFactory.getSkill(10000000 * player.getJobType() + 12), (byte) (player.getLinkedLevel() / 10), 20, -1);
             player.checkBerserk(player.isHidden());
 
@@ -394,7 +411,7 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
                 if (diseases != null) {
                     for (Entry<Disease, Pair<Long, MobSkill>> e : diseases.entrySet()) {
                         final List<Pair<Disease, Integer>> debuff = Collections.singletonList(new Pair<>(e.getKey(), e.getValue().getRight().getX()));
-                        client.sendPacket(ChannelPacketCreator.getInstance().giveDebuff(debuff, e.getValue().getRight()));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().giveDebuff(debuff, e.getValue().getRight()));
                     }
                 }
             } else {
@@ -413,7 +430,7 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
             }
 
             player.commitExcludedItems();
-            showDueyNotification(client, player);
+            showDueyNotification(client, player, context);
 
             player.resetPlayerRates();
             if (YamlConfig.config.server.USE_ADD_RATES_BY_LEVEL) {
@@ -434,7 +451,7 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
                                 Entry::getValue
                         ));
 
-                client.sendPacket(ChannelPacketCreator.getInstance().setNPCScriptable(npcsIds));
+                context.writeAndFlush(ChannelPacketCreator.getInstance().setNPCScriptable(npcsIds));
             }
 
             if (newcomer) {

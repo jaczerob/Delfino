@@ -49,14 +49,14 @@ public final class PetFoodHandler extends AbstractPacketHandler {
         Character chr = client.getPlayer();
         AutobanManager abm = chr.getAutobanManager();
         if (abm.getLastSpam(2) + 500 > currentServerTime()) {
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
         abm.spam(2);
         packet.readInt(); // timestamp issue detected thanks to Masterrulax
         abm.setTimestamp(1, Server.getInstance().getCurrentTimestamp(), 3);
         if (chr.getNoPets() == 0) {
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
         int previousFullness = 100;

@@ -32,6 +32,6 @@ public final class NPCAnimationHandler extends AbstractPacketHandler {
             byte[] bytes = packet.readBytes(length - 9);
             op.writeBytes(bytes);
         }
-        client.sendPacket(op);
+        context.writeAndFlush(op);
     }
 }

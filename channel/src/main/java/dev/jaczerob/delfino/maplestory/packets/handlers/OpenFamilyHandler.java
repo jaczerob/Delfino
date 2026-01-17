@@ -45,7 +45,7 @@ public final class OpenFamilyHandler extends AbstractPacketHandler {
             return;
         }
         Character chr = client.getPlayer();
-        client.sendPacket(ChannelPacketCreator.getInstance().getFamilyInfo(chr.getFamilyEntry()));
+        context.writeAndFlush(ChannelPacketCreator.getInstance().getFamilyInfo(chr.getFamilyEntry()));
     }
 }
 

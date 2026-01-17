@@ -24,7 +24,12 @@ package dev.jaczerob.delfino.maplestory.client.inventory.manipulator;
 import dev.jaczerob.delfino.maplestory.client.BuffStat;
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Client;
-import dev.jaczerob.delfino.maplestory.client.inventory.*;
+import dev.jaczerob.delfino.maplestory.client.inventory.Equip;
+import dev.jaczerob.delfino.maplestory.client.inventory.Inventory;
+import dev.jaczerob.delfino.maplestory.client.inventory.InventoryType;
+import dev.jaczerob.delfino.maplestory.client.inventory.Item;
+import dev.jaczerob.delfino.maplestory.client.inventory.ModifyInventory;
+import dev.jaczerob.delfino.maplestory.client.inventory.Pet;
 import dev.jaczerob.delfino.maplestory.client.newyear.NewYearCardRecord;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
 import dev.jaczerob.delfino.maplestory.constants.id.ItemId;
@@ -616,9 +621,6 @@ public class InventoryManipulator {
 
         eqpdInv.lockInventory();
         try {
-            if (source.getRingId() > -1) {
-                chr.getRingById(source.getRingId()).equip();
-            }
             chr.equippedItem(source);
             eqpdInv.addItemFromDB(source);
         } finally {
@@ -658,9 +660,6 @@ public class InventoryManipulator {
 
         eqpdInv.lockInventory();
         try {
-            if (source.getRingId() > -1) {
-                chr.getRingById(source.getRingId()).unequip();
-            }
             chr.unequippedItem(source);
             eqpdInv.removeSlot(src);
         } finally {

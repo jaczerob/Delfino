@@ -45,18 +45,18 @@ public class UseMapleLifeHandler extends AbstractPacketHandler {
 
         if (timeNow - player.getLastUsedCashItem() < 3000) {
             player.dropMessage(5, "Please wait a moment before trying again.");
-            client.sendPacket(ChannelPacketCreator.getInstance().sendMapleLifeError(3));
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().sendMapleLifeError(3));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
         player.setLastUsedCashItem(timeNow);
 
         String name = packet.readString();
         if (Character.canCreateChar(name)) {
-            client.sendPacket(ChannelPacketCreator.getInstance().sendMapleLifeCharacterInfo());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().sendMapleLifeCharacterInfo());
         } else {
-            client.sendPacket(ChannelPacketCreator.getInstance().sendMapleLifeNameError());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().sendMapleLifeNameError());
         }
-        client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+        context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
     }
 }

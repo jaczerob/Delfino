@@ -66,8 +66,8 @@ public final class MonsterCarnivalHandler extends AbstractPacketHandler {
                     if (tab == 0) {
                         final List<Pair<Integer, Integer>> mobs = client.getPlayer().getMap().getMobsToSpawn();
                         if (num >= mobs.size() || client.getPlayer().getCP() < mobs.get(num).right) {
-                            client.sendPacket(ChannelPacketCreator.getInstance().CPQMessage((byte) 1));
-                            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().CPQMessage((byte) 1));
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                             return;
                         }
 
@@ -75,8 +75,8 @@ public final class MonsterCarnivalHandler extends AbstractPacketHandler {
                         MonsterCarnival mcpq = client.getPlayer().getMonsterCarnival();
                         if (mcpq != null) {
                             if (!mcpq.canSummonR() && client.getPlayer().getTeam() == 0 || !mcpq.canSummonB() && client.getPlayer().getTeam() == 1) {
-                                client.sendPacket(ChannelPacketCreator.getInstance().CPQMessage((byte) 2));
-                                client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                                context.writeAndFlush(ChannelPacketCreator.getInstance().CPQMessage((byte) 2));
+                                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                                 return;
                             }
 
@@ -91,7 +91,7 @@ public final class MonsterCarnivalHandler extends AbstractPacketHandler {
 
                             client.getPlayer().getMap().addMonsterSpawn(mob, 1, client.getPlayer().getTeam());
                             client.getPlayer().getMap().addAllMonsterSpawn(mob, 1, client.getPlayer().getTeam());
-                            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                         }
 
                         neededCP = mobs.get(num).right;
@@ -99,13 +99,13 @@ public final class MonsterCarnivalHandler extends AbstractPacketHandler {
                         final List<Integer> skillid = client.getPlayer().getMap().getSkillIds();
                         if (num >= skillid.size()) {
                             client.getPlayer().dropMessage(5, "An unexpected error has occurred.");
-                            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                             return;
                         }
                         final MCSkill skill = CarnivalFactory.getInstance().getSkill(skillid.get(num)); //ugh wtf
                         if (skill == null || client.getPlayer().getCP() < skill.cpLoss()) {
-                            client.sendPacket(ChannelPacketCreator.getInstance().CPQMessage((byte) 1));
-                            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().CPQMessage((byte) 1));
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                             return;
                         }
                         final Disease dis = skill.getDisease();
@@ -137,20 +137,20 @@ public final class MonsterCarnivalHandler extends AbstractPacketHandler {
                             }
                         }
                         neededCP = skill.cpLoss();
-                        client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                     } else if (tab == 2) { //protectors
                         final MCSkill skill = CarnivalFactory.getInstance().getGuardian(num);
                         if (skill == null || client.getPlayer().getCP() < skill.cpLoss()) {
-                            client.sendPacket(ChannelPacketCreator.getInstance().CPQMessage((byte) 1));
-                            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().CPQMessage((byte) 1));
+                            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                             return;
                         }
 
                         MonsterCarnival mcpq = client.getPlayer().getMonsterCarnival();
                         if (mcpq != null) {
                             if (!mcpq.canGuardianR() && client.getPlayer().getTeam() == 0 || !mcpq.canGuardianB() && client.getPlayer().getTeam() == 1) {
-                                client.sendPacket(ChannelPacketCreator.getInstance().CPQMessage((byte) 2));
-                                client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                                context.writeAndFlush(ChannelPacketCreator.getInstance().CPQMessage((byte) 2));
+                                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                                 return;
                             }
 
@@ -158,17 +158,17 @@ public final class MonsterCarnivalHandler extends AbstractPacketHandler {
                             if (success != 1) {
                                 switch (success) {
                                     case -1:
-                                        client.sendPacket(ChannelPacketCreator.getInstance().CPQMessage((byte) 3));
+                                        context.writeAndFlush(ChannelPacketCreator.getInstance().CPQMessage((byte) 3));
                                         break;
 
                                     case 0:
-                                        client.sendPacket(ChannelPacketCreator.getInstance().CPQMessage((byte) 4));
+                                        context.writeAndFlush(ChannelPacketCreator.getInstance().CPQMessage((byte) 4));
                                         break;
 
                                     default:
-                                        client.sendPacket(ChannelPacketCreator.getInstance().CPQMessage((byte) 3));
+                                        context.writeAndFlush(ChannelPacketCreator.getInstance().CPQMessage((byte) 3));
                                 }
-                                client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                                 return;
                             } else {
                                 neededCP = skill.cpLoss();

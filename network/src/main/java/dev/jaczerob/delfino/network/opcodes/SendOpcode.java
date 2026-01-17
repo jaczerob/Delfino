@@ -227,7 +227,7 @@ public enum SendOpcode {
     SPAWN_NPC(0x101),
     REMOVE_NPC(0x102),
     SPAWN_NPC_REQUEST_CONTROLLER(0x103),
-    NPC_ACTION(0x104),
+    NPC_ACTION(0x104, false),
     SET_NPC_SCRIPTABLE(0x107),
     SPAWN_HIRED_MERCHANT(0x109),
     DESTROY_HIRED_MERCHANT(0x10A),
@@ -310,12 +310,30 @@ public enum SendOpcode {
     VEGA_SCROLL(0x166);
 
     private final int code;
+    private final boolean log;
 
     SendOpcode(final int code) {
+        this(code, true);
+    }
+
+    SendOpcode(final int code, final boolean log) {
         this.code = code;
+        this.log = log;
+    }
+
+    public static SendOpcode fromValue(final int value) {
+        for (final var opcode : values())
+            if (opcode.getValue() == value)
+                return opcode;
+
+        return null;
     }
 
     public int getValue() {
         return code;
+    }
+
+    public boolean getLog() {
+        return log;
     }
 }

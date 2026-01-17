@@ -19,6 +19,6 @@ public final class UseHammerHandler extends AbstractPacketHandler {
     }
 
     public void handlePacket(final InPacket packet, final Client client, final ChannelHandlerContext context) {
-        client.sendPacket(ChannelPacketCreator.getInstance().sendHammerMessage());
+        context.writeAndFlush(ChannelPacketCreator.getInstance().sendHammerMessage());
     }
 }

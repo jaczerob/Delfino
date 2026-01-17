@@ -20,6 +20,6 @@ public final class TouchingCashShopHandler extends AbstractPacketHandler {
 
     @Override
     public void handlePacket(final InPacket packet, final Client client, final ChannelHandlerContext context) {
-        client.sendPacket(ChannelPacketCreator.getInstance().showCash(client.getPlayer()));
+        context.writeAndFlush(ChannelPacketCreator.getInstance().showCash(client.getPlayer()));
     }
 }

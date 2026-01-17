@@ -62,7 +62,7 @@ public final class HiredMerchantRequest extends AbstractPacketHandler {
             if (!chr.hasMerchant()) {
                 try {
                     if (ItemFactory.MERCHANT.loadItems(chr.getId(), false).isEmpty() && chr.getMerchantMeso() == 0) {
-                        client.sendPacket(ChannelPacketCreator.getInstance().hiredMerchantBox());
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().hiredMerchantBox());
                     } else {
                         chr.sendPacket(ChannelPacketCreator.getInstance().retrieveFirstMessage());
                     }

@@ -29,6 +29,15 @@ import dev.jaczerob.delfino.network.packets.InPacket;
 import io.netty.channel.ChannelHandlerContext;
 
 public abstract class FamilySeparateHandler extends AbstractPacketHandler {
+    private static int separateRepCost(FamilyEntry junior) {
+        int level = junior.getLevel();
+        int ret = level / 20;
+        ret += 10;
+        ret *= level;
+        ret *= 2;
+        return ret;
+    }
+
     @Override
     public void handlePacket(final InPacket packet, final Client client, final ChannelHandlerContext context) {
         if (!YamlConfig.config.server.USE_FAMILY_SYSTEM) {
@@ -62,7 +71,7 @@ public abstract class FamilySeparateHandler extends AbstractPacketHandler {
         int cost = 2500 * levelDiff;
         cost += levelDiff * levelDiff;
         if (client.getPlayer().getMeso() < cost) {
-            client.sendPacket(ChannelPacketCreator.getInstance().sendFamilyMessage(isSenior ? 81 : 80, cost));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().sendFamilyMessage(isSenior ? 81 : 80, cost));
             return;
         }
         client.getPlayer().gainMeso(-cost);
@@ -73,18 +82,8 @@ public abstract class FamilySeparateHandler extends AbstractPacketHandler {
         }
         forkOn.announceToSenior(ChannelPacketCreator.getInstance().serverNotice(5, forkOn.getName() + " has left the family."), true);
         forkOn.fork();
-        client.sendPacket(ChannelPacketCreator.getInstance().getFamilyInfo(forkOn)); //pedigree info will be requested from the client if the window is open
+        context.writeAndFlush(ChannelPacketCreator.getInstance().getFamilyInfo(forkOn)); //pedigree info will be requested from the client if the window is open
         forkOn.updateSeniorFamilyInfo(true);
-        client.sendPacket(ChannelPacketCreator.getInstance().sendFamilyMessage(1, 0));
-    }
-
-
-    private static int separateRepCost(FamilyEntry junior) {
-        int level = junior.getLevel();
-        int ret = level / 20;
-        ret += 10;
-        ret *= level;
-        ret *= 2;
-        return ret;
+        context.writeAndFlush(ChannelPacketCreator.getInstance().sendFamilyMessage(1, 0));
     }
 }

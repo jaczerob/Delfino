@@ -53,13 +53,13 @@ public class CashShopSurpriseHandler extends AbstractPacketHandler {
         long cashId = packet.readLong();
         Optional<CashShopSurpriseResult> result = cs.openCashShopSurprise(cashId);
         if (result.isEmpty()) {
-            client.sendPacket(ChannelPacketCreator.getInstance().onCashItemGachaponOpenFailed());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().onCashItemGachaponOpenFailed());
             return;
         }
 
         Item usedCashShopSurprise = result.get().usedCashShopSurprise();
         Item reward = result.get().reward();
-        client.sendPacket(ChannelPacketCreator.getInstance().onCashGachaponOpenSuccess(client.getAccID(), usedCashShopSurprise.getCashId(),
+        context.writeAndFlush(ChannelPacketCreator.getInstance().onCashGachaponOpenSuccess(client.getAccID(), usedCashShopSurprise.getCashId(),
                 usedCashShopSurprise.getQuantity(), reward, reward.getItemId(), reward.getQuantity(), true));
     }
 }

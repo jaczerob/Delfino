@@ -135,7 +135,7 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
         long timeNow = currentServerTime();
         if (timeNow - player.getLastUsedCashItem() < 3000) {
             player.dropMessage(1, "You have used a cash item recently. Wait a moment, then try again.");
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
         player.setLastUsedCashItem(timeNow);
@@ -151,7 +151,7 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
             toUse = cashInv.findById(itemId);
 
             if (toUse == null) {
-                client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                 return;
             }
 
@@ -159,7 +159,7 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
         }
 
         if (toUse.getQuantity() < 1) {
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             return;
         }
 
@@ -210,11 +210,11 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
 
             if (!success) {
                 InventoryManipulator.addById(client, itemId, (short) 1);
-                client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             }
         } else if (itemType == 505) { // AP/SP reset
             if (!player.isAlive()) {
-                client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                 return;
             }
 
@@ -422,7 +422,7 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
                 player.getMap().spawnKite(kite);
                 remove(client, position, itemId);
             } else {
-                client.sendPacket(ChannelPacketCreator.getInstance().sendCannotSpawnKite());
+                context.writeAndFlush(ChannelPacketCreator.getInstance().sendCannotSpawnKite());
             }
         } else if (itemType == 509) {
             String sendTo = packet.readString();
@@ -430,7 +430,7 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
             boolean sendSuccess = noteService.sendNormal(msg, player.getName(), sendTo);
             if (sendSuccess) {
                 remove(client, position, itemId);
-                client.sendPacket(OutPacket.create(SendOpcode.MEMO_RESULT).writeByte(4));
+                context.writeAndFlush(OutPacket.create(SendOpcode.MEMO_RESULT).writeByte(4));
             }
         } else if (itemType == 510) {
             player.getMap().broadcastMessage(ChannelPacketCreator.getInstance().musicChange("Jukebox/Congratulation"));
@@ -446,7 +446,7 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
         } else if (itemType == 517) {
             Pet pet = player.getPet(0);
             if (pet == null) {
-                client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                 return;
             }
             String newName = packet.readString();
@@ -459,12 +459,12 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
             }
 
             player.getMap().broadcastMessage(player, ChannelPacketCreator.getInstance().changePetName(player, newName, 1), true);
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             remove(client, position, itemId);
         } else if (itemType == 520) {
             player.gainMeso(ii.getMeso(itemId), true, false, true);
             remove(client, position, itemId);
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
         } else if (itemType == 523) {
             int itemid = packet.readInt();
 
@@ -477,8 +477,8 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
                 remove(client, position, itemId);
             }
 
-            client.sendPacket(ChannelPacketCreator.getInstance().owlOfMinerva(client, itemid, hmsAvailable));
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().owlOfMinerva(client, itemid, hmsAvailable));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
 
         } else if (itemType == 524) {
             for (byte i = 0; i < 3; i++) {
@@ -495,7 +495,7 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
                     break;
                 }
             }
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
         } else if (itemType == 530) {
             ii.getItemEffect(itemId).applyTo(player);
             remove(client, position, itemId);
@@ -526,16 +526,16 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
             packet.readByte();
             packet.readInt();
             if (itemId == ItemId.NAME_CHANGE) {
-                client.sendPacket(ChannelPacketCreator.getInstance().showNameChangeCancel(player.cancelPendingNameChange()));
+                context.writeAndFlush(ChannelPacketCreator.getInstance().showNameChangeCancel(player.cancelPendingNameChange()));
             } else if (itemId == ItemId.WORLD_TRANSFER) {
-                client.sendPacket(ChannelPacketCreator.getInstance().showWorldTransferCancel(player.cancelPendingWorldTranfer()));
+                context.writeAndFlush(ChannelPacketCreator.getInstance().showWorldTransferCancel(player.cancelPendingWorldTranfer()));
             }
             remove(client, position, itemId);
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
         } else if (itemType == 543) {
             if (itemId == ItemId.MAPLE_LIFE_B && !client.gainCharacterSlot()) {
                 player.dropMessage(1, "You have already used up all 12 extra character slots.");
-                client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                 return;
             }
 
@@ -558,15 +558,15 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
             };
 
             if (createStatus == 0) {
-                client.sendPacket(ChannelPacketCreator.getInstance().sendMapleLifeError(0));   // success!
+                context.writeAndFlush(ChannelPacketCreator.getInstance().sendMapleLifeError(0));   // success!
 
                 player.showHint("#bSuccess#k on creation of the new character through the Maple Life card.");
                 remove(client, position, itemId);
             } else {
                 if (createStatus == -1) {    // check name
-                    client.sendPacket(ChannelPacketCreator.getInstance().sendMapleLifeNameError());
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().sendMapleLifeNameError());
                 } else {
-                    client.sendPacket(ChannelPacketCreator.getInstance().sendMapleLifeError(-1 * createStatus));
+                    context.writeAndFlush(ChannelPacketCreator.getInstance().sendMapleLifeError(-1 * createStatus));
                 }
             }
         } else if (itemType == 545) { // MiuMiu's travel store
@@ -577,25 +577,25 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
                     remove(client, position, itemId);
                 }
             } else {
-                client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             }
         } else if (itemType == 550) { //Extend item expiration
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
         } else if (itemType == 552) {
             InventoryType type = InventoryType.getByType((byte) packet.readInt());
             short slot = (short) packet.readInt();
             Item item = player.getInventory(type).getItem(slot);
             if (item == null || item.getQuantity() <= 0 || KarmaManipulator.hasKarmaFlag(item) || !ii.isKarmaAble(item.getItemId())) {
-                client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                 return;
             }
 
             KarmaManipulator.setKarmaFlag(item);
             player.forceUpdateItem(item);
             remove(client, position, itemId);
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
         } else if (itemType == 552) { //DS EGG THING
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
         } else if (itemType == 557) {
             packet.readInt();
             int itemSlot = packet.readInt();
@@ -607,8 +607,8 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
             equip.setVicious(equip.getVicious() + 1);
             equip.setUpgradeSlots(equip.getUpgradeSlots() + 1);
             remove(client, position, itemId);
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
-            client.sendPacket(ChannelPacketCreator.getInstance().sendHammerData(equip.getVicious()));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().sendHammerData(equip.getVicious()));
             player.forceUpdateItem(equip);
         } else if (itemType == 561) { //VEGA'S SPELL
             if (packet.readInt() != 1) {
@@ -630,7 +630,7 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
 
             Equip toScroll = (Equip) eitem;
             if (toScroll.getUpgradeSlots() < 1) {
-                client.sendPacket(ChannelPacketCreator.getInstance().getInventoryFull());
+                context.writeAndFlush(ChannelPacketCreator.getInstance().getInventoryFull());
                 return;
             }
 
@@ -642,10 +642,10 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
             player.toggleBlockCashShop();
 
             final int curlevel = toScroll.getLevel();
-            client.sendPacket(ChannelPacketCreator.getInstance().sendVegaScroll(0x40));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().sendVegaScroll(0x40));
 
             final Equip scrolled = (Equip) ii.scrollEquipWithId(toScroll, uitem.getItemId(), false, itemId, player.isGM());
-            client.sendPacket(ChannelPacketCreator.getInstance().sendVegaScroll(scrolled.getLevel() > curlevel ? 0x41 : 0x43));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().sendVegaScroll(scrolled.getLevel() > curlevel ? 0x41 : 0x43));
             //opcodes 0x42, 0x44: "this item cannot be used"; 0x39, 0x45: crashes
 
             InventoryManipulator.removeFromSlot(client, InventoryType.USE, uSlot, (short) 1, false);
@@ -661,7 +661,7 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
                 final List<ModifyInventory> mods = new ArrayList<>();
                 mods.add(new ModifyInventory(3, scrolled));
                 mods.add(new ModifyInventory(0, scrolled));
-                client.sendPacket(ChannelPacketCreator.getInstance().modifyInventory(true, mods));
+                context.writeAndFlush(ChannelPacketCreator.getInstance().modifyInventory(true, mods));
 
                 ScrollResult scrollResult = scrolled.getLevel() > curlevel ? ScrollResult.SUCCESS : ScrollResult.FAIL;
                 player.getMap().broadcastMessage(ChannelPacketCreator.getInstance().getScrollEffect(player.getId(), scrollResult, false, false));
@@ -669,11 +669,11 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
                     player.equipChanged();
                 }
 
-                client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
             }, SECONDS.toMillis(3));
         } else {
             log.warn("NEW CASH ITEM TYPE: {}, packet: {}", itemType, packet);
-            client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+            context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
         }
     }
 }

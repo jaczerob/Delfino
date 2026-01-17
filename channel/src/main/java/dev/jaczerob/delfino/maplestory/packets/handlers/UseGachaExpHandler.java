@@ -35,6 +35,6 @@ public class UseGachaExpHandler extends AbstractPacketHandler {
             }
         }
 
-        client.sendPacket(ChannelPacketCreator.getInstance().enableActions());
+        context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
     }
 }

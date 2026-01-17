@@ -32,7 +32,7 @@ public final class TrockAddMapHandler extends AbstractPacketHandler {
             } else {
                 chr.deleteFromTrocks(mapId);
             }
-            client.sendPacket(ChannelPacketCreator.getInstance().trockRefreshMapList(chr, true, vip));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().trockRefreshMapList(chr, true, vip));
         } else if (type == 0x01) {
             if (!FieldLimit.CANNOTVIPROCK.check(chr.getMap().getFieldLimit())) {
                 if (vip) {
@@ -41,7 +41,7 @@ public final class TrockAddMapHandler extends AbstractPacketHandler {
                     chr.addTrockMap();
                 }
 
-                client.sendPacket(ChannelPacketCreator.getInstance().trockRefreshMapList(chr, false, vip));
+                context.writeAndFlush(ChannelPacketCreator.getInstance().trockRefreshMapList(chr, false, vip));
             } else {
                 chr.message("You may not save this map.");
             }

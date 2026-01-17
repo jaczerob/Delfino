@@ -31,6 +31,8 @@ import dev.jaczerob.delfino.maplestory.tools.Pair;
 import dev.jaczerob.delfino.network.opcodes.RecvOpcode;
 import dev.jaczerob.delfino.network.packets.InPacket;
 import io.netty.channel.ChannelHandlerContext;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
@@ -39,6 +41,7 @@ import java.util.List;
 /**
  * @author Ronan
  */
+@Slf4j
 @Component
 public final class PlayerMapTransitionHandler extends AbstractPacketHandler {
     @Override
@@ -49,6 +52,18 @@ public final class PlayerMapTransitionHandler extends AbstractPacketHandler {
     @Override
     public void handlePacket(final InPacket packet, final Client client, final ChannelHandlerContext context) {
         Character chr = client.getPlayer();
+
+        final var currentMap = chr.getMap();
+        if (currentMap == null) {
+            MDC.put("player.map.current.id", "null");
+            MDC.put("player.map.current.name", "null");
+        } else {
+            MDC.put("player.map.current.id", String.valueOf(currentMap.getId()));
+            MDC.put("player.map.current.name", currentMap.getMapName());
+        }
+
+        log.debug("Player finished transitioning maps");
+
         chr.setMapTransitionComplete();
 
         int beaconid = chr.getBuffSource(BuffStat.HOMING_BEACON);
@@ -64,7 +79,7 @@ public final class PlayerMapTransitionHandler extends AbstractPacketHandler {
                 Monster m = (Monster) mo;
                 if (m.getSpawnEffect() == 0 || m.getHp() < m.getMaxHp()) {     // avoid effect-spawning mobs
                     if (m.getController() == chr) {
-                        client.sendPacket(ChannelPacketCreator.getInstance().stopControllingMonster(m.getObjectId()));
+                        context.writeAndFlush(ChannelPacketCreator.getInstance().stopControllingMonster(m.getObjectId()));
                         m.sendDestroyData(client);
                         m.aggroRemoveController();
                     } else {
