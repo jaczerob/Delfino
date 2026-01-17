@@ -3,11 +3,9 @@ package dev.jaczerob.delfino.maplestory.packets.handlers;
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.client.autoban.AutobanFactory;
-import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.net.server.world.World;
 import dev.jaczerob.delfino.maplestory.packets.AbstractPacketHandler;
 import dev.jaczerob.delfino.maplestory.server.ChatLogger;
-import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.network.opcodes.RecvOpcode;
 import dev.jaczerob.delfino.network.packets.InPacket;
 import io.netty.channel.ChannelHandlerContext;
@@ -51,15 +49,6 @@ public final class MultiChatHandler extends AbstractPacketHandler {
         } else if (type == 1 && player.getParty() != null) {
             world.partyChat(player.getParty(), chattext, player.getName());
             ChatLogger.log(client, "Party", chattext);
-        } else if (type == 2 && player.getGuildId() > 0) {
-            Server.getInstance().guildChat(player.getGuildId(), player.getName(), player.getId(), chattext);
-            ChatLogger.log(client, "Guild", chattext);
-        } else if (type == 3 && player.getGuild() != null) {
-            int allianceId = player.getGuild().getAllianceId();
-            if (allianceId > 0) {
-                Server.getInstance().allianceMessage(allianceId, ChannelPacketCreator.getInstance().multiChat(player.getName(), chattext, 3), player.getId(), -1);
-                ChatLogger.log(client, "Ally", chattext);
-            }
         }
         player.getAutobanManager().spam(7);
     }

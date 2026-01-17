@@ -10,7 +10,6 @@ import dev.jaczerob.delfino.maplestory.server.life.AbstractLoadedLife;
 import dev.jaczerob.delfino.maplestory.server.life.LifeFactory;
 import dev.jaczerob.delfino.maplestory.server.life.Monster;
 import dev.jaczerob.delfino.maplestory.server.life.PlayerNPC;
-import dev.jaczerob.delfino.maplestory.server.partyquest.GuardianSpawnPoint;
 import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
 import dev.jaczerob.delfino.maplestory.tools.StringUtil;
 
@@ -40,13 +39,6 @@ public class MapFactory {
             String id = DataTool.getString(life.getChildByPath("id"));
             String type = DataTool.getString(life.getChildByPath("type"));
             int team = DataTool.getInt("team", life, -1);
-            if (map.isCPQMap2() && type.equals("m")) {
-                if ((Integer.parseInt(life.getName()) % 2) == 0) {
-                    team = 0;
-                } else {
-                    team = 1;
-                }
-            }
             int cy = DataTool.getInt(life.getChildByPath("cy"));
             Data dF = life.getChildByPath("f");
             int f = (dF != null) ? DataTool.getInt(dF) : 0;
@@ -232,36 +224,6 @@ public class MapFactory {
         loadLifeFromWz(map, mapData);
         loadLifeFromDb(map);
 
-        if (map.isCPQMap()) {
-            Data mcData = mapData.getChildByPath("monsterCarnival");
-            if (mcData != null) {
-                map.setDeathCP(DataTool.getIntConvert("deathCP", mcData, 0));
-                map.setMaxMobs(DataTool.getIntConvert("mobGenMax", mcData, 20));    // thanks Atoot for noticing CPQ1 bf. 3 and 4 not accepting spawns due to undefined limits, Lame for noticing a need to cap mob spawns even on such undefined limits
-                map.setTimeDefault(DataTool.getIntConvert("timeDefault", mcData, 0));
-                map.setTimeExpand(DataTool.getIntConvert("timeExpand", mcData, 0));
-                map.setMaxReactors(DataTool.getIntConvert("guardianGenMax", mcData, 16));
-                Data guardianGenData = mcData.getChildByPath("guardianGenPos");
-                for (Data node : guardianGenData.getChildren()) {
-                    GuardianSpawnPoint pt = new GuardianSpawnPoint(new Point(DataTool.getIntConvert("x", node), DataTool.getIntConvert("y", node)));
-                    pt.setTeam(DataTool.getIntConvert("team", node, -1));
-                    pt.setTaken(false);
-                    map.addGuardianSpawnPoint(pt);
-                }
-                if (mcData.getChildByPath("skill") != null) {
-                    for (Data area : mcData.getChildByPath("skill")) {
-                        map.addSkillId(DataTool.getInt(area));
-                    }
-                }
-
-                if (mcData.getChildByPath("mob") != null) {
-                    for (Data area : mcData.getChildByPath("mob")) {
-                        map.addMobSpawn(DataTool.getInt(area.getChildByPath("id")), DataTool.getInt(area.getChildByPath("spendCP")));
-                    }
-                }
-            }
-
-        }
-
         if (mapData.getChildByPath("reactor") != null) {
             for (Data reactor : mapData.getChildByPath("reactor")) {
                 String id = DataTool.getString(reactor.getChildByPath("id"));
@@ -338,13 +300,12 @@ public class MapFactory {
 
     private static String getMapName(int mapid) {
         String mapName = StringUtil.getLeftPaddedStr(Integer.toString(mapid), '0', 9);
-        StringBuilder builder = new StringBuilder("Map/Map");
         int area = mapid / 100000000;
-        builder.append(area);
-        builder.append("/");
-        builder.append(mapName);
-        builder.append(".img");
-        mapName = builder.toString();
+        String builder = "Map/Map" + area +
+                "/" +
+                mapName +
+                ".img";
+        mapName = builder;
         return mapName;
     }
 

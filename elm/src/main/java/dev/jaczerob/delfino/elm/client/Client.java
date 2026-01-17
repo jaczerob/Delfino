@@ -35,12 +35,14 @@ public class Client extends ChannelInboundHandlerAdapter {
     private static final Logger log = LoggerFactory.getLogger(Client.class);
 
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final SessionCoordinator sessionCoordinator;
 
     private Account account;
     private Channel ioChannel;
 
-    public Client(final ApplicationEventPublisher applicationEventPublisher) {
+    public Client(final ApplicationEventPublisher applicationEventPublisher, final SessionCoordinator sessionCoordinator) {
         this.applicationEventPublisher = applicationEventPublisher;
+        this.sessionCoordinator = sessionCoordinator;
     }
 
     @Override
@@ -51,7 +53,7 @@ public class Client extends ChannelInboundHandlerAdapter {
     @Override
     public void channelInactive(final ChannelHandlerContext context) {
         log.info("Client disconnected: {}", this.ioChannel.remoteAddress());
-        SessionCoordinator.getInstance().logout(this);
+        this.sessionCoordinator.logout(this);
     }
 
     @Override
@@ -116,7 +118,7 @@ public class Client extends ChannelInboundHandlerAdapter {
         log.warn("Exception caught by client", cause);
 
         if (cause instanceof InvalidPacketHeaderException || cause instanceof IOException) {
-            SessionCoordinator.getInstance().logout(this);
+            this.sessionCoordinator.logout(this);
         }
     }
 }

@@ -3,36 +3,155 @@ package dev.jaczerob.delfino.maplestory.net.server.world;
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
-import dev.jaczerob.delfino.maplestory.net.server.coordinator.matchchecker.MatchCheckerCoordinator;
-import dev.jaczerob.delfino.maplestory.net.server.coordinator.matchchecker.MatchCheckerListenerFactory.MatchCheckerType;
 import dev.jaczerob.delfino.maplestory.server.maps.Door;
 import dev.jaczerob.delfino.maplestory.server.maps.MapleMap;
-import dev.jaczerob.delfino.maplestory.server.partyquest.MonsterCarnival;
 import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Party {
 
+    private final List<PartyCharacter> members = new LinkedList<>();
+    private final Map<Integer, Integer> histMembers = new HashMap<>();
+    private final Map<Integer, Door> doors = new HashMap<>();
+    private final Lock lock = new ReentrantLock(true);
     private int id;
     private Party enemy = null;
     private int leaderId;
-    private final List<PartyCharacter> members = new LinkedList<>();
     private List<PartyCharacter> pqMembers = null;
-
-    private final Map<Integer, Integer> histMembers = new HashMap<>();
     private int nextEntry = 0;
-
-    private final Map<Integer, Door> doors = new HashMap<>();
-
-    private final Lock lock = new ReentrantLock(true);
 
     public Party(int id, PartyCharacter chrfor) {
         this.leaderId = chrfor.getId();
         this.id = id;
+    }
+
+    public static boolean createParty(Character player, boolean silentCheck) {
+        Party party = player.getParty();
+        if (party == null) {
+            if (player.getLevel() < 10 && !YamlConfig.config.server.USE_PARTY_FOR_STARTERS) {
+                player.sendPacket(ChannelPacketCreator.getInstance().partyStatusMessage(10));
+                return false;
+            }
+
+            PartyCharacter partyplayer = new PartyCharacter(player);
+            party = player.getWorldServer().createParty(partyplayer);
+            player.setParty(party);
+            player.setMPC(partyplayer);
+            player.getMap().addPartyMember(player, party.getId());
+            player.silentPartyUpdate();
+
+            player.updatePartySearchAvailability(false);
+            player.partyOperationUpdate(party, null);
+
+            player.sendPacket(ChannelPacketCreator.getInstance().partyCreated(party, partyplayer.getId()));
+
+            return true;
+        } else {
+            if (!silentCheck) {
+                player.sendPacket(ChannelPacketCreator.getInstance().partyStatusMessage(16));
+            }
+
+            return false;
+        }
+    }
+
+    public static boolean joinParty(Character player, int partyid, boolean silentCheck) {
+        Party party = player.getParty();
+        World world = player.getWorldServer();
+
+        if (party == null) {
+            party = world.getParty(partyid);
+            if (party != null) {
+                if (party.getMembers().size() < 6) {
+                    PartyCharacter partyplayer = new PartyCharacter(player);
+                    player.getMap().addPartyMember(player, party.getId());
+
+                    world.updateParty(party.getId(), PartyOperation.JOIN, partyplayer);
+                    player.receivePartyMemberHP();
+                    player.updatePartyMemberHP();
+
+                    player.resetPartySearchInvite(party.getLeaderId());
+                    player.updatePartySearchAvailability(false);
+                    player.partyOperationUpdate(party, null);
+                    return true;
+                } else {
+                    if (!silentCheck) {
+                        player.sendPacket(ChannelPacketCreator.getInstance().partyStatusMessage(17));
+                    }
+                }
+            } else {
+                player.sendPacket(ChannelPacketCreator.getInstance().serverNotice(5, "You couldn't join the party since it had already been disbanded."));
+            }
+        } else {
+            if (!silentCheck) {
+                player.sendPacket(ChannelPacketCreator.getInstance().serverNotice(5, "You can't join the party as you are already in one."));
+            }
+        }
+
+        return false;
+    }
+
+    public static void leaveParty(Party party, Client c) {
+        World world = c.getWorldServer();
+        Character player = c.getPlayer();
+        PartyCharacter partyplayer = player.getMPC();
+
+        if (party != null && partyplayer != null) {
+            if (partyplayer.getId() == party.getLeaderId()) {
+                c.getWorldServer().removeMapPartyMembers(party.getId());
+
+                world.updateParty(party.getId(), PartyOperation.DISBAND, partyplayer);
+            } else {
+                MapleMap map = player.getMap();
+                if (map != null) {
+                    map.removePartyMember(player, party.getId());
+                }
+
+                world.updateParty(party.getId(), PartyOperation.LEAVE, partyplayer);
+            }
+
+            player.setParty(null);
+        }
+    }
+
+    public static void expelFromParty(Party party, Client c, int expelCid) {
+        World world = c.getWorldServer();
+        Character player = c.getPlayer();
+        PartyCharacter partyplayer = player.getMPC();
+
+        if (party != null && partyplayer != null) {
+            if (partyplayer.equals(party.getLeader())) {
+                PartyCharacter expelled = party.getMemberById(expelCid);
+                if (expelled != null) {
+                    Character emc = expelled.getPlayer();
+                    if (emc != null) {
+                        List<Character> partyMembers = emc.getPartyMembersOnline();
+
+                        MapleMap map = emc.getMap();
+                        if (map != null) {
+                            map.removePartyMember(emc, party.getId());
+                        }
+
+                        emc.setParty(null);
+                        world.updateParty(party.getId(), PartyOperation.EXPEL, expelled);
+
+                        emc.updatePartySearchAvailability(true);
+                        emc.partyOperationUpdate(party, partyMembers);
+                    } else {
+                        world.updateParty(party.getId(), PartyOperation.EXPEL, expelled);
+                    }
+                }
+            }
+        }
     }
 
     public boolean containsMembers(PartyCharacter member) {
@@ -65,10 +184,6 @@ public class Party {
         } finally {
             lock.unlock();
         }
-    }
-
-    public void setLeader(PartyCharacter victim) {
-        this.leaderId = victim.getId();
     }
 
     public void updateMember(PartyCharacter member) {
@@ -167,6 +282,10 @@ public class Party {
         } finally {
             lock.unlock();
         }
+    }
+
+    public void setLeader(PartyCharacter victim) {
+        this.leaderId = victim.getId();
     }
 
     public Party getEnemy() {
@@ -289,148 +408,5 @@ public class Party {
         }
         final Party other = (Party) obj;
         return id == other.id;
-    }
-
-    public static boolean createParty(Character player, boolean silentCheck) {
-        Party party = player.getParty();
-        if (party == null) {
-            if (player.getLevel() < 10 && !YamlConfig.config.server.USE_PARTY_FOR_STARTERS) {
-                player.sendPacket(ChannelPacketCreator.getInstance().partyStatusMessage(10));
-                return false;
-            } else if (player.getAriantColiseum() != null) {
-                player.dropMessage(5, "You cannot request a party creation while participating the Ariant Battle Arena.");
-                return false;
-            }
-
-            PartyCharacter partyplayer = new PartyCharacter(player);
-            party = player.getWorldServer().createParty(partyplayer);
-            player.setParty(party);
-            player.setMPC(partyplayer);
-            player.getMap().addPartyMember(player, party.getId());
-            player.silentPartyUpdate();
-
-            player.updatePartySearchAvailability(false);
-            player.partyOperationUpdate(party, null);
-
-            player.sendPacket(ChannelPacketCreator.getInstance().partyCreated(party, partyplayer.getId()));
-
-            return true;
-        } else {
-            if (!silentCheck) {
-                player.sendPacket(ChannelPacketCreator.getInstance().partyStatusMessage(16));
-            }
-
-            return false;
-        }
-    }
-
-    public static boolean joinParty(Character player, int partyid, boolean silentCheck) {
-        Party party = player.getParty();
-        World world = player.getWorldServer();
-
-        if (party == null) {
-            party = world.getParty(partyid);
-            if (party != null) {
-                if (party.getMembers().size() < 6) {
-                    PartyCharacter partyplayer = new PartyCharacter(player);
-                    player.getMap().addPartyMember(player, party.getId());
-
-                    world.updateParty(party.getId(), PartyOperation.JOIN, partyplayer);
-                    player.receivePartyMemberHP();
-                    player.updatePartyMemberHP();
-
-                    player.resetPartySearchInvite(party.getLeaderId());
-                    player.updatePartySearchAvailability(false);
-                    player.partyOperationUpdate(party, null);
-                    return true;
-                } else {
-                    if (!silentCheck) {
-                        player.sendPacket(ChannelPacketCreator.getInstance().partyStatusMessage(17));
-                    }
-                }
-            } else {
-                player.sendPacket(ChannelPacketCreator.getInstance().serverNotice(5, "You couldn't join the party since it had already been disbanded."));
-            }
-        } else {
-            if (!silentCheck) {
-                player.sendPacket(ChannelPacketCreator.getInstance().serverNotice(5, "You can't join the party as you are already in one."));
-            }
-        }
-
-        return false;
-    }
-
-    public static void leaveParty(Party party, Client c) {
-        World world = c.getWorldServer();
-        Character player = c.getPlayer();
-        PartyCharacter partyplayer = player.getMPC();
-
-        if (party != null && partyplayer != null) {
-            if (partyplayer.getId() == party.getLeaderId()) {
-                c.getWorldServer().removeMapPartyMembers(party.getId());
-
-                MonsterCarnival mcpq = player.getMonsterCarnival();
-                if (mcpq != null) {
-                    mcpq.leftParty(player.getId());
-                }
-
-                world.updateParty(party.getId(), PartyOperation.DISBAND, partyplayer);
-            } else {
-                MapleMap map = player.getMap();
-                if (map != null) {
-                    map.removePartyMember(player, party.getId());
-                }
-
-                MonsterCarnival mcpq = player.getMonsterCarnival();
-                if (mcpq != null) {
-                    mcpq.leftParty(player.getId());
-                }
-
-                world.updateParty(party.getId(), PartyOperation.LEAVE, partyplayer);
-            }
-
-            player.setParty(null);
-
-            MatchCheckerCoordinator mmce = c.getWorldServer().getMatchCheckerCoordinator();
-            if (mmce.getMatchConfirmationLeaderid(player.getId()) == player.getId() && mmce.getMatchConfirmationType(player.getId()) == MatchCheckerType.GUILD_CREATION) {
-                mmce.dismissMatchConfirmation(player.getId());
-            }
-        }
-    }
-
-    public static void expelFromParty(Party party, Client c, int expelCid) {
-        World world = c.getWorldServer();
-        Character player = c.getPlayer();
-        PartyCharacter partyplayer = player.getMPC();
-
-        if (party != null && partyplayer != null) {
-            if (partyplayer.equals(party.getLeader())) {
-                PartyCharacter expelled = party.getMemberById(expelCid);
-                if (expelled != null) {
-                    Character emc = expelled.getPlayer();
-                    if (emc != null) {
-                        List<Character> partyMembers = emc.getPartyMembersOnline();
-
-                        MapleMap map = emc.getMap();
-                        if (map != null) {
-                            map.removePartyMember(emc, party.getId());
-                        }
-
-                        MonsterCarnival mcpq = player.getMonsterCarnival();
-                        if (mcpq != null) {
-                            mcpq.leftParty(emc.getId());
-                        }
-
-                        emc.setParty(null);
-                        world.updateParty(party.getId(), PartyOperation.EXPEL, expelled);
-
-                        emc.updatePartySearchAvailability(true);
-                        emc.partyOperationUpdate(party, partyMembers);
-                    } else {
-                        world.updateParty(party.getId(), PartyOperation.EXPEL, expelled);
-                    }
-                }
-            }
-        }
     }
 }

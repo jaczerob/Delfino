@@ -21,10 +21,20 @@
  */
 package dev.jaczerob.delfino.maplestory.scripting;
 
-import dev.jaczerob.delfino.maplestory.client.*;
 import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Character.DelayedQuestUpdate;
-import dev.jaczerob.delfino.maplestory.client.inventory.*;
+import dev.jaczerob.delfino.maplestory.client.Client;
+import dev.jaczerob.delfino.maplestory.client.Job;
+import dev.jaczerob.delfino.maplestory.client.QuestStatus;
+import dev.jaczerob.delfino.maplestory.client.Skill;
+import dev.jaczerob.delfino.maplestory.client.SkillFactory;
+import dev.jaczerob.delfino.maplestory.client.inventory.Equip;
+import dev.jaczerob.delfino.maplestory.client.inventory.Inventory;
+import dev.jaczerob.delfino.maplestory.client.inventory.InventoryProof;
+import dev.jaczerob.delfino.maplestory.client.inventory.InventoryType;
+import dev.jaczerob.delfino.maplestory.client.inventory.Item;
+import dev.jaczerob.delfino.maplestory.client.inventory.ModifyInventory;
+import dev.jaczerob.delfino.maplestory.client.inventory.Pet;
 import dev.jaczerob.delfino.maplestory.client.inventory.manipulator.InventoryManipulator;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
 import dev.jaczerob.delfino.maplestory.constants.game.GameConstants;
@@ -33,32 +43,33 @@ import dev.jaczerob.delfino.maplestory.constants.id.MapId;
 import dev.jaczerob.delfino.maplestory.constants.id.NpcId;
 import dev.jaczerob.delfino.maplestory.constants.inventory.ItemConstants;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
-import dev.jaczerob.delfino.maplestory.net.server.guild.Guild;
 import dev.jaczerob.delfino.maplestory.net.server.world.Party;
 import dev.jaczerob.delfino.maplestory.net.server.world.PartyCharacter;
 import dev.jaczerob.delfino.maplestory.scripting.npc.NPCScriptManager;
 import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
-import dev.jaczerob.delfino.maplestory.server.expeditions.Expedition;
-import dev.jaczerob.delfino.maplestory.server.expeditions.ExpeditionBossLog;
-import dev.jaczerob.delfino.maplestory.server.expeditions.ExpeditionType;
-import dev.jaczerob.delfino.maplestory.server.life.*;
+import dev.jaczerob.delfino.maplestory.server.life.LifeFactory;
+import dev.jaczerob.delfino.maplestory.server.life.MobSkill;
+import dev.jaczerob.delfino.maplestory.server.life.MobSkillFactory;
+import dev.jaczerob.delfino.maplestory.server.life.MobSkillType;
+import dev.jaczerob.delfino.maplestory.server.life.Monster;
+import dev.jaczerob.delfino.maplestory.server.life.NPC;
 import dev.jaczerob.delfino.maplestory.server.maps.MapObject;
 import dev.jaczerob.delfino.maplestory.server.maps.MapObjectType;
 import dev.jaczerob.delfino.maplestory.server.maps.MapleMap;
-import dev.jaczerob.delfino.maplestory.server.partyquest.PartyQuest;
-import dev.jaczerob.delfino.maplestory.server.partyquest.Pyramid;
 import dev.jaczerob.delfino.maplestory.server.quest.Quest;
 import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.Pair;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 import static java.util.concurrent.TimeUnit.DAYS;
 
 public class AbstractPlayerInteraction {
-
     public Client c;
 
     public AbstractPlayerInteraction(Client c) {
@@ -615,7 +626,7 @@ public class AbstractPlayerInteraction {
                         it.setUpgradeSlots(3);
                     }
 
-                    if (YamlConfig.config.server.USE_ENHANCED_CRAFTING == true && c.getPlayer().getCS() == true) {
+                    if (YamlConfig.config.server.USE_ENHANCED_CRAFTING && c.getPlayer().getCS()) {
                         Equip eqp = (Equip) item;
                         if (!(c.getPlayer().isGM() && YamlConfig.config.server.USE_PERFECT_GM_SCROLL)) {
                             eqp.setUpgradeSlots((byte) (eqp.getUpgradeSlots() + 1));
@@ -711,21 +722,6 @@ public class AbstractPlayerInteraction {
         c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
     }
 
-    public void guildMessage(int type, String message) {
-        if (getGuild() != null) {
-            getGuild().guildMessage(ChannelPacketCreator.getInstance().serverNotice(type, message));
-        }
-    }
-
-    public Guild getGuild() {
-        try {
-            return Server.getInstance().getGuild(getPlayer().getGuildId(), getPlayer().getWorld(), null);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
     public Party getParty() {
         return getPlayer().getParty();
     }
@@ -819,26 +815,6 @@ public class AbstractPlayerInteraction {
                 }
             }
         }
-
-        int bonus = size < 4 ? 100 : 70 + (size * 10);
-        for (PartyCharacter member : party.getMembers()) {
-            if (member == null || !member.isOnline()) {
-                continue;
-            }
-            Character player = member.getPlayer();
-            if (player == null) {
-                continue;
-            }
-            if (instance) {
-                continue; // They aren't in the instance, don't give EXP.
-            }
-            int base = PartyQuest.getExp(PQ, player.getLevel());
-            int exp = base * bonus / 100;
-            player.gainExp(exp, true, true);
-            if (YamlConfig.config.server.PQ_BONUS_EXP_RATE > 0 && System.currentTimeMillis() <= YamlConfig.config.server.EVENT_END_TIMESTAMP) {
-                player.gainExp((int) (exp * YamlConfig.config.server.PQ_BONUS_EXP_RATE), true, true);
-            }
-        }
     }
 
     public void removeFromParty(int id, List<Character> party) {
@@ -897,7 +873,7 @@ public class AbstractPlayerInteraction {
     public void resetMap(int mapid) {
         getMap(mapid).resetReactors();
         getMap(mapid).killAllMonsters();
-        for (MapObject i : getMap(mapid).getMapObjectsInRange(c.getPlayer().getPosition(), Double.POSITIVE_INFINITY, Arrays.asList(MapObjectType.ITEM))) {
+        for (MapObject i : getMap(mapid).getMapObjectsInRange(c.getPlayer().getPosition(), Double.POSITIVE_INFINITY, List.of(MapObjectType.ITEM))) {
             getMap(mapid).removeMapObject(i);
             getMap(mapid).broadcastMessage(ChannelPacketCreator.getInstance().removeItemFromMap(i.getObjectId(), 0, c.getPlayer().getId()));
         }
@@ -924,8 +900,6 @@ public class AbstractPlayerInteraction {
                 getPlayer().changeSkillLevel(skill, (byte) Math.max(skillEntry.skillevel, level), Math.max(skillEntry.masterlevel, masterLevel), expiration == -1 ? -1 : Math.max(skillEntry.expiration, expiration));
                 return;
             }
-        } else if (GameConstants.isAranSkills(skillid)) {
-            c.sendPacket(ChannelPacketCreator.getInstance().showInfo("Effect/BasicEff.img/AranGetSkill"));
         }
 
         getPlayer().changeSkillLevel(skill, level, masterLevel, expiration);
@@ -982,30 +956,12 @@ public class AbstractPlayerInteraction {
         c.sendPacket(ChannelPacketCreator.getInstance().showInfo("UI/tutorial.img/" + num));
     }
 
-    public void goDojoUp() {
-        c.sendPacket(ChannelPacketCreator.getInstance().dojoWarpUp());
-    }
-
-    public void resetDojoEnergy() {
-        c.getPlayer().setDojoEnergy(0);
-    }
-
-    public void resetPartyDojoEnergy() {
-        for (Character pchr : c.getPlayer().getPartyMembersOnSameMap()) {
-            pchr.setDojoEnergy(0);
-        }
-    }
-
     public void enableActions() {
         c.sendPacket(ChannelPacketCreator.getInstance().enableActions());
     }
 
     public void showEffect(String effect) {
         c.sendPacket(ChannelPacketCreator.getInstance().showEffect(effect));
-    }
-
-    public void dojoEnergy() {
-        c.sendPacket(ChannelPacketCreator.getInstance().getEnergy("energy", getPlayer().getDojoEnergy()));
     }
 
     public void talkGuide(String message) {
@@ -1059,57 +1015,6 @@ public class AbstractPlayerInteraction {
         return GameConstants.numberWithCommas(number);
     }
 
-    public Pyramid getPyramid() {
-        return (Pyramid) getPlayer().getPartyQuest();
-    }
-
-    public int createExpedition(ExpeditionType type) {
-        return createExpedition(type, false, 0, 0);
-    }
-
-    public int createExpedition(ExpeditionType type, boolean silent, int minPlayers, int maxPlayers) {
-        Character player = getPlayer();
-        Expedition exped = new Expedition(player, type, silent, minPlayers, maxPlayers);
-
-        int channel = player.getMap().getChannelServer().getId();
-        if (!ExpeditionBossLog.attemptBoss(player.getId(), channel, exped, false)) {    // thanks Conrad for noticing missing expeditions entry limit
-            return 1;
-        }
-
-        if (exped.addChannelExpedition(player.getClient().getChannelServer())) {
-            return 0;
-        } else {
-            return -1;
-        }
-    }
-
-    public void endExpedition(Expedition exped) {
-        exped.dispose(true);
-        exped.removeChannelExpedition(getPlayer().getClient().getChannelServer());
-    }
-
-    public Expedition getExpedition(ExpeditionType type) {
-        return getPlayer().getClient().getChannelServer().getExpedition(type);
-    }
-
-    public String getExpeditionMemberNames(ExpeditionType type) {
-        String members = "";
-        Expedition exped = getExpedition(type);
-        for (String memberName : exped.getMembers().values()) {
-            members += "" + memberName + ", ";
-        }
-        return members;
-    }
-
-    public boolean isLeaderExpedition(ExpeditionType type) {
-        Expedition exped = getExpedition(type);
-        return exped.isLeader(getPlayer());
-    }
-
-    public long getJailTimeLeft() {
-        return getPlayer().getJailExpirationTimeLeft();
-    }
-
     public List<Pet> getDriedPets() {
         List<Pet> list = new LinkedList<>();
 
@@ -1124,10 +1029,6 @@ public class AbstractPlayerInteraction {
         }
 
         return list;
-    }
-
-    public boolean startDungeonInstance(int dungeonid) {
-        return c.getChannelServer().addMiniDungeon(dungeonid);
     }
 
     public boolean canGetFirstJob(int jobType) {

@@ -8,17 +8,12 @@ import dev.jaczerob.delfino.maplestory.client.inventory.Item;
 import dev.jaczerob.delfino.maplestory.constants.inventory.ItemConstants;
 import dev.jaczerob.delfino.maplestory.scripting.AbstractPlayerInteraction;
 import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
-import dev.jaczerob.delfino.maplestory.server.TimerManager;
 import dev.jaczerob.delfino.maplestory.server.life.LifeFactory;
-import dev.jaczerob.delfino.maplestory.server.life.Monster;
 import dev.jaczerob.delfino.maplestory.server.maps.MapMonitor;
 import dev.jaczerob.delfino.maplestory.server.maps.MapleMap;
 import dev.jaczerob.delfino.maplestory.server.maps.Reactor;
 import dev.jaczerob.delfino.maplestory.server.maps.ReactorDropEntry;
-import dev.jaczerob.delfino.maplestory.server.partyquest.CarnivalFactory;
-import dev.jaczerob.delfino.maplestory.server.partyquest.CarnivalFactory.MCSkill;
 
-import javax.script.Invocable;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,20 +25,10 @@ import java.util.List;
  */
 public class ReactorActionManager extends AbstractPlayerInteraction {
     private final Reactor reactor;
-    private final Invocable iv;
 
-    public ReactorActionManager(Client c, Reactor reactor, Invocable iv) {
+    public ReactorActionManager(Client c, Reactor reactor) {
         super(c);
         this.reactor = reactor;
-        this.iv = iv;
-    }
-
-    public void hitReactor() {
-        reactor.hitReactor(c);
-    }
-
-    public void destroyNpc(int npcId) {
-        reactor.getMap().destroyNPC(npcId);
     }
 
     private static void sortDropEntries(List<ReactorDropEntry> from, List<ReactorDropEntry> item, List<ReactorDropEntry> visibleQuest, List<ReactorDropEntry> otherQuest, Character chr) {
@@ -92,6 +77,14 @@ public class ReactorActionManager extends AbstractPlayerInteraction {
         items1.addAll(items2);
 
         return items1;
+    }
+
+    public void hitReactor() {
+        reactor.hitReactor(c);
+    }
+
+    public void destroyNpc(int npcId) {
+        reactor.getMap().destroyNPC(npcId);
     }
 
     public void sprayItems() {
@@ -274,35 +267,9 @@ public class ReactorActionManager extends AbstractPlayerInteraction {
         reactor.getMap().spawnFakeMonsterOnGroundBelow(LifeFactory.getMonster(id), getPosition());
     }
 
-    /**
-     * Used for Targa and Scarlion
-     */
-    public void summonBossDelayed(final int mobId, final int delayMs, final int x, final int y, final String bgm,
-                                  final String summonMessage) {
-        TimerManager.getInstance().schedule(() -> {
-            summonBoss(mobId, x, y, bgm, summonMessage);
-        }, delayMs);
-    }
-
     private void summonBoss(int mobId, int x, int y, String bgmName, String summonMessage) {
         spawnMonster(mobId, x, y);
         changeMusic(bgmName);
         mapMessage(6, summonMessage);
-    }
-
-    public void dispelAllMonsters(int num, int team) { //dispels all mobs, cpq
-        final MCSkill skil = CarnivalFactory.getInstance().getGuardian(num);
-        if (skil != null) {
-            for (Monster mons : getMap().getAllMonsters()) {
-                if (mons.getTeam() == team) {
-                    mons.dispelSkill(skil.getSkill());
-                }
-            }
-        }
-        if (team == 0) {
-            getPlayer().getMap().getRedTeamBuffs().remove(skil);
-        } else {
-            getPlayer().getMap().getBlueTeamBuffs().remove(skil);
-        }
     }
 }

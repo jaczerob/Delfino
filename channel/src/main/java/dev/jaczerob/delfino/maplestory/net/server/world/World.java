@@ -1,24 +1,3 @@
-/*
-This file is part of the OdinMS Maple Story Server
-Copyright (C) 2008 Patrick Huy <patrick.huy@frz.cc>
-Matthias Butz <matze@odinms.de>
-Jan Christian Meyer <vimes@odinms.de>
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as
-published by the Free Software Foundation version 3 as published by
-the Free Software Foundation. You may not use, modify or distribute
-this program under any other version of the GNU Affero General Public
-License.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package dev.jaczerob.delfino.maplestory.net.server.world;
 
 import dev.jaczerob.delfino.maplestory.client.BuddyList;
@@ -26,151 +5,115 @@ import dev.jaczerob.delfino.maplestory.client.BuddyList.BuddyAddResult;
 import dev.jaczerob.delfino.maplestory.client.BuddyList.BuddyOperation;
 import dev.jaczerob.delfino.maplestory.client.BuddylistEntry;
 import dev.jaczerob.delfino.maplestory.client.Character;
-import dev.jaczerob.delfino.maplestory.client.Family;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
 import dev.jaczerob.delfino.maplestory.constants.game.GameConstants;
 import dev.jaczerob.delfino.maplestory.net.server.PlayerStorage;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.net.server.channel.Channel;
 import dev.jaczerob.delfino.maplestory.net.server.channel.CharacterIdChannelPair;
-import dev.jaczerob.delfino.maplestory.net.server.coordinator.matchchecker.MatchCheckerCoordinator;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.partysearch.PartySearchCoordinator;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.world.InviteCoordinator;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.world.InviteCoordinator.InviteResultType;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.world.InviteCoordinator.InviteType;
-import dev.jaczerob.delfino.maplestory.net.server.guild.Guild;
-import dev.jaczerob.delfino.maplestory.net.server.guild.GuildCharacter;
-import dev.jaczerob.delfino.maplestory.net.server.guild.GuildPackets;
-import dev.jaczerob.delfino.maplestory.net.server.guild.GuildSummary;
 import dev.jaczerob.delfino.maplestory.net.server.services.BaseService;
 import dev.jaczerob.delfino.maplestory.net.server.services.ServicesManager;
 import dev.jaczerob.delfino.maplestory.net.server.services.type.WorldServices;
-import dev.jaczerob.delfino.maplestory.net.server.task.*;
+import dev.jaczerob.delfino.maplestory.net.server.task.CharacterAutosaverTask;
+import dev.jaczerob.delfino.maplestory.net.server.task.CharacterHpDecreaseTask;
+import dev.jaczerob.delfino.maplestory.net.server.task.MountTirednessTask;
+import dev.jaczerob.delfino.maplestory.net.server.task.PartySearchTask;
+import dev.jaczerob.delfino.maplestory.net.server.task.PetFullnessTask;
+import dev.jaczerob.delfino.maplestory.net.server.task.ServerMessageTask;
+import dev.jaczerob.delfino.maplestory.net.server.task.TimedMapObjectTask;
+import dev.jaczerob.delfino.maplestory.net.server.task.TimeoutTask;
 import dev.jaczerob.delfino.maplestory.server.Storage;
 import dev.jaczerob.delfino.maplestory.server.TimerManager;
-import dev.jaczerob.delfino.maplestory.server.maps.*;
+import dev.jaczerob.delfino.maplestory.server.maps.MapleMap;
 import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
 import dev.jaczerob.delfino.maplestory.tools.Pair;
-import dev.jaczerob.delfino.maplestory.tools.packets.Fishing;
 import dev.jaczerob.delfino.network.packets.Packet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledFuture;
+import java.util.PriorityQueue;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static java.util.concurrent.TimeUnit.*;
+import static java.util.concurrent.TimeUnit.HOURS;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
-/**
- * @author kevintjuh93
- * @author Ronan - thread-oriented (world schedules + guild queue + marriages + party chars)
- */
 public class World {
     private static final Logger log = LoggerFactory.getLogger(World.class);
 
     private final int id;
-    private int flag;
-    private int exprate;
-    private int droprate;
-    private int bossdroprate;
-    private int mesorate;
-    private int questrate;
-    private int travelrate;
-    private int fishingrate;
-    private final String eventmsg;
     private final List<Channel> channels = new ArrayList<>();
     private final Map<Integer, Byte> pnpcStep = new HashMap<>();
     private final Map<Integer, Short> pnpcPodium = new HashMap<>();
     private final Map<Integer, Messenger> messengers = new HashMap<>();
     private final AtomicInteger runningMessengerId = new AtomicInteger();
-    private final Map<Integer, Family> families = new LinkedHashMap<>();
-    private final Map<Integer, Integer> relationships = new HashMap<>();
-    private final Map<Integer, Pair<Integer, Integer>> relationshipCouples = new HashMap<>();
-    private final Map<Integer, GuildSummary> gsStore = new HashMap<>();
-    private PlayerStorage players = new PlayerStorage();
     private final ServicesManager services = new ServicesManager(WorldServices.SAVE_CHARACTER);
-    private final MatchCheckerCoordinator matchChecker = new MatchCheckerCoordinator();
     private final PartySearchCoordinator partySearch = new PartySearchCoordinator();
-
     private final Lock chnRLock;
     private final Lock chnWLock;
-
     private final Map<Integer, SortedMap<Integer, Character>> accountChars = new HashMap<>();
     private final Map<Integer, Storage> accountStorages = new HashMap<>();
     private final Lock accountCharsLock = new ReentrantLock(true);
-
-    private final Set<Integer> queuedGuilds = new HashSet<>();
-    private final Map<Integer, Pair<Pair<Boolean, Boolean>, Pair<Integer, Integer>>> queuedMarriages = new HashMap<>();
-    private final Map<Integer, Set<Integer>> marriageGuests = new ConcurrentHashMap<>();
-
     private final Map<Integer, Integer> partyChars = new HashMap<>();
     private final Map<Integer, Party> parties = new HashMap<>();
     private final AtomicInteger runningPartyId = new AtomicInteger();
     private final Lock partyLock = new ReentrantLock(true);
-
     private final Map<Integer, Integer> owlSearched = new LinkedHashMap<>();
     private final List<Map<Integer, Integer>> cashItemBought = new ArrayList<>(9);
-
     private final Lock suggestRLock;
     private final Lock suggestWLock;
-
     private final Map<Integer, Integer> disabledServerMessages = new HashMap<>();    // reuse owl lock
     private final Lock srvMessagesLock = new ReentrantLock();
-    private ScheduledFuture<?> srvMessagesSchedule;
-
-    private Lock activePetsLock = new ReentrantLock(true);
     private final Map<Integer, Integer> activePets = new LinkedHashMap<>();
-    private ScheduledFuture<?> petsSchedule;
-    private long petUpdate;
-
-    private Lock activeMountsLock = new ReentrantLock(true);
     private final Map<Integer, Integer> activeMounts = new LinkedHashMap<>();
-    private ScheduledFuture<?> mountsSchedule;
+    private final Map<Runnable, Long> registeredTimedMapObjects = new LinkedHashMap<>();
+    private final Lock activePetsLock = new ReentrantLock(true);
+    private final Lock activeMountsLock = new ReentrantLock(true);
+    private final Lock timedMapObjectLock = new ReentrantLock(true);
+    private final Map<Character, Integer> playerHpDec = Collections.synchronizedMap(new WeakHashMap<>());
+    private final int expRate;
+    private final int dropRate;
+    private final int bossDropRate;
+    private final int mesoRate;
+    private final int questRate;
+    private final int fishingRate;
+    private final PlayerStorage players = new PlayerStorage();
+    private long petUpdate;
     private long mountUpdate;
 
-    private Lock activePlayerShopsLock = new ReentrantLock(true);
-    private final Map<Integer, PlayerShop> activePlayerShops = new LinkedHashMap<>();
-
-    private Lock activeMerchantsLock = new ReentrantLock(true);
-    private final Map<Integer, Pair<HiredMerchant, Integer>> activeMerchants = new LinkedHashMap<>();
-    private ScheduledFuture<?> merchantSchedule;
-    private long merchantUpdate;
-
-    private final Map<Runnable, Long> registeredTimedMapObjects = new LinkedHashMap<>();
-    private ScheduledFuture<?> timedMapObjectsSchedule;
-    private Lock timedMapObjectLock = new ReentrantLock(true);
-
-    private final Map<Character, Integer> fishingAttempters = Collections.synchronizedMap(new WeakHashMap<>());
-    private Map<Character, Integer> playerHpDec = Collections.synchronizedMap(new WeakHashMap<>());
-
-    private ScheduledFuture<?> charactersSchedule;
-    private ScheduledFuture<?> marriagesSchedule;
-    private ScheduledFuture<?> mapOwnershipSchedule;
-    private ScheduledFuture<?> fishingSchedule;
-    private ScheduledFuture<?> partySearchSchedule;
-    private ScheduledFuture<?> timeoutSchedule;
-    private ScheduledFuture<?> hpDecSchedule;
-
-    public World(int world, int flag, String eventmsg, int exprate, int droprate, int bossdroprate, int mesorate, int questrate, int travelrate, int fishingrate) {
+    public World(int world, int expRate, int dropRate, int bossDropRate, int mesorate, int questrate, int fishingRate) {
         this.id = world;
-        this.flag = flag;
-        this.eventmsg = eventmsg;
-        this.exprate = exprate;
-        this.droprate = droprate;
-        this.bossdroprate = bossdroprate;
-        this.mesorate = mesorate;
-        this.questrate = questrate;
-        this.travelrate = travelrate;
-        this.fishingrate = fishingrate;
+        this.expRate = expRate;
+        this.dropRate = dropRate;
+        this.bossDropRate = bossDropRate;
+        this.mesoRate = mesorate;
+        this.questRate = questrate;
+        this.fishingRate = fishingRate;
         runningPartyId.set(1000000001); // partyid must not clash with charid to solve update item looting issues, found thanks to Vcoc
         runningMessengerId.set(1);
 
@@ -190,32 +133,33 @@ public class World {
         }
 
         TimerManager tman = TimerManager.getInstance();
-        petsSchedule = tman.register(new PetFullnessTask(this), MINUTES.toMillis(1), MINUTES.toMillis(1));
-        srvMessagesSchedule = tman.register(new ServerMessageTask(this), SECONDS.toMillis(10), SECONDS.toMillis(10));
-        mountsSchedule = tman.register(new MountTirednessTask(this), MINUTES.toMillis(1), MINUTES.toMillis(1));
-        merchantSchedule = tman.register(new HiredMerchantTask(this), 10 * MINUTES.toMillis(1), 10 * MINUTES.toMillis(1));
-        timedMapObjectsSchedule = tman.register(new TimedMapObjectTask(this), MINUTES.toMillis(1), MINUTES.toMillis(1));
-        charactersSchedule = tman.register(new CharacterAutosaverTask(this), HOURS.toMillis(1), HOURS.toMillis(1));
-        marriagesSchedule = tman.register(new WeddingReservationTask(this), MINUTES.toMillis(YamlConfig.config.server.WEDDING_RESERVATION_INTERVAL), MINUTES.toMillis(YamlConfig.config.server.WEDDING_RESERVATION_INTERVAL));
-        mapOwnershipSchedule = tman.register(new MapOwnershipTask(this), SECONDS.toMillis(20), SECONDS.toMillis(20));
-        fishingSchedule = tman.register(new FishingTask(this), SECONDS.toMillis(10), SECONDS.toMillis(10));
-        partySearchSchedule = tman.register(new PartySearchTask(this), SECONDS.toMillis(10), SECONDS.toMillis(10));
-        timeoutSchedule = tman.register(new TimeoutTask(this), SECONDS.toMillis(10), SECONDS.toMillis(10));
-        hpDecSchedule = tman.register(new CharacterHpDecreaseTask(this), YamlConfig.config.server.MAP_DAMAGE_OVERTIME_INTERVAL, YamlConfig.config.server.MAP_DAMAGE_OVERTIME_INTERVAL);
-
-        if (YamlConfig.config.server.USE_FAMILY_SYSTEM) {
-            long timeLeft = Server.getTimeLeftForNextDay();
-            FamilyDailyResetTask.resetEntitlementUsage(this);
-            tman.register(new FamilyDailyResetTask(this), DAYS.toMillis(1), timeLeft);
-        }
+        tman.register(new PetFullnessTask(this), MINUTES.toMillis(1), MINUTES.toMillis(1));
+        tman.register(new ServerMessageTask(this), SECONDS.toMillis(10), SECONDS.toMillis(10));
+        tman.register(new MountTirednessTask(this), MINUTES.toMillis(1), MINUTES.toMillis(1));
+        tman.register(new TimedMapObjectTask(this), MINUTES.toMillis(1), MINUTES.toMillis(1));
+        tman.register(new CharacterAutosaverTask(this), HOURS.toMillis(1), HOURS.toMillis(1));
+        tman.register(new PartySearchTask(this), SECONDS.toMillis(10), SECONDS.toMillis(10));
+        tman.register(new TimeoutTask(this), SECONDS.toMillis(10), SECONDS.toMillis(10));
+        tman.register(new CharacterHpDecreaseTask(this), YamlConfig.config.server.MAP_DAMAGE_OVERTIME_INTERVAL, YamlConfig.config.server.MAP_DAMAGE_OVERTIME_INTERVAL);
     }
 
-    public int getChannelsSize() {
-        chnRLock.lock();
-        try {
-            return channels.size();
-        } finally {
-            chnRLock.unlock();
+    private static Integer getPetKey(Character chr, byte petSlot) {    // assuming max 3 pets
+        return (chr.getId() << 2) + petSlot;
+    }
+
+    private static void executePlayerNpcMapDataUpdate(Connection con, boolean isPodium, Map<Integer, ?> pnpcData, int value, int worldid, int mapid) throws SQLException {
+        final String query;
+        if (pnpcData.containsKey(mapid)) {
+            query = "UPDATE playernpcs_field SET " + (isPodium ? "podium" : "step") + " = ? WHERE world = ? AND map = ?";
+        } else {
+            query = "INSERT INTO playernpcs_field (" + (isPodium ? "podium" : "step") + ", world, map) VALUES (?, ?, ?)";
+        }
+
+        try (PreparedStatement ps = con.prepareStatement(query)) {
+            ps.setInt(1, value);
+            ps.setInt(2, worldid);
+            ps.setInt(3, mapid);
+            ps.executeUpdate();
         }
     }
 
@@ -255,167 +199,28 @@ public class World {
         }
     }
 
-    public int removeChannel() {
-        Channel ch;
-        int chIdx;
-
-        chnRLock.lock();
-        try {
-            chIdx = channels.size() - 1;
-            if (chIdx < 0) {
-                return -1;
-            }
-
-            ch = channels.get(chIdx);
-        } finally {
-            chnRLock.unlock();
-        }
-
-        if (ch == null || !ch.canUninstall()) {
-            return -1;
-        }
-
-        chnWLock.lock();
-        try {
-            if (chIdx == channels.size() - 1) {
-                channels.remove(chIdx);
-            } else {
-                return -1;
-            }
-        } finally {
-            chnWLock.unlock();
-        }
-
-        ch.shutdown();
-        return ch.getId();
-    }
-
-    public boolean canUninstall() {
-        if (players.getSize() > 0) {
-            return false;
-        }
-
-        for (Channel ch : this.getChannels()) {
-            if (!ch.canUninstall()) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    public void setFlag(byte b) {
-        this.flag = b;
-    }
-
-    public int getFlag() {
-        return flag;
-    }
-
-    public String getEventMessage() {
-        return eventmsg;
-    }
-
     public int getExpRate() {
-        return exprate;
-    }
-
-    public void setExpRate(int exp) {
-        Collection<Character> list = getPlayerStorage().getAllCharacters();
-
-        for (Character chr : list) {
-            if (!chr.isLoggedin()) {
-                continue;
-            }
-            chr.revertWorldRates();
-        }
-        this.exprate = exp;
-        for (Character chr : list) {
-            if (!chr.isLoggedin()) {
-                continue;
-            }
-            chr.setWorldRates();
-        }
+        return expRate;
     }
 
     public int getDropRate() {
-        return droprate;
-    }
-
-    public void setDropRate(int drop) {
-        Collection<Character> list = getPlayerStorage().getAllCharacters();
-
-        for (Character chr : list) {
-            if (!chr.isLoggedin()) {
-                continue;
-            }
-            chr.revertWorldRates();
-        }
-        this.droprate = drop;
-        for (Character chr : list) {
-            if (!chr.isLoggedin()) {
-                continue;
-            }
-            chr.setWorldRates();
-        }
+        return dropRate;
     }
 
     public int getBossDropRate() {  // boss rate concept thanks to Lapeiro
-        return bossdroprate;
-    }
-
-    public void setBossDropRate(int bossdrop) {
-        bossdroprate = bossdrop;
+        return bossDropRate;
     }
 
     public int getMesoRate() {
-        return mesorate;
-    }
-
-    public void setMesoRate(int meso) {
-        Collection<Character> list = getPlayerStorage().getAllCharacters();
-
-        for (Character chr : list) {
-            if (!chr.isLoggedin()) {
-                continue;
-            }
-            chr.revertWorldRates();
-        }
-        this.mesorate = meso;
-        for (Character chr : list) {
-            if (!chr.isLoggedin()) {
-                continue;
-            }
-            chr.setWorldRates();
-        }
+        return mesoRate;
     }
 
     public int getQuestRate() {
-        return questrate;
-    }
-
-    public void setQuestRate(int quest) {
-        this.questrate = quest;
-    }
-
-    public int getTravelRate() {
-        return travelrate;
-    }
-
-    public void setTravelRate(int travel) {
-        this.travelrate = travel;
-    }
-
-    public int getTransportationTime(int travelTime) {
-        return (int) Math.ceil((double) travelTime / travelrate);
+        return questRate;
     }
 
     public int getFishingRate() {
-        return fishingrate;
-    }
-
-    public void setFishingRate(int quest) {
-        this.fishingrate = quest;
+        return fishingRate;
     }
 
     public void loadAccountCharactersView(Integer accountId, List<Character> chars) {
@@ -427,36 +232,6 @@ public class World {
         accountCharsLock.lock();    // accountCharsLock should be used after server's lgnWLock for compliance
         try {
             accountChars.put(accountId, charsMap);
-        } finally {
-            accountCharsLock.unlock();
-        }
-    }
-
-    public void registerAccountCharacterView(Integer accountId, Character chr) {
-        accountCharsLock.lock();
-        try {
-            accountChars.get(accountId).put(chr.getId(), chr);
-        } finally {
-            accountCharsLock.unlock();
-        }
-    }
-
-    public void unregisterAccountCharacterView(Integer accountId, Integer chrId) {
-        accountCharsLock.lock();
-        try {
-            accountChars.get(accountId).remove(chrId);
-        } finally {
-            accountCharsLock.unlock();
-        }
-    }
-
-    public void clearAccountCharacterView(Integer accountId) {
-        accountCharsLock.lock();
-        try {
-            SortedMap<Integer, Character> accChars = accountChars.remove(accountId);
-            if (accChars != null) {
-                accChars.clear();
-            }
         } finally {
             accountCharsLock.unlock();
         }
@@ -478,57 +253,12 @@ public class World {
         }
     }
 
-    public void unregisterAccountStorage(Integer accountId) {
-        accountCharsLock.lock();
-        try {
-            accountStorages.remove(accountId);
-        } finally {
-            accountCharsLock.unlock();
-        }
-    }
-
     public Storage getAccountStorage(Integer accountId) {
         return accountStorages.get(accountId);
     }
 
-    private static List<Entry<Integer, SortedMap<Integer, Character>>> getSortedAccountCharacterView(Map<Integer, SortedMap<Integer, Character>> map) {
-        List<Entry<Integer, SortedMap<Integer, Character>>> list = new ArrayList<>(map.size());
-        list.addAll(map.entrySet());
-
-        list.sort((o1, o2) -> o1.getKey() - o2.getKey());
-
-        return list;
-    }
-
-    public List<Character> loadAndGetAllCharactersView() {
-        Server.getInstance().loadAllAccountsCharactersView();
-        return getAllCharactersView();
-    }
-
-    public List<Character> getAllCharactersView() {    // sorting by accountid, charid
-        List<Character> chrList = new LinkedList<>();
-        Map<Integer, SortedMap<Integer, Character>> accChars;
-
-        accountCharsLock.lock();
-        try {
-            accChars = new HashMap<>(accountChars);
-        } finally {
-            accountCharsLock.unlock();
-        }
-
-        for (Entry<Integer, SortedMap<Integer, Character>> e : getSortedAccountCharacterView(accChars)) {
-            chrList.addAll(e.getValue().values());
-        }
-
-        return chrList;
-    }
-
     public PlayerStorage getPlayerStorage() {
         return players;
-    }
-
-    public MatchCheckerCoordinator getMatchCheckerCoordinator() {
-        return matchChecker;
     }
 
     public PartySearchCoordinator getPartySearchCoordinator() {
@@ -561,155 +291,6 @@ public class World {
         return id;
     }
 
-    public void addFamily(int id, Family f) {
-        synchronized (families) {
-            if (!families.containsKey(id)) {
-                families.put(id, f);
-            }
-        }
-    }
-
-    public void removeFamily(int id) {
-        synchronized (families) {
-            families.remove(id);
-        }
-    }
-
-    public Family getFamily(int id) {
-        synchronized (families) {
-            if (families.containsKey(id)) {
-                return families.get(id);
-            }
-            return null;
-        }
-    }
-
-    public Collection<Family> getFamilies() {
-        synchronized (families) {
-            return Collections.unmodifiableCollection(families.values());
-        }
-    }
-
-    public Guild getGuild(GuildCharacter mgc) {
-        if (mgc == null) {
-            return null;
-        }
-
-        int gid = mgc.getGuildId();
-        Guild g = Server.getInstance().getGuild(gid, mgc.getWorld(), mgc.getCharacter());
-        if (gsStore.get(gid) == null) {
-            gsStore.put(gid, new GuildSummary(g));
-        }
-        return g;
-    }
-
-    public boolean isWorldCapacityFull() {
-        return getWorldCapacityStatus() == 2;
-    }
-
-    public int getWorldCapacityStatus() {
-        int worldCap = getChannelsSize() * YamlConfig.config.server.CHANNEL_LOAD;
-        int num = players.getSize();
-
-        int status;
-        if (num >= worldCap) {
-            status = 2;
-        } else if (num >= worldCap * .8) { // More than 80 percent o___o
-            status = 1;
-        } else {
-            status = 0;
-        }
-
-        return status;
-    }
-
-    public GuildSummary getGuildSummary(int gid, int wid) {
-        if (gsStore.containsKey(gid)) {
-            return gsStore.get(gid);
-        } else {
-            Guild g = Server.getInstance().getGuild(gid, wid, null);
-            if (g != null) {
-                gsStore.put(gid, new GuildSummary(g));
-            }
-            return gsStore.get(gid);
-        }
-    }
-
-    public void updateGuildSummary(int gid, GuildSummary mgs) {
-        gsStore.put(gid, mgs);
-    }
-
-    public void reloadGuildSummary() {
-        Guild g;
-        Server server = Server.getInstance();
-        for (int i : gsStore.keySet()) {
-            g = server.getGuild(i, getId(), null);
-            if (g != null) {
-                gsStore.put(i, new GuildSummary(g));
-            } else {
-                gsStore.remove(i);
-            }
-        }
-    }
-
-    public void setGuildAndRank(List<Integer> cids, int guildid, int rank, int exception) {
-        for (int cid : cids) {
-            if (cid != exception) {
-                setGuildAndRank(cid, guildid, rank);
-            }
-        }
-    }
-
-    public void setOfflineGuildStatus(int guildid, int guildrank, int cid) {
-        try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("UPDATE characters SET guildid = ?, guildrank = ? WHERE id = ?")) {
-            ps.setInt(1, guildid);
-            ps.setInt(2, guildrank);
-            ps.setInt(3, cid);
-            ps.executeUpdate();
-        } catch (SQLException se) {
-            se.printStackTrace();
-        }
-    }
-
-    public void setGuildAndRank(int cid, int guildid, int rank) {
-        Character mc = getPlayerStorage().getCharacterById(cid);
-        if (mc == null) {
-            return;
-        }
-        boolean bDifferentGuild;
-        if (guildid == -1 && rank == -1) {
-            bDifferentGuild = true;
-        } else {
-            bDifferentGuild = guildid != mc.getGuildId();
-            mc.getMGC().setGuildId(guildid);
-            mc.getMGC().setGuildRank(rank);
-
-            if (bDifferentGuild) {
-                mc.getMGC().setAllianceRank(5);
-            }
-
-            mc.saveGuildStatus();
-        }
-        if (bDifferentGuild) {
-            if (mc.isLoggedinWorld()) {
-                Guild guild = Server.getInstance().getGuild(guildid);
-                if (guild != null) {
-                    mc.getMap().broadcastPacket(mc, GuildPackets.guildNameChanged(cid, guild.getName()));
-                    mc.getMap().broadcastPacket(mc, GuildPackets.guildMarkChanged(cid, guild));
-                } else {
-                    mc.getMap().broadcastPacket(mc, GuildPackets.guildNameChanged(cid, ""));
-                }
-            }
-        }
-    }
-
-    public void changeEmblem(int gid, List<Integer> affectedPlayers, GuildSummary mgs) {
-        updateGuildSummary(gid, mgs);
-        sendPacket(affectedPlayers, GuildPackets.guildEmblemChange(gid, mgs.getLogoBG(), mgs.getLogoBGColor(), mgs.getLogo(), mgs.getLogoColor()), -1);
-        setGuildAndRank(affectedPlayers, -1, -1, -1);    //respawn player
-    }
-
     public void sendPacket(List<Integer> targetIds, Packet packet, int exception) {
         Character chr;
         for (int i : targetIds) {
@@ -721,112 +302,6 @@ public class World {
                 chr.sendPacket(packet);
             }
         }
-    }
-
-    public boolean isGuildQueued(int guildId) {
-        return queuedGuilds.contains(guildId);
-    }
-
-    public void putGuildQueued(int guildId) {
-        queuedGuilds.add(guildId);
-    }
-
-    public void removeGuildQueued(int guildId) {
-        queuedGuilds.remove(guildId);
-    }
-
-    public boolean isMarriageQueued(int marriageId) {
-        return queuedMarriages.containsKey(marriageId);
-    }
-
-    public Pair<Boolean, Boolean> getMarriageQueuedLocation(int marriageId) {
-        Pair<Pair<Boolean, Boolean>, Pair<Integer, Integer>> qm = queuedMarriages.get(marriageId);
-        return (qm != null) ? qm.getLeft() : null;
-    }
-
-    public Pair<Integer, Integer> getMarriageQueuedCouple(int marriageId) {
-        Pair<Pair<Boolean, Boolean>, Pair<Integer, Integer>> qm = queuedMarriages.get(marriageId);
-        return (qm != null) ? qm.getRight() : null;
-    }
-
-    public void putMarriageQueued(int marriageId, boolean cathedral, boolean premium, int groomId, int brideId) {
-        queuedMarriages.put(marriageId, new Pair<>(new Pair<>(cathedral, premium), new Pair<>(groomId, brideId)));
-        marriageGuests.put(marriageId, new HashSet());
-    }
-
-    public Pair<Boolean, Set<Integer>> removeMarriageQueued(int marriageId) {
-        Boolean type = queuedMarriages.remove(marriageId).getLeft().getRight();
-        Set<Integer> guests = marriageGuests.remove(marriageId);
-
-        return new Pair<>(type, guests);
-    }
-
-    public boolean addMarriageGuest(int marriageId, int playerId) {
-        Set<Integer> guests = marriageGuests.get(marriageId);
-        if (guests != null) {
-            if (guests.contains(playerId)) {
-                return false;
-            }
-
-            guests.add(playerId);
-            return true;
-        }
-
-        return false;
-    }
-
-    public Pair<Integer, Integer> getWeddingCoupleForGuest(int guestId, Boolean cathedral) {
-        for (Channel ch : getChannels()) {
-            Pair<Integer, Integer> p = ch.getWeddingCoupleForGuest(guestId, cathedral);
-            if (p != null) {
-                return p;
-            }
-        }
-
-        List<Integer> possibleWeddings = new LinkedList<>();
-        for (Entry<Integer, Set<Integer>> mg : new HashSet<>(marriageGuests.entrySet())) {
-            if (mg.getValue().contains(guestId)) {
-                Pair<Boolean, Boolean> loc = getMarriageQueuedLocation(mg.getKey());
-                if (loc != null && cathedral.equals(loc.getLeft())) {
-                    possibleWeddings.add(mg.getKey());
-                }
-            }
-        }
-
-        int pwSize = possibleWeddings.size();
-        if (pwSize == 0) {
-            return null;
-        } else if (pwSize > 1) {
-            int selectedPw = -1;
-            int selectedPos = Integer.MAX_VALUE;
-
-            for (Integer pw : possibleWeddings) {
-                for (Channel ch : getChannels()) {
-                    int pos = ch.getWeddingReservationStatus(pw, cathedral);
-                    if (pos != -1) {
-                        if (pos < selectedPos) {
-                            selectedPos = pos;
-                            selectedPw = pw;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            if (selectedPw == -1) {
-                return null;
-            }
-
-            possibleWeddings.clear();
-            possibleWeddings.add(selectedPw);
-        }
-
-        return getMarriageQueuedCouple(possibleWeddings.get(0));
-    }
-
-    public void debugMarriageStatus() {
-        log.debug("Queued marriages: {}", queuedMarriages);
-        log.debug("Guest list: {}", marriageGuests);
     }
 
     private void registerCharacterParty(Integer chrid, Integer partyid) {
@@ -846,15 +321,6 @@ public class World {
         partyLock.lock();
         try {
             unregisterCharacterPartyInternal(chrid);
-        } finally {
-            partyLock.unlock();
-        }
-    }
-
-    public Integer getCharacterPartyid(Integer chrid) {
-        partyLock.lock();
-        try {
-            return partyChars.get(chrid);
         } finally {
             partyLock.unlock();
         }
@@ -973,19 +439,6 @@ public class World {
                 party.updateMember(target);
                 break;
             case CHANGE_LEADER:
-                Character mc = party.getLeader().getPlayer();
-                if (mc != null) {
-                    int oldLeaderMapid = mc.getMapId();
-
-                    if (MiniDungeonInfo.isDungeonMap(oldLeaderMapid)) {
-                        if (oldLeaderMapid != target.getMapId()) {
-                            MiniDungeon mmd = mc.getClient().getChannelServer().getMiniDungeon(oldLeaderMapid);
-                            if (mmd != null) {
-                                mmd.close();
-                            }
-                        }
-                    }
-                }
                 party.setLeader(target);
                 break;
             default:
@@ -1174,14 +627,6 @@ public class World {
         }
     }
 
-    public void silentLeaveMessenger(int messengerid, MessengerCharacter target) {
-        Messenger messenger = getMessenger(messengerid);
-        if (messenger == null) {
-            throw new IllegalArgumentException("No messenger with the specified messengerid exists");
-        }
-        messenger.addMember(target, target.getPosition());
-    }
-
     public void joinMessenger(int messengerid, MessengerCharacter target, String from, int fromchannel) {
         Messenger messenger = getMessenger(messengerid);
         if (messenger == null) {
@@ -1275,10 +720,6 @@ public class World {
                 }
             }
         }
-    }
-
-    private static Integer getPetKey(Character chr, byte petSlot) {    // assuming max 3 pets
-        return (chr.getId() << 2) + petSlot;
     }
 
     public void addOwlItemSearch(Integer itemid) {
@@ -1544,125 +985,6 @@ public class World {
         }
     }
 
-    public void registerPlayerShop(PlayerShop ps) {
-        activePlayerShopsLock.lock();
-        try {
-            activePlayerShops.put(ps.getOwner().getId(), ps);
-        } finally {
-            activePlayerShopsLock.unlock();
-        }
-    }
-
-    public void unregisterPlayerShop(PlayerShop ps) {
-        activePlayerShopsLock.lock();
-        try {
-            activePlayerShops.remove(ps.getOwner().getId());
-        } finally {
-            activePlayerShopsLock.unlock();
-        }
-    }
-
-    public List<PlayerShop> getActivePlayerShops() {
-        List<PlayerShop> psList = new ArrayList<>();
-        activePlayerShopsLock.lock();
-        try {
-            psList.addAll(activePlayerShops.values());
-
-            return psList;
-        } finally {
-            activePlayerShopsLock.unlock();
-        }
-    }
-
-    public PlayerShop getPlayerShop(int ownerid) {
-        activePlayerShopsLock.lock();
-        try {
-            return activePlayerShops.get(ownerid);
-        } finally {
-            activePlayerShopsLock.unlock();
-        }
-    }
-
-    public void registerHiredMerchant(HiredMerchant hm) {
-        activeMerchantsLock.lock();
-        try {
-            int initProc;
-            if (Server.getInstance().getCurrentTime() - merchantUpdate > MINUTES.toMillis(5)) {
-                initProc = 1;
-            } else {
-                initProc = 0;
-            }
-
-            activeMerchants.put(hm.getOwnerId(), new Pair<>(hm, initProc));
-        } finally {
-            activeMerchantsLock.unlock();
-        }
-    }
-
-    public void unregisterHiredMerchant(HiredMerchant hm) {
-        activeMerchantsLock.lock();
-        try {
-            activeMerchants.remove(hm.getOwnerId());
-        } finally {
-            activeMerchantsLock.unlock();
-        }
-    }
-
-    public void runHiredMerchantSchedule() {
-        Map<Integer, Pair<HiredMerchant, Integer>> deployedMerchants;
-        activeMerchantsLock.lock();
-        try {
-            merchantUpdate = Server.getInstance().getCurrentTime();
-            deployedMerchants = new LinkedHashMap<>(activeMerchants);
-
-            for (Entry<Integer, Pair<HiredMerchant, Integer>> dm : deployedMerchants.entrySet()) {
-                int timeOn = dm.getValue().getRight();
-                HiredMerchant hm = dm.getValue().getLeft();
-
-                if (timeOn <= 144) {   // 1440 minutes == 24hrs
-                    activeMerchants.put(hm.getOwnerId(), new Pair<>(dm.getValue().getLeft(), timeOn + 1));
-                } else {
-                    hm.forceClose();
-                    this.getChannel(hm.getChannel()).removeHiredMerchant(hm.getOwnerId());
-
-                    activeMerchants.remove(dm.getKey());
-                }
-            }
-        } finally {
-            activeMerchantsLock.unlock();
-        }
-    }
-
-    public List<HiredMerchant> getActiveMerchants() {
-        List<HiredMerchant> hmList = new ArrayList<>();
-        activeMerchantsLock.lock();
-        try {
-            for (Pair<HiredMerchant, Integer> hmp : activeMerchants.values()) {
-                HiredMerchant hm = hmp.getLeft();
-                if (hm.isOpen()) {
-                    hmList.add(hm);
-                }
-            }
-
-            return hmList;
-        } finally {
-            activeMerchantsLock.unlock();
-        }
-    }
-
-    public HiredMerchant getHiredMerchant(int ownerid) {
-        activeMerchantsLock.lock();
-        try {
-            if (activeMerchants.containsKey(ownerid)) {
-                return activeMerchants.get(ownerid).getLeft();
-            }
-
-            return null;
-        } finally {
-            activeMerchantsLock.unlock();
-        }
-    }
-
     public void registerTimedMapObject(Runnable r, long duration) {
         timedMapObjectLock.lock();
         try {
@@ -1799,22 +1121,6 @@ public class World {
         setPlayerNpcMapData(mapid, step, podium, true);
     }
 
-    private static void executePlayerNpcMapDataUpdate(Connection con, boolean isPodium, Map<Integer, ?> pnpcData, int value, int worldid, int mapid) throws SQLException {
-        final String query;
-        if (pnpcData.containsKey(mapid)) {
-            query = "UPDATE playernpcs_field SET " + (isPodium ? "podium" : "step") + " = ? WHERE world = ? AND map = ?";
-        } else {
-            query = "INSERT INTO playernpcs_field (" + (isPodium ? "podium" : "step") + ", world, map) VALUES (?, ?, ?)";
-        }
-
-        try (PreparedStatement ps = con.prepareStatement(query)) {
-            ps.setInt(1, value);
-            ps.setInt(2, worldid);
-            ps.setInt(3, mapid);
-            ps.executeUpdate();
-        }
-    }
-
     private void setPlayerNpcMapData(int mapid, int step, int podium, boolean silent) {
         if (!silent) {
             try (Connection con = DatabaseConnection.getStaticConnection()) {
@@ -1854,11 +1160,6 @@ public class World {
         }
     }
 
-    public void resetPlayerNpcMapData() {
-        pnpcStep.clear();
-        pnpcPodium.clear();
-    }
-
     public void setServerMessage(String msg) {
         for (Channel ch : getChannels()) {
             ch.setServerMessage(msg);
@@ -1871,186 +1172,9 @@ public class World {
         }
     }
 
-    public List<Pair<PlayerShopItem, AbstractMapObject>> getAvailableItemBundles(int itemid) {
-        List<Pair<PlayerShopItem, AbstractMapObject>> hmsAvailable = new ArrayList<>();
-
-        for (HiredMerchant hm : getActiveMerchants()) {
-            List<PlayerShopItem> itemBundles = hm.sendAvailableBundles(itemid);
-
-            for (PlayerShopItem mpsi : itemBundles) {
-                hmsAvailable.add(new Pair<>(mpsi, hm));
-            }
-        }
-
-        for (PlayerShop ps : getActivePlayerShops()) {
-            List<PlayerShopItem> itemBundles = ps.sendAvailableBundles(itemid);
-
-            for (PlayerShopItem mpsi : itemBundles) {
-                hmsAvailable.add(new Pair<>(mpsi, ps));
-            }
-        }
-
-        hmsAvailable.sort((p1, p2) -> p1.getLeft().getPrice() - p2.getLeft().getPrice());
-
-        hmsAvailable.subList(0, Math.min(hmsAvailable.size(), 200));    //truncates the list to have up to 200 elements
-        return hmsAvailable;
-    }
-
-    private void pushRelationshipCouple(Pair<Integer, Pair<Integer, Integer>> couple) {
-        int mid = couple.getLeft(), hid = couple.getRight().getLeft(), wid = couple.getRight().getRight();
-        relationshipCouples.put(mid, couple.getRight());
-        relationships.put(hid, mid);
-        relationships.put(wid, mid);
-    }
-
-    public Pair<Integer, Integer> getRelationshipCouple(int relationshipId) {
-        Pair<Integer, Integer> rc = relationshipCouples.get(relationshipId);
-
-        if (rc == null) {
-            Pair<Integer, Pair<Integer, Integer>> couple = getRelationshipCoupleFromDb(relationshipId, true);
-            if (couple == null) {
-                return null;
-            }
-
-            pushRelationshipCouple(couple);
-            rc = couple.getRight();
-        }
-
-        return rc;
-    }
-
-    public int getRelationshipId(int playerId) {
-        Integer ret = relationships.get(playerId);
-
-        if (ret == null) {
-            Pair<Integer, Pair<Integer, Integer>> couple = getRelationshipCoupleFromDb(playerId, false);
-            if (couple == null) {
-                return -1;
-            }
-
-            pushRelationshipCouple(couple);
-            ret = couple.getLeft();
-        }
-
-        return ret;
-    }
-
-    private static Pair<Integer, Pair<Integer, Integer>> getRelationshipCoupleFromDb(int id, boolean usingMarriageId) {
-        try (Connection con = DatabaseConnection.getStaticConnection()) {
-            Integer mid = null, hid = null, wid = null;
-
-            PreparedStatement ps;
-            if (usingMarriageId) {
-                ps = con.prepareStatement("SELECT * FROM marriages WHERE marriageid = ?");
-                ps.setInt(1, id);
-            } else {
-                ps = con.prepareStatement("SELECT * FROM marriages WHERE husbandid = ? OR wifeid = ?");
-                ps.setInt(1, id);
-                ps.setInt(2, id);
-            }
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    mid = rs.getInt("marriageid");
-                    hid = rs.getInt("husbandid");
-                    wid = rs.getInt("wifeid");
-                }
-            }
-
-            ps.close();
-
-            return (mid == null) ? null : new Pair<>(mid, new Pair<>(hid, wid));
-        } catch (SQLException se) {
-            se.printStackTrace();
-            return null;
-        }
-    }
-
-    public int createRelationship(int groomId, int brideId) {
-        int ret = addRelationshipToDb(groomId, brideId);
-
-        pushRelationshipCouple(new Pair<>(ret, new Pair<>(groomId, brideId)));
-        return ret;
-    }
-
-    private static int addRelationshipToDb(int groomId, int brideId) {
-        try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("INSERT INTO marriages (husbandid, wifeid) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS)) {
-            ps.setInt(1, groomId);
-            ps.setInt(2, brideId);
-            ps.executeUpdate();
-
-            try (ResultSet rs = ps.getGeneratedKeys()) {
-                rs.next();
-                int ret = rs.getInt(1);
-                return ret;
-            }
-        } catch (SQLException se) {
-            se.printStackTrace();
-            return -1;
-        }
-    }
-
-    public void deleteRelationship(int playerId, int partnerId) {
-        int relationshipId = relationships.get(playerId);
-        deleteRelationshipFromDb(relationshipId);
-
-        relationshipCouples.remove(relationshipId);
-        relationships.remove(playerId);
-        relationships.remove(partnerId);
-    }
-
-    private static void deleteRelationshipFromDb(int playerId) {
-        try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("DELETE FROM marriages WHERE marriageid = ?")) {
-            ps.setInt(1, playerId);
-            ps.executeUpdate();
-        } catch (SQLException se) {
-            se.printStackTrace();
-        }
-    }
-
     public void dropMessage(int type, String message) {
         for (Character player : getPlayerStorage().getAllCharacters()) {
             player.dropMessage(type, message);
-        }
-    }
-
-    public boolean registerFisherPlayer(Character chr, int baitLevel) {
-        synchronized (fishingAttempters) {
-            if (fishingAttempters.containsKey(chr)) {
-                return false;
-            }
-
-            fishingAttempters.put(chr, baitLevel);
-            return true;
-        }
-    }
-
-    public int unregisterFisherPlayer(Character chr) {
-        Integer baitLevel = fishingAttempters.remove(chr);
-        if (baitLevel != null) {
-            return baitLevel;
-        } else {
-            return 0;
-        }
-    }
-
-    public void runCheckFishingSchedule() {
-        double[] fishingLikelihoods = Fishing.fetchFishingLikelihood();
-        double yearLikelihood = fishingLikelihoods[0], timeLikelihood = fishingLikelihoods[1];
-
-        if (!fishingAttempters.isEmpty()) {
-            List<Character> fishingAttemptersList;
-
-            synchronized (fishingAttempters) {
-                fishingAttemptersList = new ArrayList<>(fishingAttempters.keySet());
-            }
-
-            for (Character chr : fishingAttemptersList) {
-                int baitLevel = unregisterFisherPlayer(chr);
-                Fishing.doFishing(chr, baitLevel, yearLikelihood, timeLikelihood);
-            }
         }
     }
 
@@ -2061,93 +1185,5 @@ public class World {
 
     public BaseService getServiceAccess(WorldServices sv) {
         return services.getAccess(sv).getService();
-    }
-
-    private void closeWorldServices() {
-        services.shutdown();
-    }
-
-    private void clearWorldData() {
-        List<Party> pList;
-        partyLock.lock();
-        try {
-            pList = new ArrayList<>(parties.values());
-        } finally {
-            partyLock.unlock();
-        }
-
-        closeWorldServices();
-    }
-
-    public final void shutdown() {
-        for (Channel ch : getChannels()) {
-            ch.shutdown();
-        }
-
-        if (petsSchedule != null) {
-            petsSchedule.cancel(false);
-            petsSchedule = null;
-        }
-
-        if (srvMessagesSchedule != null) {
-            srvMessagesSchedule.cancel(false);
-            srvMessagesSchedule = null;
-        }
-
-        if (mountsSchedule != null) {
-            mountsSchedule.cancel(false);
-            mountsSchedule = null;
-        }
-
-        if (merchantSchedule != null) {
-            merchantSchedule.cancel(false);
-            merchantSchedule = null;
-        }
-
-        if (timedMapObjectsSchedule != null) {
-            timedMapObjectsSchedule.cancel(false);
-            timedMapObjectsSchedule = null;
-        }
-
-        if (charactersSchedule != null) {
-            charactersSchedule.cancel(false);
-            charactersSchedule = null;
-        }
-
-        if (marriagesSchedule != null) {
-            marriagesSchedule.cancel(false);
-            marriagesSchedule = null;
-        }
-
-        if (mapOwnershipSchedule != null) {
-            mapOwnershipSchedule.cancel(false);
-            mapOwnershipSchedule = null;
-        }
-
-        if (fishingSchedule != null) {
-            fishingSchedule.cancel(false);
-            fishingSchedule = null;
-        }
-
-        if (partySearchSchedule != null) {
-            partySearchSchedule.cancel(false);
-            partySearchSchedule = null;
-        }
-
-        if (timeoutSchedule != null) {
-            timeoutSchedule.cancel(false);
-            timeoutSchedule = null;
-        }
-
-        if (hpDecSchedule != null) {
-            hpDecSchedule.cancel(false);
-            hpDecSchedule = null;
-        }
-
-        players.disconnectAll();
-        players = null;
-
-        clearWorldData();
-        log.info("Finished shutting down world {}", id);
     }
 }

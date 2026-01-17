@@ -21,22 +21,28 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package dev.jaczerob.delfino.maplestory.packets.handlers;
 
-import dev.jaczerob.delfino.maplestory.client.*;
+import dev.jaczerob.delfino.maplestory.client.BuffStat;
 import dev.jaczerob.delfino.maplestory.client.Character;
+import dev.jaczerob.delfino.maplestory.client.Client;
+import dev.jaczerob.delfino.maplestory.client.Skill;
+import dev.jaczerob.delfino.maplestory.client.SkillFactory;
 import dev.jaczerob.delfino.maplestory.client.inventory.Inventory;
 import dev.jaczerob.delfino.maplestory.client.inventory.InventoryType;
 import dev.jaczerob.delfino.maplestory.client.inventory.Item;
 import dev.jaczerob.delfino.maplestory.client.inventory.manipulator.InventoryManipulator;
 import dev.jaczerob.delfino.maplestory.client.status.MonsterStatus;
-import dev.jaczerob.delfino.maplestory.client.status.MonsterStatusEffect;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
 import dev.jaczerob.delfino.maplestory.constants.id.MapId;
 import dev.jaczerob.delfino.maplestory.constants.inventory.ItemConstants;
-import dev.jaczerob.delfino.maplestory.constants.skills.Aran;
 import dev.jaczerob.delfino.maplestory.packets.AbstractPacketHandler;
 import dev.jaczerob.delfino.maplestory.server.StatEffect;
 import dev.jaczerob.delfino.maplestory.server.life.LifeFactory.loseItem;
-import dev.jaczerob.delfino.maplestory.server.life.*;
+import dev.jaczerob.delfino.maplestory.server.life.MobAttackInfo;
+import dev.jaczerob.delfino.maplestory.server.life.MobAttackInfoFactory;
+import dev.jaczerob.delfino.maplestory.server.life.MobSkill;
+import dev.jaczerob.delfino.maplestory.server.life.MobSkillFactory;
+import dev.jaczerob.delfino.maplestory.server.life.MobSkillType;
+import dev.jaczerob.delfino.maplestory.server.life.Monster;
 import dev.jaczerob.delfino.maplestory.server.maps.MapObject;
 import dev.jaczerob.delfino.maplestory.server.maps.MapleMap;
 import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
@@ -50,7 +56,6 @@ import org.springframework.stereotype.Component;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -125,10 +130,6 @@ public final class TakeDamageHandler extends AbstractPacketHandler {
                                             InventoryManipulator.removeById(client, type, loseItem.getId(), qty, false, false);
                                         } finally {
                                             inv.unlockInventory();
-                                        }
-
-                                        if (loseItem.getId() == 4031868) {
-                                            chr.updateAriantScore();
                                         }
 
                                         for (byte b = 0; b < qty; b++) {
@@ -216,15 +217,6 @@ public final class TakeDamageHandler extends AbstractPacketHandler {
                         map.broadcastMessage(chr, ChannelPacketCreator.getInstance().damageMonster(oid, bouncedamage), false, true);
                         attacker.aggroMonsterDamage(chr, bouncedamage);
                     }
-                    StatEffect bPressure = chr.getBuffEffect(BuffStat.BODY_PRESSURE); // thanks Atoot for noticing an issue on Body Pressure neutralise
-                    if (bPressure != null) {
-                        Skill skill = SkillFactory.getSkill(Aran.BODY_PRESSURE);
-                        if (!attacker.alreadyBuffedStats().contains(MonsterStatus.NEUTRALISE)) {
-                            if (!attacker.isBoss() && bPressure.makeChanceResult()) {
-                                attacker.applyStatus(chr, new MonsterStatusEffect(Collections.singletonMap(MonsterStatus.NEUTRALISE, 1), skill, null, false), false, (bPressure.getDuration() / 10) * 2, false);
-                            }
-                        }
-                    }
                 }
 
                 StatEffect cBarrier = chr.getBuffEffect(BuffStat.COMBO_BARRIER);  // thanks BHB for noticing Combo Barrier buff not working
@@ -242,12 +234,6 @@ public final class TakeDamageHandler extends AbstractPacketHandler {
                 }
                 if (achilles != 0 && achilles1 != null) {
                     damage *= (achilles1.getEffect(achilles).getX() / 1000.0);
-                }
-
-                Skill highDef = SkillFactory.getSkill(Aran.HIGH_DEFENSE);
-                int hdLevel = chr.getSkillLevel(highDef);
-                if (highDef != null && hdLevel > 0) {
-                    damage *= Math.ceil(highDef.getEffect(hdLevel).getX() / 1000.0);
                 }
             }
             Integer mesoguard = chr.getBuffedValue(BuffStat.MESOGUARD);
@@ -273,9 +259,6 @@ public final class TakeDamageHandler extends AbstractPacketHandler {
                 }
                 chr.addMPHP(-damage, -mpattack);
             } else {
-                if (chr.isRidingBattleship()) {
-                    chr.decreaseBattleshipHp(damage);
-                }
                 chr.addMPHP(-damage, -mpattack);
             }
         }
@@ -283,10 +266,6 @@ public final class TakeDamageHandler extends AbstractPacketHandler {
             map.broadcastMessage(chr, ChannelPacketCreator.getInstance().damagePlayer(damagefrom, monsteridfrom, chr.getId(), damage, fake, direction, is_pgmr, pgmr, is_pg, oid, pos_x, pos_y), false);
         } else {
             map.broadcastGMMessage(chr, ChannelPacketCreator.getInstance().damagePlayer(damagefrom, monsteridfrom, chr.getId(), damage, fake, direction, is_pgmr, pgmr, is_pg, oid, pos_x, pos_y), false);
-        }
-        if (MapId.isDojo(map.getId())) {
-            chr.setDojoEnergy(chr.getDojoEnergy() + YamlConfig.config.server.DOJO_ENERGY_DMG);
-            context.writeAndFlush(ChannelPacketCreator.getInstance().getEnergy("energy", chr.getDojoEnergy()));
         }
 
         for (Character player : banishPlayers) {  // chill, if this list ever gets non-empty an attacker does exist, trust me :)

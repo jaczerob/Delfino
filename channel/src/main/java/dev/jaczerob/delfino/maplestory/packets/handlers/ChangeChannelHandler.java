@@ -49,7 +49,7 @@ public final class ChangeChannelHandler extends AbstractPacketHandler {
             AutobanFactory.GENERAL.alert(client.getPlayer(), "CCing to same channel.");
             client.disconnect(false, false);
             return;
-        } else if (client.getPlayer().getCashShop().isOpened() || client.getPlayer().getMiniGame() != null || client.getPlayer().getPlayerShop() != null) {
+        } else if (client.getPlayer().getCashShop().isOpened()) {
             return;
         }
 

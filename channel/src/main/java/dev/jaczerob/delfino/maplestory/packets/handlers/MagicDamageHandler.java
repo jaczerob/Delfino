@@ -21,14 +21,11 @@
  */
 package dev.jaczerob.delfino.maplestory.packets.handlers;
 
-import dev.jaczerob.delfino.maplestory.client.*;
+import dev.jaczerob.delfino.maplestory.client.BuffStat;
 import dev.jaczerob.delfino.maplestory.client.Character;
-import dev.jaczerob.delfino.maplestory.config.YamlConfig;
-import dev.jaczerob.delfino.maplestory.constants.id.MapId;
-import dev.jaczerob.delfino.maplestory.constants.skills.Bishop;
-import dev.jaczerob.delfino.maplestory.constants.skills.Evan;
-import dev.jaczerob.delfino.maplestory.constants.skills.FPArchMage;
-import dev.jaczerob.delfino.maplestory.constants.skills.ILArchMage;
+import dev.jaczerob.delfino.maplestory.client.Client;
+import dev.jaczerob.delfino.maplestory.client.Skill;
+import dev.jaczerob.delfino.maplestory.client.SkillFactory;
 import dev.jaczerob.delfino.maplestory.server.StatEffect;
 import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.network.opcodes.RecvOpcode;
@@ -60,12 +57,7 @@ public final class MagicDamageHandler extends AbstractDealDamageHandler {
             }
         }
 
-        if (MapId.isDojo(chr.getMap().getId()) && attack.numAttacked > 0) {
-            chr.setDojoEnergy(chr.getDojoEnergy() + +YamlConfig.config.server.DOJO_ENERGY_ATK);
-            context.writeAndFlush(ChannelPacketCreator.getInstance().getEnergy("energy", chr.getDojoEnergy()));
-        }
-
-        int charge = (attack.skill == Evan.FIRE_BREATH || attack.skill == Evan.ICE_BREATH || attack.skill == FPArchMage.BIG_BANG || attack.skill == ILArchMage.BIG_BANG || attack.skill == Bishop.BIG_BANG) ? attack.charge : -1;
+        int charge = -1;
         Packet magicAttackPacket = ChannelPacketCreator.getInstance().magicAttack(chr, attack.skill, attack.skilllevel, attack.stance,
                 attack.numAttackedAndDamage, attack.targets, charge, attack.speed, attack.direction, attack.display);
 
@@ -82,12 +74,5 @@ public final class MagicDamageHandler extends AbstractDealDamageHandler {
             }
         }
         applyAttack(attack, chr, effect.getAttackCount());
-        Skill eaterSkill = SkillFactory.getSkill((chr.getJob().getId() - (chr.getJob().getId() % 10)) * 10000);// MP Eater, works with right job
-        int eaterLevel = chr.getSkillLevel(eaterSkill);
-        if (eaterLevel > 0) {
-            for (Integer oid : attack.targets.keySet()) {
-                eaterSkill.getEffect(eaterLevel).applyPassive(chr, chr.getMap().getMapObject(oid), 0);
-            }
-        }
     }
 }

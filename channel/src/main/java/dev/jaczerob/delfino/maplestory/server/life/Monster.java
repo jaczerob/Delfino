@@ -21,13 +21,15 @@
  */
 package dev.jaczerob.delfino.maplestory.server.life;
 
-import dev.jaczerob.delfino.maplestory.client.*;
+import dev.jaczerob.delfino.maplestory.client.BuffStat;
 import dev.jaczerob.delfino.maplestory.client.Character;
+import dev.jaczerob.delfino.maplestory.client.Client;
+import dev.jaczerob.delfino.maplestory.client.Skill;
+import dev.jaczerob.delfino.maplestory.client.SkillFactory;
 import dev.jaczerob.delfino.maplestory.client.status.MonsterStatus;
 import dev.jaczerob.delfino.maplestory.client.status.MonsterStatusEffect;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
 import dev.jaczerob.delfino.maplestory.constants.id.MobId;
-import dev.jaczerob.delfino.maplestory.constants.skills.*;
 import dev.jaczerob.delfino.maplestory.net.server.channel.Channel;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.world.MonsterAggroCoordinator;
 import dev.jaczerob.delfino.maplestory.net.server.services.task.channel.MobAnimationService;
@@ -54,9 +56,17 @@ import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -65,39 +75,37 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class Monster extends AbstractLoadedLife {
     private static final Logger log = LoggerFactory.getLogger(Monster.class);
-
-    private ChangeableStats ostats = null;  //unused, v83 WZs offers no support for changeable stats.
-    private MonsterStats stats;
     private final AtomicInteger hp = new AtomicInteger(1);
     private final AtomicLong maxHpPlusHeal = new AtomicLong(1);
-    private int mp;
-    private WeakReference<Character> controller = new WeakReference<>(null);
-    private boolean controllerHasAggro, controllerKnowsAboutAggro, controllerHasPuppet;
     private final Collection<MonsterListener> listeners = new LinkedList<>();
     private final EnumMap<MonsterStatus, MonsterStatusEffect> stati = new EnumMap<>(MonsterStatus.class);
     private final ArrayList<MonsterStatus> alreadyBuffed = new ArrayList<>();
-    private MapleMap map;
-    private int VenomMultiplier = 0;
-    private boolean fake = false;
-    private boolean dropsDisabled = false;
     private final Set<MobSkillId> usedSkills = new HashSet<>();
     private final Set<Integer> usedAttacks = new HashSet<>();
-    private Set<Integer> calledMobOids = null;
-    private WeakReference<Monster> callerMob = new WeakReference<>(null);
     private final List<Integer> stolenItems = new ArrayList<>(5);
-    private int team;
-    private int parentMobOid = 0;
-    private int spawnEffect = 0;
     private final HashMap<Integer, AtomicLong> takenDamage = new HashMap<>();
-    private ScheduledFuture<?> monsterItemDrop = null;
-    private Runnable removeAfterAction = null;
-    private boolean availablePuppetUpdate = true;
-
     private final Lock externalLock = new ReentrantLock();
     private final Lock monsterLock = new ReentrantLock(true);
     private final Lock statiLock = new ReentrantLock();
     private final Lock animationLock = new ReentrantLock();
     private final Lock aggroUpdateLock = new ReentrantLock();
+    private ChangeableStats ostats = null;  //unused, v83 WZs offers no support for changeable stats.
+    private MonsterStats stats;
+    private int mp;
+    private WeakReference<Character> controller = new WeakReference<>(null);
+    private boolean controllerHasAggro, controllerKnowsAboutAggro, controllerHasPuppet;
+    private MapleMap map;
+    private int VenomMultiplier = 0;
+    private boolean fake = false;
+    private boolean dropsDisabled = false;
+    private Set<Integer> calledMobOids = null;
+    private WeakReference<Monster> callerMob = new WeakReference<>(null);
+    private int team;
+    private int parentMobOid = 0;
+    private int spawnEffect = 0;
+    private ScheduledFuture<?> monsterItemDrop = null;
+    private Runnable removeAfterAction = null;
+    private boolean availablePuppetUpdate = true;
 
     public Monster(int id, MonsterStats stats) {
         super(id);
@@ -107,6 +115,47 @@ public class Monster extends AbstractLoadedLife {
     public Monster(Monster monster) {
         super(monster);
         initWithStats(monster.stats);
+    }
+
+    private static boolean isWhiteExpGain(Character chr, Map<Integer, Float> personalRatio, double sdevRatio) {
+        Float pr = personalRatio.get(chr.getId());
+        if (pr == null) {
+            return false;
+        }
+
+        return pr >= sdevRatio;
+    }
+
+    private static double calcExperienceStandDevThreshold(List<Float> entryExpRatio, int totalEntries) {
+        float avgExpReward = 0.0f;
+        for (Float exp : entryExpRatio) {
+            avgExpReward += exp;
+        }
+
+        // thanks Simon (HarborMS) for finding an issue with solo party player gaining yellow EXP when soloing mobs
+        avgExpReward /= totalEntries;
+
+        float varExpReward = 0.0f;
+        for (Float exp : entryExpRatio) {
+            varExpReward += Math.pow(exp - avgExpReward, 2);
+        }
+        varExpReward /= entryExpRatio.size();
+
+        return avgExpReward + Math.sqrt(varExpReward);
+    }
+
+    private static int expValueToInteger(double exp) {
+        if (exp > Integer.MAX_VALUE) {
+            exp = Integer.MAX_VALUE;
+        } else if (exp < Integer.MIN_VALUE) {
+            exp = Integer.MIN_VALUE;
+        }
+
+        return (int) Math.round(exp);    // operations on float point are not point-precise... thanks IxianMace for noticing -1 EXP gains
+    }
+
+    private static void aggroMonsterControl(Client c, Monster mob, boolean immediateAggro) {
+        c.sendPacket(ChannelPacketCreator.getInstance().controlMonster(mob, false, immediateAggro));
     }
 
     public void lockMonster() {
@@ -126,12 +175,12 @@ public class Monster extends AbstractLoadedLife {
         maxHpPlusHeal.set(hp.get());
     }
 
-    public void setSpawnEffect(int effect) {
-        spawnEffect = effect;
-    }
-
     public int getSpawnEffect() {
         return spawnEffect;
+    }
+
+    public void setSpawnEffect(int effect) {
+        spawnEffect = effect;
     }
 
     public void disableDrops() {
@@ -144,10 +193,6 @@ public class Monster extends AbstractLoadedLife {
 
     public boolean dropsDisabled() {
         return dropsDisabled;
-    }
-
-    public void setMap(MapleMap map) {
-        this.map = map;
     }
 
     public int getParentMobOid() {
@@ -282,6 +327,10 @@ public class Monster extends AbstractLoadedLife {
 
     public boolean isBoss() {
         return stats.isBoss();
+    }
+
+    public void setBoss(boolean boss) {
+        this.stats.setBoss(boss);
     }
 
     public int getAnimationTime(String name) {
@@ -483,33 +532,6 @@ public class Monster extends AbstractLoadedLife {
         return takenDamage.containsKey(chr.getId());
     }
 
-    private static boolean isWhiteExpGain(Character chr, Map<Integer, Float> personalRatio, double sdevRatio) {
-        Float pr = personalRatio.get(chr.getId());
-        if (pr == null) {
-            return false;
-        }
-
-        return pr >= sdevRatio;
-    }
-
-    private static double calcExperienceStandDevThreshold(List<Float> entryExpRatio, int totalEntries) {
-        float avgExpReward = 0.0f;
-        for (Float exp : entryExpRatio) {
-            avgExpReward += exp;
-        }
-
-        // thanks Simon (HarborMS) for finding an issue with solo party player gaining yellow EXP when soloing mobs
-        avgExpReward /= totalEntries;
-
-        float varExpReward = 0.0f;
-        for (Float exp : entryExpRatio) {
-            varExpReward += Math.pow(exp - avgExpReward, 2);
-        }
-        varExpReward /= entryExpRatio.size();
-
-        return avgExpReward + Math.sqrt(varExpReward);
-    }
-
     private void distributePlayerExperience(Character chr, float exp, float partyBonusMod, int totalPartyLevel, boolean highestPartyDamager, boolean whiteExpGain, boolean hasPartySharers) {
         float playerExp = (YamlConfig.config.server.EXP_SPLIT_COMMON_MOD * chr.getLevel()) / totalPartyLevel;
         if (highestPartyDamager) {
@@ -520,7 +542,6 @@ public class Monster extends AbstractLoadedLife {
         float bonusExp = partyBonusMod * playerExp;
 
         this.giveExpToCharacter(chr, playerExp, bonusExp, whiteExpGain, hasPartySharers);
-        giveFamilyRep(chr.getFamilyEntry());
     }
 
     private void distributePartyExperience(Map<Character, Long> partyParticipation, float expPerDmg, Set<Character> underleveled, Map<Integer, Float> personalRatio, double sdevRatio) {
@@ -573,7 +594,6 @@ public class Monster extends AbstractLoadedLife {
 
         for (Character mc : expMembers) {
             distributePlayerExperience(mc, participationExp, partyBonusMod, totalPartyLevel, mc == participationMvp, isWhiteExpGain(mc, personalRatio, sdevRatio), hasPartySharers);
-            giveFamilyRep(mc.getFamilyEntry());
         }
     }
 
@@ -685,16 +705,6 @@ public class Monster extends AbstractLoadedLife {
         return multiplier;
     }
 
-    private static int expValueToInteger(double exp) {
-        if (exp > Integer.MAX_VALUE) {
-            exp = Integer.MAX_VALUE;
-        } else if (exp < Integer.MIN_VALUE) {
-            exp = Integer.MIN_VALUE;
-        }
-
-        return (int) Math.round(exp);    // operations on float point are not point-precise... thanks IxianMace for noticing -1 EXP gains
-    }
-
     private void giveExpToCharacter(Character attacker, Float personalExp, Float partyExp, boolean white, boolean hasPartySharers) {
         if (attacker.isAlive()) {
             if (personalExp != null) {
@@ -778,29 +788,7 @@ public class Monster extends AbstractLoadedLife {
                             mob.disableDrops();
                         }
                         reviveMap.spawnMonster(mob);
-
-                        if (MobId.isDeadHorntailPart(mob.getId()) && reviveMap.isHorntailDefeated()) {
-                            boolean htKilled = false;
-                            Monster ht = reviveMap.getMonsterById(MobId.HORNTAIL);
-
-                            if (ht != null) {
-                                ht.lockMonster();
-                                try {
-                                    htKilled = ht.isAlive();
-                                    ht.setHpZero();
-                                } finally {
-                                    ht.unlockMonster();
-                                }
-
-                                if (htKilled) {
-                                    reviveMap.killMonster(ht, killer, true, (short) 0);
-                                }
-                            }
-
-                            for (int i = MobId.DEAD_HORNTAIL_MAX; i >= MobId.DEAD_HORNTAIL_MIN; i--) {
-                                reviveMap.killMonster(reviveMap.getMonsterById(i), killer, true, (short) 0);
-                            }
-                        } else if (controller != null) {
+                        if (controller != null) {
                             mob.aggroSwitchController(controller, aggro);
                         }
                     }
@@ -912,16 +900,6 @@ public class Monster extends AbstractLoadedLife {
 
         for (MonsterListener listener : listenersList) {
             listener.monsterHealed(trueHeal);
-        }
-    }
-
-    private void giveFamilyRep(FamilyEntry entry) {
-        if (entry != null) {
-            int repGain = isBoss() ? YamlConfig.config.server.FAMILY_REP_PER_BOSS_KILL : YamlConfig.config.server.FAMILY_REP_PER_KILL;
-            if (getMaxHp() <= 1) {
-                repGain = 0; //don't count trash mobs
-            }
-            entry.giveReputationToSenior(repGain, true);
         }
     }
 
@@ -1099,21 +1077,6 @@ public class Monster extends AbstractLoadedLife {
             }
         }
 
-        if (status.getSkill().getId() == FPMage.ELEMENT_COMPOSITION) { // fp compo
-            ElementalEffectiveness effectiveness = getMonsterEffectiveness(Element.POISON);
-            if (effectiveness == ElementalEffectiveness.IMMUNE || effectiveness == ElementalEffectiveness.STRONG) {
-                return false;
-            }
-        } else if (status.getSkill().getId() == ILMage.ELEMENT_COMPOSITION) { // il compo
-            ElementalEffectiveness effectiveness = getMonsterEffectiveness(Element.ICE);
-            if (effectiveness == ElementalEffectiveness.IMMUNE || effectiveness == ElementalEffectiveness.STRONG) {
-                return false;
-            }
-        } else if (status.getSkill().getId() == NightLord.VENOMOUS_STAR || status.getSkill().getId() == Shadower.VENOMOUS_STAB || status.getSkill().getId() == NightWalker.VENOM) {// venom
-            if (getMonsterEffectiveness(Element.POISON) == ElementalEffectiveness.WEAK) {
-                return false;
-            }
-        }
         if (poison && hp.get() <= 1) {
             return false;
         }
@@ -1129,7 +1092,7 @@ public class Monster extends AbstractLoadedLife {
 
         final Channel ch = map.getChannelServer();
         final int mapid = map.getId();
-        if (statis.size() > 0) {
+        if (!statis.isEmpty()) {
             statiLock.lock();
             try {
                 for (MonsterStatus stat : statis.keySet()) {
@@ -1178,44 +1141,7 @@ public class Monster extends AbstractLoadedLife {
             overtimeAction = new DamageTask(poisonDamage, from, status, 0);
             overtimeDelay = 1000;
         } else if (venom) {
-            if (from.getJob() == Job.NIGHTLORD || from.getJob() == Job.SHADOWER || from.getJob().isA(Job.NIGHTWALKER3)) {
-                int poisonLevel, matk, jobid = from.getJob().getId();
-                int skillid = (jobid == 412 ? NightLord.VENOMOUS_STAR : (jobid == 422 ? Shadower.VENOMOUS_STAB : NightWalker.VENOM));
-                poisonLevel = from.getSkillLevel(SkillFactory.getSkill(skillid));
-                if (poisonLevel <= 0) {
-                    return false;
-                }
-                matk = SkillFactory.getSkill(skillid).getEffect(poisonLevel).getMatk();
-                int luk = from.getLuk();
-                int maxDmg = (int) Math.ceil(Math.min(Short.MAX_VALUE, 0.2 * luk * matk));
-                int minDmg = (int) Math.ceil(Math.min(Short.MAX_VALUE, 0.1 * luk * matk));
-                int gap = maxDmg - minDmg;
-                if (gap == 0) {
-                    gap = 1;
-                }
-                int poisonDamage = 0;
-                for (int i = 0; i < getVenomMulti(); i++) {
-                    poisonDamage += (Randomizer.nextInt(gap) + minDmg);
-                }
-                poisonDamage = Math.min(Short.MAX_VALUE, poisonDamage);
-                status.setValue(MonsterStatus.VENOMOUS_WEAPON, poisonDamage);
-                status.setValue(MonsterStatus.POISON, poisonDamage);
-                animationTime = broadcastStatusEffect(status);
-
-                overtimeAction = new DamageTask(poisonDamage, from, status, 0);
-                overtimeDelay = 1000;
-            } else {
-                return false;
-            }
-            /*
-        } else if (status.getSkill().getId() == Hermit.SHADOW_WEB || status.getSkill().getId() == NightWalker.SHADOW_WEB) { //Shadow Web
-            int webDamage = (int) (getMaxHp() / 50.0 + 0.999);
-            status.setValue(MonsterStatus.SHADOW_WEB, Integer.valueOf(webDamage));
-            animationTime = broadcastStatusEffect(status);
-            
-            overtimeAction = new DamageTask(webDamage, from, status, 1);
-            overtimeDelay = 3500;
-            */
+            return false;
         } else if (status.getSkill().getId() == 4121004 || status.getSkill().getId() == 4221004) { // Ninja Ambush
             final Skill skill = SkillFactory.getSkill(status.getSkill().getId());
             final byte level = from.getSkillLevel(skill);
@@ -1321,38 +1247,15 @@ public class Monster extends AbstractLoadedLife {
         }
     }
 
-    public void debuffMob(int skillid) {
-        MonsterStatus[] statups = {MonsterStatus.WEAPON_ATTACK_UP, MonsterStatus.WEAPON_DEFENSE_UP, MonsterStatus.MAGIC_ATTACK_UP, MonsterStatus.MAGIC_DEFENSE_UP};
+    public void debuffMob() {
         statiLock.lock();
         try {
-            if (skillid == Hermit.SHADOW_MESO) {
-                debuffMobStat(statups[1]);
-                debuffMobStat(statups[3]);
-            } else if (skillid == Priest.DISPEL) {
-                for (MonsterStatus ms : statups) {
-                    debuffMobStat(ms);
-                }
-            } else {    // is a crash skill
-                int i = (skillid == Crusader.ARMOR_CRASH ? 1 : (skillid == WhiteKnight.MAGIC_CRASH ? 2 : 0));
-                debuffMobStat(statups[i]);
+            int i = 0;
+            debuffMobStat(MonsterStatus.WEAPON_ATTACK_UP);
 
-                if (YamlConfig.config.server.USE_ANTI_IMMUNITY_CRASH) {
-                    if (skillid == Crusader.ARMOR_CRASH) {
-                        if (!isBuffed(MonsterStatus.WEAPON_REFLECT)) {
-                            debuffMobStat(MonsterStatus.WEAPON_IMMUNITY);
-                        }
-                        if (!isBuffed(MonsterStatus.MAGIC_REFLECT)) {
-                            debuffMobStat(MonsterStatus.MAGIC_IMMUNITY);
-                        }
-                    } else if (skillid == WhiteKnight.MAGIC_CRASH) {
-                        if (!isBuffed(MonsterStatus.MAGIC_REFLECT)) {
-                            debuffMobStat(MonsterStatus.MAGIC_IMMUNITY);
-                        }
-                    } else {
-                        if (!isBuffed(MonsterStatus.WEAPON_REFLECT)) {
-                            debuffMobStat(MonsterStatus.WEAPON_IMMUNITY);
-                        }
-                    }
+            if (YamlConfig.config.server.USE_ANTI_IMMUNITY_CRASH) {
+                if (!isBuffed(MonsterStatus.WEAPON_REFLECT)) {
+                    debuffMobStat(MonsterStatus.WEAPON_IMMUNITY);
                 }
             }
         } finally {
@@ -1369,15 +1272,6 @@ public class Monster extends AbstractLoadedLife {
         }
     }
 
-    public void setFake(boolean fake) {
-        monsterLock.lock();
-        try {
-            this.fake = fake;
-        } finally {
-            monsterLock.unlock();
-        }
-    }
-
     public boolean isFake() {
         monsterLock.lock();
         try {
@@ -1387,8 +1281,21 @@ public class Monster extends AbstractLoadedLife {
         }
     }
 
+    public void setFake(boolean fake) {
+        monsterLock.lock();
+        try {
+            this.fake = fake;
+        } finally {
+            monsterLock.unlock();
+        }
+    }
+
     public MapleMap getMap() {
         return map;
+    }
+
+    public void setMap(MapleMap map) {
+        this.map = map;
     }
 
     public MonsterAggroCoordinator getMapAggroCoordinator() {
@@ -1424,7 +1331,7 @@ public class Monster extends AbstractLoadedLife {
             if (mp < mpCon) {
                 return false;
             }
-            
+
             /*
             if (!this.applyAnimationIfRoaming(-1, toUse)) {
                 return false;
@@ -1494,7 +1401,7 @@ public class Monster extends AbstractLoadedLife {
             if (mp < mpCon) {
                 return -1;
             }
-            
+
             /*
             if (!this.applyAnimationIfRoaming(attackPos, null)) {
                 return -1;
@@ -1558,58 +1465,6 @@ public class Monster extends AbstractLoadedLife {
         return this.stats.getBuffToGive();
     }
 
-    private final class DamageTask implements Runnable {
-
-        private final int dealDamage;
-        private final Character chr;
-        private final MonsterStatusEffect status;
-        private final int type;
-        private final MapleMap map;
-
-        private DamageTask(int dealDamage, Character chr, MonsterStatusEffect status, int type) {
-            this.dealDamage = dealDamage;
-            this.chr = chr;
-            this.status = status;
-            this.type = type;
-            this.map = chr.getMap();
-        }
-
-        @Override
-        public void run() {
-            int curHp = hp.get();
-            if (curHp <= 1) {
-                MobStatusService service = (MobStatusService) map.getChannelServer().getServiceAccess(ChannelServices.MOB_STATUS);
-                service.interruptMobStatus(map.getId(), status);
-                return;
-            }
-
-            int damage = dealDamage;
-            if (damage >= curHp) {
-                damage = curHp - 1;
-                if (type == 1 || type == 2) {
-                    MobStatusService service = (MobStatusService) map.getChannelServer().getServiceAccess(ChannelServices.MOB_STATUS);
-                    service.interruptMobStatus(map.getId(), status);
-                }
-            }
-            if (damage > 0) {
-                lockMonster();
-                try {
-                    applyDamage(chr, damage, true, false);
-                } finally {
-                    unlockMonster();
-                }
-
-                if (type == 1) {
-                    map.broadcastMessage(ChannelPacketCreator.getInstance().damageMonster(getObjectId(), damage), getPosition());
-                } else if (type == 2) {
-                    if (damage < dealDamage) {    // ninja ambush (type 2) is already displaying DOT to the caster
-                        map.broadcastMessage(ChannelPacketCreator.getInstance().damageMonster(getObjectId(), damage), getPosition());
-                    }
-                }
-            }
-        }
-    }
-
     public String getName() {
         return stats.getName();
     }
@@ -1660,10 +1515,6 @@ public class Monster extends AbstractLoadedLife {
 
     public BanishInfo getBanish() {
         return stats.getBanishInfo();
-    }
-
-    public void setBoss(boolean boss) {
-        this.stats.setBoss(boss);
     }
 
     public int getDropPeriodTime() {
@@ -2049,10 +1900,6 @@ public class Monster extends AbstractLoadedLife {
         }
     }
 
-    private static void aggroMonsterControl(Client c, Monster mob, boolean immediateAggro) {
-        c.sendPacket(ChannelPacketCreator.getInstance().controlMonster(mob, false, immediateAggro));
-    }
-
     private void aggroRefreshPuppetVisibility(Character chrController, Summon puppet) {
         // lame patch for client to redirect all aggro to the puppet
 
@@ -2146,5 +1993,57 @@ public class Monster extends AbstractLoadedLife {
         }
 
         this.getMap().dismissRemoveAfter(this);
+    }
+
+    private final class DamageTask implements Runnable {
+
+        private final int dealDamage;
+        private final Character chr;
+        private final MonsterStatusEffect status;
+        private final int type;
+        private final MapleMap map;
+
+        private DamageTask(int dealDamage, Character chr, MonsterStatusEffect status, int type) {
+            this.dealDamage = dealDamage;
+            this.chr = chr;
+            this.status = status;
+            this.type = type;
+            this.map = chr.getMap();
+        }
+
+        @Override
+        public void run() {
+            int curHp = hp.get();
+            if (curHp <= 1) {
+                MobStatusService service = (MobStatusService) map.getChannelServer().getServiceAccess(ChannelServices.MOB_STATUS);
+                service.interruptMobStatus(map.getId(), status);
+                return;
+            }
+
+            int damage = dealDamage;
+            if (damage >= curHp) {
+                damage = curHp - 1;
+                if (type == 1 || type == 2) {
+                    MobStatusService service = (MobStatusService) map.getChannelServer().getServiceAccess(ChannelServices.MOB_STATUS);
+                    service.interruptMobStatus(map.getId(), status);
+                }
+            }
+            if (damage > 0) {
+                lockMonster();
+                try {
+                    applyDamage(chr, damage, true, false);
+                } finally {
+                    unlockMonster();
+                }
+
+                if (type == 1) {
+                    map.broadcastMessage(ChannelPacketCreator.getInstance().damageMonster(getObjectId(), damage), getPosition());
+                } else if (type == 2) {
+                    if (damage < dealDamage) {    // ninja ambush (type 2) is already displaying DOT to the caster
+                        map.broadcastMessage(ChannelPacketCreator.getInstance().damageMonster(getObjectId(), damage), getPosition());
+                    }
+                }
+            }
+        }
     }
 }

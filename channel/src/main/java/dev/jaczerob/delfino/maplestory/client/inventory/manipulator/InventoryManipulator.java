@@ -30,7 +30,6 @@ import dev.jaczerob.delfino.maplestory.client.inventory.InventoryType;
 import dev.jaczerob.delfino.maplestory.client.inventory.Item;
 import dev.jaczerob.delfino.maplestory.client.inventory.ModifyInventory;
 import dev.jaczerob.delfino.maplestory.client.inventory.Pet;
-import dev.jaczerob.delfino.maplestory.client.newyear.NewYearCardRecord;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
 import dev.jaczerob.delfino.maplestory.constants.id.ItemId;
 import dev.jaczerob.delfino.maplestory.constants.inventory.ItemConstants;
@@ -711,7 +710,7 @@ public class InventoryManipulator {
             return;
         }
 
-        if (chr.getTrade() != null || chr.getMiniGame() != null || source == null) { //Only check needed would prob be merchants (to see if the player is in one)
+        if (chr.getTrade() != null || source == null) { //Only check needed would prob be merchants (to see if the player is in one)
             return;
         }
         int itemId = source.getItemId();
@@ -737,16 +736,6 @@ public class InventoryManipulator {
             source.setQuantity((short) (source.getQuantity() - quantity));
             c.sendPacket(ChannelPacketCreator.getInstance().modifyInventory(true, Collections.singletonList(new ModifyInventory(1, source))));
 
-            if (ItemConstants.isNewYearCardEtc(itemId)) {
-                if (itemId == ItemId.NEW_YEARS_CARD_SEND) {
-                    NewYearCardRecord.removeAllNewYearCard(true, chr);
-                    c.getAbstractPlayerInteraction().removeAll(ItemId.NEW_YEARS_CARD_SEND);
-                } else {
-                    NewYearCardRecord.removeAllNewYearCard(false, chr);
-                    c.getAbstractPlayerInteraction().removeAll(ItemId.NEW_YEARS_CARD_RECEIVED);
-                }
-            }
-
             if (isDisappearingItemDrop(target)) {
                 map.disappearingItemDrop(chr, chr, target, dropPos);
             } else {
@@ -768,14 +757,6 @@ public class InventoryManipulator {
             c.sendPacket(ChannelPacketCreator.getInstance().modifyInventory(true, Collections.singletonList(new ModifyInventory(3, source))));
             if (src < 0) {
                 chr.equipChanged();
-            } else if (ItemConstants.isNewYearCardEtc(itemId)) {
-                if (itemId == ItemId.NEW_YEARS_CARD_SEND) {
-                    NewYearCardRecord.removeAllNewYearCard(true, chr);
-                    c.getAbstractPlayerInteraction().removeAll(ItemId.NEW_YEARS_CARD_SEND);
-                } else {
-                    NewYearCardRecord.removeAllNewYearCard(false, chr);
-                    c.getAbstractPlayerInteraction().removeAll(ItemId.NEW_YEARS_CARD_RECEIVED);
-                }
             }
 
             if (isDisappearingItemDrop(source)) {
@@ -795,8 +776,6 @@ public class InventoryManipulator {
             if (source.getQuantity() <= 0) {
                 chr.setChalkboard(null);
             }
-        } else if (itemId == ItemId.ARPQ_SPIRIT_JEWEL) {
-            chr.updateAriantScore(quantityNow);
         }
     }
 

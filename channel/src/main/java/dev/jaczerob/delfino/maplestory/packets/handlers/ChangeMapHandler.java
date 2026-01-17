@@ -171,12 +171,6 @@ public final class ChangeMapHandler extends AbstractPacketHandler {
                 return;
             }
 
-            if (chr.getMapId() == MapId.FITNESS_EVENT_LAST) {
-                chr.getFitness().resetTimes();
-            } else if (chr.getMapId() == MapId.OLA_EVENT_LAST_1 || chr.getMapId() == MapId.OLA_EVENT_LAST_2) {
-                chr.getOla().resetTimes();
-            }
-
             if (portal != null) {
                 if (portal.getPosition().distanceSq(chr.getPosition()) > 400000) {
                     context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());

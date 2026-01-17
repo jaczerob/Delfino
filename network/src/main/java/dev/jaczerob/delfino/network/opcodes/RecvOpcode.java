@@ -35,7 +35,7 @@ public enum RecvOpcode {
     CHANGE_MAP(0x26),
     CHANGE_CHANNEL(0x27),
     ENTER_CASHSHOP(0x28),
-    MOVE_PLAYER(0x29),
+    MOVE_PLAYER(0x29, false),
     CANCEL_CHAIR(0x2A),
     USE_CHAIR(0x2B),
     CLOSE_RANGE_ATTACK(0x2C),

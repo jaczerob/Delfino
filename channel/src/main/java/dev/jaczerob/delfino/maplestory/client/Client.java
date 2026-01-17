@@ -23,16 +23,16 @@ package dev.jaczerob.delfino.maplestory.client;
 
 import dev.jaczerob.delfino.maplestory.client.inventory.InventoryType;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
-import dev.jaczerob.delfino.maplestory.constants.id.MapId;
 import dev.jaczerob.delfino.maplestory.net.netty.InvalidPacketHeaderException;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.net.server.channel.Channel;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.session.Hwid;
 import dev.jaczerob.delfino.maplestory.net.server.coordinator.session.SessionCoordinator;
-import dev.jaczerob.delfino.maplestory.net.server.guild.Guild;
-import dev.jaczerob.delfino.maplestory.net.server.guild.GuildCharacter;
-import dev.jaczerob.delfino.maplestory.net.server.guild.GuildPackets;
-import dev.jaczerob.delfino.maplestory.net.server.world.*;
+import dev.jaczerob.delfino.maplestory.net.server.world.MessengerCharacter;
+import dev.jaczerob.delfino.maplestory.net.server.world.Party;
+import dev.jaczerob.delfino.maplestory.net.server.world.PartyCharacter;
+import dev.jaczerob.delfino.maplestory.net.server.world.PartyOperation;
+import dev.jaczerob.delfino.maplestory.net.server.world.World;
 import dev.jaczerob.delfino.maplestory.packets.ChannelPacketProcessor;
 import dev.jaczerob.delfino.maplestory.scripting.AbstractPlayerInteraction;
 import dev.jaczerob.delfino.maplestory.scripting.npc.NPCConversationManager;
@@ -60,7 +60,11 @@ import javax.script.ScriptEngine;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
@@ -81,6 +85,7 @@ public class Client extends ChannelInboundHandlerAdapter {
     private final Semaphore actionsSemaphore = new Semaphore(7);
     private final Lock lock = new ReentrantLock(true);
     private final Lock announcerLock = new ReentrantLock(true);
+    private final byte gender = -1;
     private Hwid hwid;
     private String remoteAddress = "null";
     private volatile boolean inTransition;
@@ -98,7 +103,6 @@ public class Client extends ChannelInboundHandlerAdapter {
     private Map<String, ScriptEngine> engines = new HashMap<>();
     private byte characterSlots = 3;
     private byte csattempt = 0;
-    private byte gender = -1;
     private boolean disconnecting = false;
     private long lastNpcClick;
     private long lastPacket = System.currentTimeMillis();
@@ -384,22 +388,10 @@ public class Client extends ChannelInboundHandlerAdapter {
 
             if (!serverTransition) {    // thanks MedicOP for detecting an issue with party leader change on changing channels
                 removePartyPlayer(wserv);
-
-                if (player.getMonsterCarnival() != null) {
-                    player.getMonsterCarnival().playerDisconnected(getPlayer().getId());
-                }
-
-                if (player.getAriantColiseum() != null) {
-                    player.getAriantColiseum().playerDisconnected(getPlayer());
-                }
             }
 
             if (player.getMap() != null) {
-                int mapId = player.getMapId();
                 player.getMap().removePlayer(player);
-                if (MapId.isDojo(mapId)) {
-                    this.getChannelServer().freeDojoSectionIfEmpty(mapId);
-                }
 
                 if (player.getMap().getHPDec() > 0) {
                     getWorldServer().removePlayerHpDecrease(player);
@@ -438,10 +430,6 @@ public class Client extends ChannelInboundHandlerAdapter {
             //final int fid = player.getFamilyId();
             final BuddyList bl = player.getBuddylist();
             final MessengerCharacter chrm = new MessengerCharacter(player, 0);
-            final GuildCharacter chrg = player.getMGC();
-            final Guild guild = player.getGuild();
-
-            player.cancelMagicDoor();
 
             final World wserv = getWorldServer();   // obviously wserv is NOT null if this player was online on it
             try {
@@ -462,11 +450,6 @@ public class Client extends ChannelInboundHandlerAdapter {
 
                             player.forfeitExpirableQuests();    //This is for those quests that you have to stay logged in for a certain amount of time
 
-                            if (guild != null) {
-                                final Server server = Server.getInstance();
-                                server.setGuildMemberOnline(player, false, player.getClient().getChannel());
-                                player.sendPacket(GuildPackets.showGuildInfo(player));
-                            }
                             if (bl != null) {
                                 wserv.loggedOff(player.getName(), player.getId(), channel, player.getBuddylist().getBuddyIds());
                             }
@@ -483,11 +466,7 @@ public class Client extends ChannelInboundHandlerAdapter {
                 log.error("Account stuck", e);
             } finally {
                 if (!this.serverTransition) {
-                    if (chrg != null) {
-                        chrg.setCharacter(null);
-                    }
                     wserv.removePlayer(player);
-                    //getChannelServer().removePlayer(player); already being done
 
                     player.saveCooldowns();
                     player.cancelAllDebuffs();
@@ -497,7 +476,6 @@ public class Client extends ChannelInboundHandlerAdapter {
                     if (YamlConfig.config.server.INSTANT_NAME_CHANGE) {
                         player.doPendingNameChange();
                     }
-                    clear();
                 } else {
                     getChannelServer().removePlayer(player);
 
@@ -512,8 +490,6 @@ public class Client extends ChannelInboundHandlerAdapter {
 
         if (!serverTransition && isLoggedIn()) {
             updateLoginState(Client.LOGIN_NOTLOGGEDIN);
-
-            clear();
         } else {
             if (!Server.getInstance().hasCharacteridInTransition(this)) {
                 updateLoginState(Client.LOGIN_NOTLOGGEDIN);
@@ -521,19 +497,6 @@ public class Client extends ChannelInboundHandlerAdapter {
 
             engines = null; // thanks Tochi for pointing out a NPE here
         }
-    }
-
-    private void clear() {
-        // player hard reference removal thanks to Steve (kaito1410)
-        if (this.player != null) {
-            this.player.empty(true); // clears schedules and stuff
-        }
-
-        this.accountName = null;
-        this.hwid = null;
-        this.birthday = null;
-        this.engines = null;
-        this.player = null;
     }
 
     public void setCharacterOnSessionTransitionState(int cid) {

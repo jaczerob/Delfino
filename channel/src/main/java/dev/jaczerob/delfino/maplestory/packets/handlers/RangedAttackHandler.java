@@ -21,18 +21,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package dev.jaczerob.delfino.maplestory.packets.handlers;
 
-import dev.jaczerob.delfino.maplestory.client.*;
+import dev.jaczerob.delfino.maplestory.client.BuffStat;
 import dev.jaczerob.delfino.maplestory.client.Character;
+import dev.jaczerob.delfino.maplestory.client.Client;
+import dev.jaczerob.delfino.maplestory.client.Skill;
+import dev.jaczerob.delfino.maplestory.client.SkillFactory;
 import dev.jaczerob.delfino.maplestory.client.inventory.Inventory;
 import dev.jaczerob.delfino.maplestory.client.inventory.InventoryType;
 import dev.jaczerob.delfino.maplestory.client.inventory.Item;
 import dev.jaczerob.delfino.maplestory.client.inventory.WeaponType;
 import dev.jaczerob.delfino.maplestory.client.inventory.manipulator.InventoryManipulator;
-import dev.jaczerob.delfino.maplestory.config.YamlConfig;
 import dev.jaczerob.delfino.maplestory.constants.id.ItemId;
-import dev.jaczerob.delfino.maplestory.constants.id.MapId;
 import dev.jaczerob.delfino.maplestory.constants.inventory.ItemConstants;
-import dev.jaczerob.delfino.maplestory.constants.skills.*;
 import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
 import dev.jaczerob.delfino.maplestory.server.StatEffect;
 import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
@@ -60,12 +60,6 @@ public final class RangedAttackHandler extends AbstractDealDamageHandler {
     @Override
     public void handlePacket(final InPacket packet, final Client client, final ChannelHandlerContext context) {
         Character chr = client.getPlayer();
-        
-        /*long timeElapsed = currentServerTime() - chr.getAutobanManager().getLastSpam(8);
-        if(timeElapsed < 300) {
-            AutobanFactory.FAST_ATTACK.alert(chr, "Time: " + timeElapsed);
-        }
-        chr.getAutobanManager().spam(8);*/
 
         AttackInfo attack = parseDamage(packet, chr, true, false);
 
@@ -77,68 +71,33 @@ public final class RangedAttackHandler extends AbstractDealDamageHandler {
             }
         }
 
-        if (MapId.isDojo(chr.getMap().getId()) && attack.numAttacked > 0) {
-            chr.setDojoEnergy(chr.getDojoEnergy() + YamlConfig.config.server.DOJO_ENERGY_ATK);
-            context.writeAndFlush(ChannelPacketCreator.getInstance().getEnergy("energy", chr.getDojoEnergy()));
+        Item weapon = chr.getInventory(InventoryType.EQUIPPED).getItem((short) -11);
+        WeaponType type = ItemInformationProvider.getInstance().getWeaponType(weapon.getItemId());
+        if (type == WeaponType.NOT_A_WEAPON) {
+            return;
         }
-
-        if (attack.skill == Buccaneer.ENERGY_ORB || attack.skill == ThunderBreaker.SPARK || attack.skill == Shadower.TAUNT || attack.skill == NightLord.TAUNT) {
-            chr.getMap().broadcastMessage(chr, ChannelPacketCreator.getInstance().rangedAttack(chr, attack.skill, attack.skilllevel,
-                    attack.stance, attack.numAttackedAndDamage, 0, attack.targets, attack.speed,
-                    attack.direction, attack.display), false);
-            applyAttack(attack, chr, 1);
-        } else if (attack.skill == ThunderBreaker.SHARK_WAVE && chr.getSkillLevel(ThunderBreaker.SHARK_WAVE) > 0) {
-            chr.getMap().broadcastMessage(chr, ChannelPacketCreator.getInstance().rangedAttack(chr, attack.skill, attack.skilllevel,
-                    attack.stance, attack.numAttackedAndDamage, 0, attack.targets, attack.speed,
-                    attack.direction, attack.display), false);
-            applyAttack(attack, chr, 1);
-
-            for (int i = 0; i < attack.numAttacked; i++) {
-                chr.handleEnergyChargeGain();
+        short slot = -1;
+        int projectile = 0;
+        short bulletCount = 1;
+        StatEffect effect = null;
+        if (attack.skill != 0) {
+            effect = attack.getAttackEffect(chr, null);
+            bulletCount = effect.getBulletCount();
+            if (effect.getCooldown() > 0) {
+                context.writeAndFlush(ChannelPacketCreator.getInstance().skillCooldown(attack.skill, effect.getCooldown()));
             }
-        } else if (attack.skill == Aran.COMBO_SMASH || attack.skill == Aran.COMBO_FENRIR || attack.skill == Aran.COMBO_TEMPEST) {
-            chr.getMap().broadcastMessage(chr, ChannelPacketCreator.getInstance().rangedAttack(chr, attack.skill, attack.skilllevel,
-                    attack.stance, attack.numAttackedAndDamage, 0, attack.targets, attack.speed,
-                    attack.direction, attack.display), false);
-            if (attack.skill == Aran.COMBO_SMASH && chr.getCombo() >= 30) {
-                chr.setCombo((short) 0);
-                applyAttack(attack, chr, 1);
-            } else if (attack.skill == Aran.COMBO_FENRIR && chr.getCombo() >= 100) {
-                chr.setCombo((short) 0);
-                applyAttack(attack, chr, 2);
-            } else if (attack.skill == Aran.COMBO_TEMPEST && chr.getCombo() >= 200) {
-                chr.setCombo((short) 0);
-                applyAttack(attack, chr, 4);
-            }
-        } else {
-            Item weapon = chr.getInventory(InventoryType.EQUIPPED).getItem((short) -11);
-            WeaponType type = ItemInformationProvider.getInstance().getWeaponType(weapon.getItemId());
-            if (type == WeaponType.NOT_A_WEAPON) {
-                return;
-            }
-            short slot = -1;
-            int projectile = 0;
-            short bulletCount = 1;
-            StatEffect effect = null;
-            if (attack.skill != 0) {
-                effect = attack.getAttackEffect(chr, null);
-                bulletCount = effect.getBulletCount();
-                if (effect.getCooldown() > 0) {
-                    context.writeAndFlush(ChannelPacketCreator.getInstance().skillCooldown(attack.skill, effect.getCooldown()));
-                }
 
-                if (attack.skill == 4111004) {   // shadow meso
-                    bulletCount = 0;
+            if (attack.skill == 4111004) {   // shadow meso
+                bulletCount = 0;
 
-                    int money = effect.getMoneyCon();
-                    if (money != 0) {
-                        int moneyMod = money / 2;
-                        money += Randomizer.nextInt(moneyMod);
-                        if (money > chr.getMeso()) {
-                            money = chr.getMeso();
-                        }
-                        chr.gainMeso(-money, false);
+                int money = effect.getMoneyCon();
+                if (money != 0) {
+                    int moneyMod = money / 2;
+                    money += Randomizer.nextInt(moneyMod);
+                    if (money > chr.getMeso()) {
+                        money = chr.getMeso();
                     }
+                    chr.gainMeso(-money, false);
                 }
             }
             boolean hasShadowPartner = chr.getBuffedValue(BuffStat.SHADOWPARTNER) != null;
@@ -242,14 +201,6 @@ public final class RangedAttackHandler extends AbstractDealDamageHandler {
                             chr.addCooldown(attack.skill, currentServerTime(), SECONDS.toMillis(effect_.getCooldown()));
                         }
                     }
-                }
-
-                if (chr.getSkillLevel(SkillFactory.getSkill(NightWalker.VANISH)) > 0 && chr.getBuffedValue(BuffStat.DARKSIGHT) != null && attack.numAttacked > 0 && chr.getBuffSource(BuffStat.DARKSIGHT) != 9101004) {
-                    chr.cancelEffectFromBuffStat(BuffStat.DARKSIGHT);
-                    chr.cancelBuffStats(BuffStat.DARKSIGHT);
-                } else if (chr.getSkillLevel(SkillFactory.getSkill(WindArcher.WIND_WALK)) > 0 && chr.getBuffedValue(BuffStat.WIND_WALK) != null && attack.numAttacked > 0) {
-                    chr.cancelEffectFromBuffStat(BuffStat.WIND_WALK);
-                    chr.cancelBuffStats(BuffStat.WIND_WALK);
                 }
 
                 applyAttack(attack, chr, bulletCount);

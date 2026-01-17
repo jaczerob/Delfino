@@ -22,12 +22,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package dev.jaczerob.delfino.maplestory.scripting.reactor;
 
 import dev.jaczerob.delfino.maplestory.client.Client;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import dev.jaczerob.delfino.maplestory.scripting.AbstractScriptManager;
 import dev.jaczerob.delfino.maplestory.server.maps.Reactor;
 import dev.jaczerob.delfino.maplestory.server.maps.ReactorDropEntry;
 import dev.jaczerob.delfino.maplestory.tools.DatabaseConnection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
@@ -135,7 +135,7 @@ public class ReactorScriptManager extends AbstractScriptManager {
         }
 
         Invocable iv = (Invocable) engine;
-        ReactorActionManager rm = new ReactorActionManager(c, reactor, iv);
+        ReactorActionManager rm = new ReactorActionManager(c, reactor);
         engine.put("rm", rm);
 
         return iv;

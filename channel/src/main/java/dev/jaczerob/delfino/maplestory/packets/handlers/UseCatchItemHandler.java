@@ -96,32 +96,6 @@ public final class UseCatchItemHandler extends AbstractPacketHandler {
                     context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
                 }
                 break;
-            case ItemId.ARPQ_ELEMENT_ROCK:
-                if (mob.getId() == MobId.ARPQ_SCORPION) {
-                    if ((abm.getLastSpam(10) + 800) < currentServerTime()) {
-                        if (mob.getHp() < ((mob.getMaxHp() / 10) * 4)) {
-                            if (chr.canHold(ItemId.ARPQ_SPIRIT_JEWEL, 1)) {
-                                if (Math.random() < 0.5) { // 50% chance
-                                    chr.getMap().broadcastMessage(ChannelPacketCreator.getInstance().catchMonster(monsterid, itemId, (byte) 1));
-                                    killMonster(mob);
-                                    InventoryManipulator.removeById(client, InventoryType.USE, itemId, 1, true, true);
-                                    InventoryManipulator.addById(client, ItemId.ARPQ_SPIRIT_JEWEL, (short) 1, "", -1);
-                                    chr.updateAriantScore();
-                                } else {
-                                    chr.getMap().broadcastMessage(ChannelPacketCreator.getInstance().catchMonster(monsterid, itemId, (byte) 0));
-                                }
-                            } else {
-                                chr.dropMessage(5, "Make a ETC slot available before using this item.");
-                            }
-
-                            abm.spam(10);
-                        } else {
-                            context.writeAndFlush(ChannelPacketCreator.getInstance().catchMessage(0));
-                        }
-                    }
-                    context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
-                }
-                break;
             case ItemId.MAGIC_CANE:
                 if (mob.getId() == MobId.LOST_RUDOLPH) {
                     if (mob.getHp() < ((mob.getMaxHp() / 10) * 4)) {

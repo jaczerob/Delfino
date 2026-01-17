@@ -9,9 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-/**
- * @author Jay Estrella, Ronan
- */
 public class MakerItemFactory {
     private static final ItemInformationProvider ii = ItemInformationProvider.getInstance();
 
@@ -125,10 +122,10 @@ public class MakerItemFactory {
     public static class MakerItemCreateEntry {
         private final int reqLevel;
         private final int reqMakerLevel;
-        private double cost;
-        private int reqCost;
         private final List<Pair<Integer, Integer>> reqItems = new ArrayList<>(); // itemId / amount
         private final List<Pair<Integer, Integer>> gainItems = new ArrayList<>(); // itemId / amount
+        private double cost;
+        private int reqCost;
 
         public MakerItemCreateEntry(int cost, int reqLevel, int reqMakerLevel) {
             this.cost = cost;

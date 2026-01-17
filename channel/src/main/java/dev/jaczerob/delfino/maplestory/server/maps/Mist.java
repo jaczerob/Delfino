@@ -4,28 +4,24 @@ import dev.jaczerob.delfino.maplestory.client.Character;
 import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.client.Skill;
 import dev.jaczerob.delfino.maplestory.client.SkillFactory;
-import dev.jaczerob.delfino.maplestory.constants.skills.*;
-import dev.jaczerob.delfino.network.packets.Packet;
 import dev.jaczerob.delfino.maplestory.server.StatEffect;
 import dev.jaczerob.delfino.maplestory.server.life.MobSkill;
 import dev.jaczerob.delfino.maplestory.server.life.Monster;
 import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
+import dev.jaczerob.delfino.network.packets.Packet;
 
 import java.awt.*;
 
-/**
- * @author LaiLaiNoob
- */
 public class Mist extends AbstractMapObject {
     private final Rectangle mistPosition;
-    private Character owner = null;
+    private final boolean isMobMist;
+    private final int skillDelay;
+    private final Character owner = null;
+    private final MobSkill skill;
+    private final boolean isPoisonMist;
+    private final boolean isRecoveryMist;
     private Monster mob = null;
     private StatEffect source;
-    private MobSkill skill;
-    private final boolean isMobMist;
-    private boolean isPoisonMist;
-    private boolean isRecoveryMist;
-    private final int skillDelay;
 
     public Mist(Rectangle mistPosition, Monster mob, MobSkill skill) {
         this.mistPosition = mistPosition;
@@ -37,31 +33,6 @@ public class Mist extends AbstractMapObject {
         skillDelay = 0;
     }
 
-    public Mist(Rectangle mistPosition, Character owner, StatEffect source) {
-        this.mistPosition = mistPosition;
-        this.owner = owner;
-        this.source = source;
-        this.skillDelay = 8;
-        this.isMobMist = false;
-        this.isRecoveryMist = false;
-        this.isPoisonMist = false;
-        switch (source.getSourceId()) {
-            case Evan.RECOVERY_AURA:
-                isRecoveryMist = true;
-                break;
-
-            case Shadower.SMOKE_SCREEN: // Smoke Screen
-                isPoisonMist = false;
-                break;
-
-            case FPMage.POISON_MIST: // FP mist
-            case BlazeWizard.FLAME_GEAR: // Flame Gear
-            case NightWalker.POISON_BOMB: // Poison Bomb
-                isPoisonMist = true;
-                break;
-        }
-    }
-
     @Override
     public MapObjectType getType() {
         return MapObjectType.MIST;
@@ -70,6 +41,11 @@ public class Mist extends AbstractMapObject {
     @Override
     public Point getPosition() {
         return mistPosition.getLocation();
+    }
+
+    @Override
+    public void setPosition(Point position) {
+        throw new UnsupportedOperationException();
     }
 
     public Skill getSourceSkill() {
@@ -102,11 +78,6 @@ public class Mist extends AbstractMapObject {
 
     public Rectangle getBox() {
         return mistPosition;
-    }
-
-    @Override
-    public void setPosition(Point position) {
-        throw new UnsupportedOperationException();
     }
 
     public final Packet makeDestroyData() {

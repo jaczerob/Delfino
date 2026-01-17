@@ -5,19 +5,19 @@ import dev.jaczerob.delfino.maplestory.provider.DataEntity;
 import dev.jaczerob.delfino.maplestory.provider.DataEntry;
 import dev.jaczerob.delfino.maplestory.provider.DataFileEntry;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class WZDirectoryEntry extends WZEntry implements DataDirectoryEntry {
     private final List<DataDirectoryEntry> subdirs = new ArrayList<>();
     private final List<DataFileEntry> files = new ArrayList<>();
     private final Map<String, DataEntry> entries = new HashMap<>();
 
-    public WZDirectoryEntry(String name, int size, int checksum, DataEntity parent) {
-        super(name, size, checksum, parent);
-    }
-
-    public WZDirectoryEntry() {
-        super(null, 0, 0, null);
+    public WZDirectoryEntry(String name, int size, DataEntity parent) {
+        super(name, size, parent);
     }
 
     public void addDirectory(DataDirectoryEntry dir) {

@@ -1,49 +1,22 @@
-/*
-	This file is part of the OdinMS Maple Story Server
-    Copyright (C) 2008 Patrick Huy <patrick.huy@frz.cc>
-		       Matthias Butz <matze@odinms.de>
-		       Jan Christian Meyer <vimes@odinms.de>
-
-    Copyleft (L) 2016 - 2019 RonanLana (HeavenMS)
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as
-    published by the Free Software Foundation version 3 as published by
-    the Free Software Foundation. You may not use, modify or distribute
-    this program under any other version of the GNU Affero General Public
-    License.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
-
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package dev.jaczerob.delfino.maplestory.client.processor.stat;
 
-import dev.jaczerob.delfino.maplestory.client.*;
 import dev.jaczerob.delfino.maplestory.client.Character;
+import dev.jaczerob.delfino.maplestory.client.Client;
+import dev.jaczerob.delfino.maplestory.client.Job;
+import dev.jaczerob.delfino.maplestory.client.Stat;
 import dev.jaczerob.delfino.maplestory.client.autoban.AutobanFactory;
 import dev.jaczerob.delfino.maplestory.client.inventory.Equip;
 import dev.jaczerob.delfino.maplestory.client.inventory.InventoryType;
 import dev.jaczerob.delfino.maplestory.client.inventory.Item;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
-import dev.jaczerob.delfino.maplestory.constants.skills.*;
 import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
-import dev.jaczerob.delfino.maplestory.tools.Randomizer;
 import dev.jaczerob.delfino.network.packets.InPacket;
-import io.netty.channel.ChannelHandlerContext;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author RonanLana - synchronization of AP transaction modules
- */
 public class AssignAPProcessor {
 
     public static void APAutoAssignAction(InPacket inPacket, Client c) {
@@ -124,243 +97,76 @@ public class AssignAPProcessor {
                 }
 
                 Stat primary, secondary, tertiary = Stat.LUK;
-                switch (stance) {
-                    case MAGICIAN:
-                        CAP = 165;
-                        scStat = (chr.getLevel() + 3) - (chr.getLuk() + luk - eqpLuk);
-                        if (scStat < 0) {
-                            scStat = 0;
-                        }
-                        scStat = Math.min(scStat, tempAp);
+                CAP = 300;
 
-                        if (tempAp > scStat) {
-                            tempAp -= scStat;
-                        } else {
-                            tempAp = 0;
-                        }
-
-                        prStat = tempAp;
-                        int_ = prStat;
-                        luk = scStat;
-                        str = 0;
-                        dex = 0;
-
-                        if (YamlConfig.config.server.USE_AUTOASSIGN_SECONDARY_CAP && luk + chr.getLuk() > CAP) {
-                            temp = luk + chr.getLuk() - CAP;
-                            scStat -= temp;
-                            prStat += temp;
-                        }
-
-                        primary = Stat.INT;
-                        secondary = Stat.LUK;
-                        tertiary = Stat.DEX;
-
-                        break;
-
-                    case BOWMAN:
-                        CAP = 125;
-                        scStat = (chr.getLevel() + 5) - (chr.getStr() + str - eqpStr);
-                        if (scStat < 0) {
-                            scStat = 0;
-                        }
-                        scStat = Math.min(scStat, tempAp);
-
-                        if (tempAp > scStat) {
-                            tempAp -= scStat;
-                        } else {
-                            tempAp = 0;
-                        }
-
-                        prStat = tempAp;
-                        dex = prStat;
-                        str = scStat;
-                        int_ = 0;
-                        luk = 0;
-
-                        if (YamlConfig.config.server.USE_AUTOASSIGN_SECONDARY_CAP && str + chr.getStr() > CAP) {
-                            temp = str + chr.getStr() - CAP;
-                            scStat -= temp;
-                            prStat += temp;
-                        }
-
-                        primary = Stat.DEX;
-                        secondary = Stat.STR;
-
-                        break;
-
-                    case GUNSLINGER:
-                    case CROSSBOWMAN:
-                        CAP = 120;
-                        scStat = chr.getLevel() - (chr.getStr() + str - eqpStr);
-                        if (scStat < 0) {
-                            scStat = 0;
-                        }
-                        scStat = Math.min(scStat, tempAp);
-
-                        if (tempAp > scStat) {
-                            tempAp -= scStat;
-                        } else {
-                            tempAp = 0;
-                        }
-
-                        prStat = tempAp;
-                        dex = prStat;
-                        str = scStat;
-                        int_ = 0;
-                        luk = 0;
-
-                        if (YamlConfig.config.server.USE_AUTOASSIGN_SECONDARY_CAP && str + chr.getStr() > CAP) {
-                            temp = str + chr.getStr() - CAP;
-                            scStat -= temp;
-                            prStat += temp;
-                        }
-
-                        primary = Stat.DEX;
-                        secondary = Stat.STR;
-
-                        break;
-
-                    case THIEF:
-                        CAP = 160;
-
-                        scStat = 0;
-                        if (chr.getDex() < 80) {
-                            scStat = (2 * chr.getLevel()) - (chr.getDex() + dex - eqpDex);
-                            if (scStat < 0) {
-                                scStat = 0;
-                            }
-
-                            scStat = Math.min(80 - chr.getDex(), scStat);
-                            scStat = Math.min(tempAp, scStat);
-                            tempAp -= scStat;
-                        }
-
-                        temp = (chr.getLevel() + 40) - Math.max(80, scStat + chr.getDex() + dex - eqpDex);
-                        if (temp < 0) {
-                            temp = 0;
-                        }
-                        temp = Math.min(tempAp, temp);
-                        scStat += temp;
-                        tempAp -= temp;
-
-                        // thieves will upgrade STR as well only if a level-based threshold is reached.
-                        if (chr.getStr() >= Math.max(13, (int) (0.4 * chr.getLevel()))) {
-                            if (chr.getStr() < 50) {
-                                trStat = (chr.getLevel() - 10) - (chr.getStr() + str - eqpStr);
-                                if (trStat < 0) {
-                                    trStat = 0;
-                                }
-
-                                trStat = Math.min(50 - chr.getStr(), trStat);
-                                trStat = Math.min(tempAp, trStat);
-                                tempAp -= trStat;
-                            }
-
-                            temp = (20 + (chr.getLevel() / 2)) - Math.max(50, trStat + chr.getStr() + str - eqpStr);
-                            if (temp < 0) {
-                                temp = 0;
-                            }
-                            temp = Math.min(tempAp, temp);
-                            trStat += temp;
-                            tempAp -= temp;
-                        }
-
-                        prStat = tempAp;
-                        luk = prStat;
-                        dex = scStat;
-                        str = trStat;
-                        int_ = 0;
-
-                        if (YamlConfig.config.server.USE_AUTOASSIGN_SECONDARY_CAP && dex + chr.getDex() > CAP) {
-                            temp = dex + chr.getDex() - CAP;
-                            scStat -= temp;
-                            prStat += temp;
-                        }
-                        if (YamlConfig.config.server.USE_AUTOASSIGN_SECONDARY_CAP && str + chr.getStr() > CAP) {
-                            temp = str + chr.getStr() - CAP;
-                            trStat -= temp;
-                            prStat += temp;
-                        }
-
-                        primary = Stat.LUK;
-                        secondary = Stat.DEX;
-                        tertiary = Stat.STR;
-
-                        break;
-
-                    case BRAWLER:
-                    default:    //warrior, beginner, ...
-                        CAP = 300;
-
-                        boolean highDex = false;    // thanks lucasziron & Vcoc for finding out DEX autoassigning poorly for STR-based characters
-                        if (chr.getLevel() < 40) {
-                            if (chr.getDex() >= (2 * chr.getLevel()) + 2) {
-                                highDex = true;
-                            }
-                        } else {
-                            if (chr.getDex() >= chr.getLevel() + 42) {
-                                highDex = true;
-                            }
-                        }
-
-                        // other classes will start favoring more DEX only if a level-based threshold is reached.
-                        if (!highDex) {
-                            scStat = 0;
-                            if (chr.getDex() < 80) {
-                                scStat = (2 * chr.getLevel()) - (chr.getDex() + dex - eqpDex);
-                                if (scStat < 0) {
-                                    scStat = 0;
-                                }
-
-                                scStat = Math.min(80 - chr.getDex(), scStat);
-                                scStat = Math.min(tempAp, scStat);
-                                tempAp -= scStat;
-                            }
-
-                            temp = (chr.getLevel() + 40) - Math.max(80, scStat + chr.getDex() + dex - eqpDex);
-                            if (temp < 0) {
-                                temp = 0;
-                            }
-                            temp = Math.min(tempAp, temp);
-                            scStat += temp;
-                            tempAp -= temp;
-                        } else {
-                            scStat = 0;
-                            if (chr.getDex() < 96) {
-                                scStat = (int) (2.4 * chr.getLevel()) - (chr.getDex() + dex - eqpDex);
-                                if (scStat < 0) {
-                                    scStat = 0;
-                                }
-
-                                scStat = Math.min(96 - chr.getDex(), scStat);
-                                scStat = Math.min(tempAp, scStat);
-                                tempAp -= scStat;
-                            }
-
-                            temp = 96 + (int) (1.2 * (chr.getLevel() - 40)) - Math.max(96, scStat + chr.getDex() + dex - eqpDex);
-                            if (temp < 0) {
-                                temp = 0;
-                            }
-                            temp = Math.min(tempAp, temp);
-                            scStat += temp;
-                            tempAp -= temp;
-                        }
-
-                        prStat = tempAp;
-                        str = prStat;
-                        dex = scStat;
-                        int_ = 0;
-                        luk = 0;
-
-                        if (YamlConfig.config.server.USE_AUTOASSIGN_SECONDARY_CAP && dex + chr.getDex() > CAP) {
-                            temp = dex + chr.getDex() - CAP;
-                            scStat -= temp;
-                            prStat += temp;
-                        }
-
-                        primary = Stat.STR;
-                        secondary = Stat.DEX;
+                boolean highDex = false;    // thanks lucasziron & Vcoc for finding out DEX autoassigning poorly for STR-based characters
+                if (chr.getLevel() < 40) {
+                    if (chr.getDex() >= (2 * chr.getLevel()) + 2) {
+                        highDex = true;
+                    }
+                } else {
+                    if (chr.getDex() >= chr.getLevel() + 42) {
+                        highDex = true;
+                    }
                 }
+
+                // other classes will start favoring more DEX only if a level-based threshold is reached.
+                if (!highDex) {
+                    scStat = 0;
+                    if (chr.getDex() < 80) {
+                        scStat = (2 * chr.getLevel()) - (chr.getDex() + dex - eqpDex);
+                        if (scStat < 0) {
+                            scStat = 0;
+                        }
+
+                        scStat = Math.min(80 - chr.getDex(), scStat);
+                        scStat = Math.min(tempAp, scStat);
+                        tempAp -= scStat;
+                    }
+
+                    temp = (chr.getLevel() + 40) - Math.max(80, scStat + chr.getDex() + dex - eqpDex);
+                    if (temp < 0) {
+                        temp = 0;
+                    }
+                    temp = Math.min(tempAp, temp);
+                    scStat += temp;
+                    tempAp -= temp;
+                } else {
+                    scStat = 0;
+                    if (chr.getDex() < 96) {
+                        scStat = (int) (2.4 * chr.getLevel()) - (chr.getDex() + dex - eqpDex);
+                        if (scStat < 0) {
+                            scStat = 0;
+                        }
+
+                        scStat = Math.min(96 - chr.getDex(), scStat);
+                        scStat = Math.min(tempAp, scStat);
+                        tempAp -= scStat;
+                    }
+
+                    temp = 96 + (int) (1.2 * (chr.getLevel() - 40)) - Math.max(96, scStat + chr.getDex() + dex - eqpDex);
+                    if (temp < 0) {
+                        temp = 0;
+                    }
+                    temp = Math.min(tempAp, temp);
+                    scStat += temp;
+                    tempAp -= temp;
+                }
+
+                prStat = tempAp;
+                str = prStat;
+                dex = scStat;
+                int_ = 0;
+                luk = 0;
+
+                if (YamlConfig.config.server.USE_AUTOASSIGN_SECONDARY_CAP && dex + chr.getDex() > CAP) {
+                    temp = dex + chr.getDex() - CAP;
+                    scStat -= temp;
+                    prStat += temp;
+                }
+
+                primary = Stat.STR;
+                secondary = Stat.DEX;
 
                 //-------------------------------------------------------------------------------------
 
@@ -469,9 +275,6 @@ public class AssignAPProcessor {
     }
 
     private static Stat getQuaternaryStat(Job stance) {
-        if (stance != Job.MAGICIAN) {
-            return Stat.INT;
-        }
         return Stat.STR;
     }
 
@@ -587,7 +390,7 @@ public class AssignAPProcessor {
                     }
                     break;
                 default:
-                    c.sendPacket(ChannelPacketCreator.getInstance().updatePlayerStats(ChannelPacketCreator.getInstance().EMPTY_STATUPDATE, true, player));
+                    c.sendPacket(ChannelPacketCreator.getInstance().updatePlayerStats(ChannelPacketCreator.EMPTY_STATUPDATE, true, player));
                     return false;
             }
 
@@ -652,345 +455,33 @@ public class AssignAPProcessor {
                 }
                 break;
             default:
-                chr.sendPacket(ChannelPacketCreator.getInstance().updatePlayerStats(ChannelPacketCreator.getInstance().EMPTY_STATUPDATE, true, chr));
+                chr.sendPacket(ChannelPacketCreator.getInstance().updatePlayerStats(ChannelPacketCreator.EMPTY_STATUPDATE, true, chr));
                 return false;
         }
         return true;
     }
 
     private static int calcHpChange(Character player, boolean usedAPReset) {
-        Job job = player.getJob();
-        int MaxHP = 0;
-
-        if (job.isA(Job.WARRIOR) || job.isA(Job.DAWNWARRIOR1)) {
-            if (!usedAPReset) {
-                Skill increaseHP = SkillFactory.getSkill(job.isA(Job.DAWNWARRIOR1) ? DawnWarrior.MAX_HP_INCREASE : Warrior.IMPROVED_MAXHP);
-                int sLvl = player.getSkillLevel(increaseHP);
-
-                if (sLvl > 0) {
-                    MaxHP += increaseHP.getEffect(sLvl).getY();
-                }
-            }
-
-            if (YamlConfig.config.server.USE_RANDOMIZE_HPMP_GAIN) {
-                if (usedAPReset) {
-                    MaxHP += 20;
-                } else {
-                    MaxHP += Randomizer.rand(18, 22);
-                }
-            } else {
-                MaxHP += 20;
-            }
-        } else if (job.isA(Job.ARAN1)) {
-            if (YamlConfig.config.server.USE_RANDOMIZE_HPMP_GAIN) {
-                if (usedAPReset) {
-                    MaxHP += 20;
-                } else {
-                    MaxHP += Randomizer.rand(26, 30);
-                }
-            } else {
-                MaxHP += 28;
-            }
-        } else if (job.isA(Job.MAGICIAN) || job.isA(Job.BLAZEWIZARD1)) {
-            if (YamlConfig.config.server.USE_RANDOMIZE_HPMP_GAIN) {
-                if (usedAPReset) {
-                    MaxHP += 6;
-                } else {
-                    MaxHP += Randomizer.rand(5, 9);
-                }
-            } else {
-                MaxHP += 6;
-            }
-        } else if (job.isA(Job.THIEF) || job.isA(Job.NIGHTWALKER1)) {
-            if (YamlConfig.config.server.USE_RANDOMIZE_HPMP_GAIN) {
-                if (usedAPReset) {
-                    MaxHP += 16;
-                } else {
-                    MaxHP += Randomizer.rand(14, 18);
-                }
-            } else {
-                MaxHP += 16;
-            }
-        } else if (job.isA(Job.BOWMAN) || job.isA(Job.WINDARCHER1)) {
-            if (YamlConfig.config.server.USE_RANDOMIZE_HPMP_GAIN) {
-                if (usedAPReset) {
-                    MaxHP += 16;
-                } else {
-                    MaxHP += Randomizer.rand(14, 18);
-                }
-            } else {
-                MaxHP += 16;
-            }
-        } else if (job.isA(Job.PIRATE) || job.isA(Job.THUNDERBREAKER1)) {
-            if (!usedAPReset) {
-                Skill increaseHP = SkillFactory.getSkill(job.isA(Job.PIRATE) ? Brawler.IMPROVE_MAX_HP : ThunderBreaker.IMPROVE_MAX_HP);
-                int sLvl = player.getSkillLevel(increaseHP);
-
-                if (sLvl > 0) {
-                    MaxHP += increaseHP.getEffect(sLvl).getY();
-                }
-            }
-
-            if (YamlConfig.config.server.USE_RANDOMIZE_HPMP_GAIN) {
-                if (usedAPReset) {
-                    MaxHP += 18;
-                } else {
-                    MaxHP += Randomizer.rand(16, 20);
-                }
-            } else {
-                MaxHP += 18;
-            }
-        } else if (usedAPReset) {
-            MaxHP += 8;
-        } else {
-            if (YamlConfig.config.server.USE_RANDOMIZE_HPMP_GAIN) {
-                MaxHP += Randomizer.rand(8, 12);
-            } else {
-                MaxHP += 10;
-            }
-        }
-
-        return MaxHP;
+        return 10;
     }
 
     private static int calcMpChange(Character player, boolean usedAPReset) {
-        Job job = player.getJob();
-        int MaxMP = 0;
-
-        if (job.isA(Job.WARRIOR) || job.isA(Job.DAWNWARRIOR1) || job.isA(Job.ARAN1)) {
-            if (YamlConfig.config.server.USE_RANDOMIZE_HPMP_GAIN) {
-                if (!usedAPReset) {
-                    MaxMP += (Randomizer.rand(2, 4) + (player.getInt() / 10));
-                } else {
-                    MaxMP += 2;
-                }
-            } else {
-                MaxMP += 3;
-            }
-        } else if (job.isA(Job.MAGICIAN) || job.isA(Job.BLAZEWIZARD1)) {
-            if (!usedAPReset) {
-                Skill increaseMP = SkillFactory.getSkill(job.isA(Job.BLAZEWIZARD1) ? BlazeWizard.INCREASING_MAX_MP : Magician.IMPROVED_MAX_MP_INCREASE);
-                int sLvl = player.getSkillLevel(increaseMP);
-
-                if (sLvl > 0) {
-                    MaxMP += increaseMP.getEffect(sLvl).getY();
-                }
-            }
-
-            if (YamlConfig.config.server.USE_RANDOMIZE_HPMP_GAIN) {
-                if (!usedAPReset) {
-                    MaxMP += (Randomizer.rand(12, 16) + (player.getInt() / 20));
-                } else {
-                    MaxMP += 18;
-                }
-            } else {
-                MaxMP += 18;
-            }
-        } else if (job.isA(Job.BOWMAN) || job.isA(Job.WINDARCHER1)) {
-            if (YamlConfig.config.server.USE_RANDOMIZE_HPMP_GAIN) {
-                if (!usedAPReset) {
-                    MaxMP += (Randomizer.rand(6, 8) + (player.getInt() / 10));
-                } else {
-                    MaxMP += 10;
-                }
-            } else {
-                MaxMP += 10;
-            }
-        } else if (job.isA(Job.THIEF) || job.isA(Job.NIGHTWALKER1)) {
-            if (YamlConfig.config.server.USE_RANDOMIZE_HPMP_GAIN) {
-                if (!usedAPReset) {
-                    MaxMP += (Randomizer.rand(6, 8) + (player.getInt() / 10));
-                } else {
-                    MaxMP += 10;
-                }
-            } else {
-                MaxMP += 10;
-            }
-        } else if (job.isA(Job.PIRATE) || job.isA(Job.THUNDERBREAKER1)) {
-            if (YamlConfig.config.server.USE_RANDOMIZE_HPMP_GAIN) {
-                if (!usedAPReset) {
-                    MaxMP += (Randomizer.rand(7, 9) + (player.getInt() / 10));
-                } else {
-                    MaxMP += 14;
-                }
-            } else {
-                MaxMP += 14;
-            }
-        } else {
-            if (YamlConfig.config.server.USE_RANDOMIZE_HPMP_GAIN) {
-                if (!usedAPReset) {
-                    MaxMP += (Randomizer.rand(4, 6) + (player.getInt() / 10));
-                } else {
-                    MaxMP += 6;
-                }
-            } else {
-                MaxMP += 6;
-            }
-        }
-
-        return MaxMP;
+        return 6;
     }
 
     private static int takeHp(Job job) {
-        int MaxHP = 0;
-
-        if (job.isA(Job.WARRIOR) || job.isA(Job.DAWNWARRIOR1) || job.isA(Job.ARAN1)) {
-            MaxHP += 54;
-        } else if (job.isA(Job.MAGICIAN) || job.isA(Job.BLAZEWIZARD1)) {
-            MaxHP += 10;
-        } else if (job.isA(Job.THIEF) || job.isA(Job.NIGHTWALKER1)) {
-            MaxHP += 20;
-        } else if (job.isA(Job.BOWMAN) || job.isA(Job.WINDARCHER1)) {
-            MaxHP += 20;
-        } else if (job.isA(Job.PIRATE) || job.isA(Job.THUNDERBREAKER1)) {
-            MaxHP += 42;
-        } else {
-            MaxHP += 12;
-        }
-
-        return MaxHP;
+        return 12;
     }
 
     private static int takeMp(Job job) {
-        int MaxMP = 0;
-
-        if (job.isA(Job.WARRIOR) || job.isA(Job.DAWNWARRIOR1) || job.isA(Job.ARAN1)) {
-            MaxMP += 4;
-        } else if (job.isA(Job.MAGICIAN) || job.isA(Job.BLAZEWIZARD1)) {
-            MaxMP += 31;
-        } else if (job.isA(Job.BOWMAN) || job.isA(Job.WINDARCHER1)) {
-            MaxMP += 12;
-        } else if (job.isA(Job.THIEF) || job.isA(Job.NIGHTWALKER1)) {
-            MaxMP += 12;
-        } else if (job.isA(Job.PIRATE) || job.isA(Job.THUNDERBREAKER1)) {
-            MaxMP += 16;
-        } else {
-            MaxMP += 8;
-        }
-
-        return MaxMP;
+        return 8;
     }
 
     public static int getMinHp(Job job, int level) {
-        int multiplier = 0;
-        int offset = 0;
-
-        if (job == Job.WARRIOR ||
-                job.isA(Job.PAGE) ||
-                job.isA(Job.SPEARMAN) ||
-                job == Job.DAWNWARRIOR1 ||
-                job == Job.ARAN1) {
-            multiplier = 24;
-            offset = 118;
-
-        } else if (job.isA(Job.FIGHTER) ||
-                job.isA(Job.DAWNWARRIOR2) ||
-                job.isA(Job.ARAN2)) {
-            multiplier = 24;
-            offset = 418;
-
-        } else if (job.isA(Job.MAGICIAN) ||
-                job.isA(Job.BLAZEWIZARD1)) {
-            multiplier = 10;
-            offset = 54;
-
-        } else if (job == Job.BOWMAN ||
-                job == Job.THIEF ||
-                job == Job.WINDARCHER1 ||
-                job == Job.NIGHTWALKER1) {
-            multiplier = 20;
-            offset = 58;
-
-        } else if (job.isA(Job.HUNTER) ||
-                job.isA(Job.CROSSBOWMAN) ||
-                job.isA(Job.ASSASSIN) ||
-                job.isA(Job.BANDIT) ||
-                job.isA(Job.WINDARCHER2) ||
-                job.isA(Job.NIGHTWALKER2)) {
-            multiplier = 20;
-            offset = 358;
-
-        } else if (job == Job.PIRATE ||
-                job == Job.THUNDERBREAKER1) {
-            multiplier = 22;
-            offset = 38;
-
-        } else if (job.isA(Job.BRAWLER) ||
-                job.isA(Job.GUNSLINGER) ||
-                job.isA(Job.THUNDERBREAKER2)) {
-            multiplier = 22;
-            offset = 338;
-
-        } else if (job == Job.BEGINNER ||
-                job == Job.NOBLESSE) {
-            multiplier = 12;
-            offset = 38;
-        }
-
-        return (multiplier * level) + offset;
+        return (12 * level) + 38;
     }
 
     public static int getMinMp(Job job, int level) {
-        int multiplier = 0;
-        int offset = 0;
-
-        if (job == Job.WARRIOR ||
-                job.isA(Job.FIGHTER) ||
-                job.isA(Job.DAWNWARRIOR1) ||
-                job.isA(Job.ARAN1)) {
-            multiplier = 4;
-            offset = 55;
-
-        } else if (job.isA(Job.PAGE) ||
-                job.isA(Job.SPEARMAN)) {
-            multiplier = 4;
-            offset = 155;
-
-        } else if (job == Job.MAGICIAN ||
-                job == Job.BLAZEWIZARD1) {
-            multiplier = 22;
-            offset = -1;
-
-        } else if (job.isA(Job.FP_WIZARD) ||
-                job.isA(Job.IL_WIZARD) ||
-                job.isA(Job.CLERIC) ||
-                job.isA(Job.BLAZEWIZARD2)) {
-            multiplier = 22;
-            offset = 449;
-
-        } else if (job == Job.BOWMAN ||
-                job == Job.THIEF ||
-                job == Job.WINDARCHER1 ||
-                job == Job.NIGHTWALKER1) {
-            multiplier = 14;
-            offset = -15;
-
-        } else if (job.isA(Job.HUNTER) ||
-                job.isA(Job.CROSSBOWMAN) ||
-                job.isA(Job.ASSASSIN) ||
-                job.isA(Job.BANDIT) ||
-                job.isA(Job.WINDARCHER2) ||
-                job.isA(Job.NIGHTWALKER2)) {
-            multiplier = 14;
-            offset = 135;
-
-        } else if (job == Job.PIRATE ||
-                job == Job.THUNDERBREAKER1) {
-            multiplier = 18;
-            offset = -55;
-
-        } else if (job.isA(Job.BRAWLER) ||
-                job.isA(Job.GUNSLINGER) ||
-                job.isA(Job.THUNDERBREAKER2)) {
-            multiplier = 18;
-            offset = 95;
-
-        } else if (job == Job.BEGINNER ||
-                job == Job.NOBLESSE) {
-            multiplier = 10;
-            offset = -5;
-        }
-
-        return (multiplier * level) + offset;
+        return (10 * level) + -5;
     }
 }

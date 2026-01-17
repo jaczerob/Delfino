@@ -1,21 +1,3 @@
-/*
- This file is part of the OdinMS Maple Story Server
- Copyright (C) 2008 Patrick Huy <patrick.huy@frz.cc>
- Matthias Butz <matze@odinms.de>
- Jan Christian Meyer <vimes@odinms.de>
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU Affero General Public License as
- published by the Free Software Foundation version 3 as published by
- the Free Software Foundation. You may not use, modify or distribute
- this program under any other version of the GNU Affero General Public
- License.
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU Affero General Public License for more details.
- You should have received a copy of the GNU Affero General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package dev.jaczerob.delfino.maplestory.server;
 
 import dev.jaczerob.delfino.maplestory.client.Client;
@@ -38,25 +20,27 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-/**
- * @author Matze
- */
 public class Storage {
     private static final Logger log = LoggerFactory.getLogger(Storage.class);
     private static final Map<Integer, Integer> trunkGetCache = new HashMap<>();
     private static final Map<Integer, Integer> trunkPutCache = new HashMap<>();
 
     private final int id;
+    private final Map<InventoryType, List<Item>> typeItems = new HashMap<>();
+    private final Lock lock = new ReentrantLock(true);
     private int currentNpcid;
     private int meso;
     private byte slots;
-    private final Map<InventoryType, List<Item>> typeItems = new HashMap<>();
     private List<Item> items = new LinkedList<>();
-    private final Lock lock = new ReentrantLock(true);
 
     private Storage(int id, byte slots, int meso) {
         this.id = id;

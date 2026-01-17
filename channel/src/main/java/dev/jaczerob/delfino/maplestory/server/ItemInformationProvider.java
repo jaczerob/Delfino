@@ -1,24 +1,3 @@
-/*
- This file is part of the OdinMS Maple Story Server
- Copyright (C) 2008 Patrick Huy <patrick.huy@frz.cc>
- Matthias Butz <matze@odinms.de>
- Jan Christian Meyer <vimes@odinms.de>
-
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU Affero General Public License as
- published by the Free Software Foundation version 3 as published by
- the Free Software Foundation. You may not use, modify or distribute
- this program under any other version of the GNU Affero General Public
- License.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU Affero General Public License for more details.
-
- You should have received a copy of the GNU Affero General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package dev.jaczerob.delfino.maplestory.server;
 
 import dev.jaczerob.delfino.maplestory.client.Character;
@@ -36,9 +15,6 @@ import dev.jaczerob.delfino.maplestory.config.YamlConfig;
 import dev.jaczerob.delfino.maplestory.constants.id.ItemId;
 import dev.jaczerob.delfino.maplestory.constants.inventory.EquipSlot;
 import dev.jaczerob.delfino.maplestory.constants.inventory.ItemConstants;
-import dev.jaczerob.delfino.maplestory.constants.skills.Assassin;
-import dev.jaczerob.delfino.maplestory.constants.skills.Gunslinger;
-import dev.jaczerob.delfino.maplestory.constants.skills.NightWalker;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.provider.Data;
 import dev.jaczerob.delfino.maplestory.provider.DataDirectoryEntry;
@@ -73,9 +49,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-/**
- * @author Matze
- */
 public class ItemInformationProvider {
     private static final Logger log = LoggerFactory.getLogger(ItemInformationProvider.class);
     private final static ItemInformationProvider instance = new ItemInformationProvider();
@@ -101,7 +74,6 @@ public class ItemInformationProvider {
     protected Map<Integer, Double> unitPriceCache = new HashMap<>();
     protected Map<Integer, Integer> projectileWatkCache = new HashMap<>();
     protected Map<Integer, String> nameCache = new HashMap<>();
-    protected Map<Integer, String> descCache = new HashMap<>();
     protected Map<Integer, String> msgCache = new HashMap<>();
     protected Map<Integer, Boolean> accountItemRestrictionCache = new HashMap<>();
     protected Map<Integer, Boolean> dropRestrictionCache = new HashMap<>();
@@ -135,6 +107,7 @@ public class ItemInformationProvider {
     protected Map<Integer, Data> skillUpgradeInfoCache = new HashMap<>();
     protected Map<Integer, Pair<Integer, Set<Integer>>> cashPetFoodCache = new HashMap<>();
     protected Map<Integer, QuestConsItem> questItemConsCache = new HashMap<>();
+
     private ItemInformationProvider() {
         loadCardIdData();
         itemData = DataProviderFactory.getDataProvider(WZFiles.ITEM);
@@ -157,20 +130,7 @@ public class ItemInformationProvider {
     }
 
     private static short getExtraSlotMaxFromPlayer(Client c, int itemId) {
-        short ret = 0;
-
-        // thanks GMChuck for detecting player sensitive data being cached into getSlotMax
-        if (ItemConstants.isThrowingStar(itemId)) {
-            if (c.getPlayer().getJob().isA(Job.NIGHTWALKER1)) {
-                ret += c.getPlayer().getSkillLevel(SkillFactory.getSkill(NightWalker.CLAW_MASTERY)) * 10;
-            } else {
-                ret += c.getPlayer().getSkillLevel(SkillFactory.getSkill(Assassin.CLAW_MASTERY)) * 10;
-            }
-        } else if (ItemConstants.isBullet(itemId)) {
-            ret += c.getPlayer().getSkillLevel(SkillFactory.getSkill(Gunslinger.GUN_MASTERY)) * 10;
-        }
-
-        return ret;
+        return 0;
     }
 
     private static double getRoundedUnitPrice(double unitPrice, int max) {
@@ -1765,7 +1725,7 @@ public class ItemInformationProvider {
             return items;
         }
         Collection<Item> itemz = new LinkedList<>();
-        if (chr.getJob() == Job.SUPERGM || chr.getJob() == Job.GM) {
+        if (chr.getJob() == Job.SUPER_GM || chr.getJob() == Job.GM) {
             for (Item item : items) {
                 Equip equip = (Equip) item;
                 equip.wear(true);
@@ -1787,7 +1747,7 @@ public class ItemInformationProvider {
             ex.printStackTrace();
          }*/
         int tdex = chr.getDex(), tstr = chr.getStr(), tint = chr.getInt(), tluk = chr.getLuk(), fame = chr.getFame();
-        if (chr.getJob() != Job.SUPERGM || chr.getJob() != Job.GM) {
+        if (chr.getJob() != Job.SUPER_GM || chr.getJob() != Job.GM) {
             for (Item item : inv.list()) {
                 Equip equip = (Equip) item;
                 tdex += equip.getDex();
@@ -1852,7 +1812,7 @@ public class ItemInformationProvider {
             return false;
         }
 
-        if (chr.getJob() == Job.SUPERGM || chr.getJob() == Job.GM) {
+        if (chr.getJob() == Job.SUPER_GM || chr.getJob() == Job.GM) {
             equip.wear(true);
             return true;
         }

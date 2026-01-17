@@ -1,32 +1,8 @@
-/*
-	This file is part of the OdinMS Maple Story Server
-    Copyright (C) 2008 Patrick Huy <patrick.huy@frz.cc>
-		       Matthias Butz <matze@odinms.de>
-		       Jan Christian Meyer <vimes@odinms.de>
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as
-    published by the Free Software Foundation version 3 as published by
-    the Free Software Foundation. You may not use, modify or distribute
-    this program under any other version of the GNU Affero General Public
-    License.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
-
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package dev.jaczerob.delfino.maplestory.packets.handlers;
 
 import dev.jaczerob.delfino.maplestory.client.Client;
-import dev.jaczerob.delfino.maplestory.client.Skill;
-import dev.jaczerob.delfino.maplestory.client.SkillFactory;
 import dev.jaczerob.delfino.maplestory.client.inventory.InventoryType;
 import dev.jaczerob.delfino.maplestory.client.keybind.KeyBinding;
-import dev.jaczerob.delfino.maplestory.constants.game.GameConstants;
 import dev.jaczerob.delfino.maplestory.packets.AbstractPacketHandler;
 import dev.jaczerob.delfino.network.opcodes.RecvOpcode;
 import dev.jaczerob.delfino.network.packets.InPacket;
@@ -50,25 +26,6 @@ public final class KeymapChangeHandler extends AbstractPacketHandler {
                     int key = packet.readInt();
                     int type = packet.readByte();
                     int action = packet.readInt();
-
-                    if (type == 1) {
-                        Skill skill = SkillFactory.getSkill(action);
-                        boolean isBanndedSkill;
-                        if (skill != null) {
-                            isBanndedSkill = GameConstants.bannedBindSkills(skill.getId());
-                            if (isBanndedSkill || (!client.getPlayer().isGM() && GameConstants.isGMSkills(skill.getId())) || (!GameConstants.isInJobTree(skill.getId(), client.getPlayer().getJob().getId()) && !client.getPlayer().isGM())) { //for those skills are are "technically" in the beginner tab, like bamboo rain in Dojo or skills you find in PYPQ
-                                //AutobanFactory.PACKET_EDIT.alert(client.getPlayer(), client.getPlayer().getName() + " tried to packet edit keymapping.");
-                                //FilePrinter.printError(FilePrinter.EXPLOITS + client.getPlayer().getName() + ".txt", client.getPlayer().getName() + " tried to use skill " + skill.getId());
-                                //client.disconnect(true, false);
-                                //return;
-
-                                continue;   // fk that
-                            }
-                                                        /* if (client.getPlayer().getSkillLevel(skill) < 1) {    HOW WOULD A SKILL EVEN BE AVAILABLE TO KEYBINDING
-                                                                continue;                                   IF THERE IS NOT EVEN A SINGLE POINT USED INTO IT??
-                                                        } */
-                        }
-                    }
 
                     client.getPlayer().changeKeybinding(key, new KeyBinding(type, action));
                 }

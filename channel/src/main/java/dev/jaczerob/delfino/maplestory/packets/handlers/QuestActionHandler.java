@@ -18,11 +18,6 @@ import java.awt.*;
  */
 @Component
 public final class QuestActionHandler extends AbstractPacketHandler {
-    @Override
-    public RecvOpcode getOpcode() {
-        return RecvOpcode.QUEST_ACTION;
-    }
-
     // isNpcNearby thanks to GabrielSin
     private static boolean isNpcNearby(InPacket packet, Character player, Quest quest, int npcId) {
         Point playerP;
@@ -51,6 +46,11 @@ public final class QuestActionHandler extends AbstractPacketHandler {
         }
 
         return true;
+    }
+
+    @Override
+    public RecvOpcode getOpcode() {
+        return RecvOpcode.QUEST_ACTION;
     }
 
     @Override

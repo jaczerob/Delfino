@@ -9,11 +9,9 @@ import dev.jaczerob.delfino.maplestory.constants.game.GameConstants;
 import dev.jaczerob.delfino.maplestory.constants.id.NpcId;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
 import dev.jaczerob.delfino.maplestory.net.server.channel.Channel;
-import dev.jaczerob.delfino.maplestory.net.server.world.World;
 import dev.jaczerob.delfino.maplestory.server.life.positioner.PlayerNPCPodium;
 import dev.jaczerob.delfino.maplestory.server.life.positioner.PlayerNPCPositioner;
 import dev.jaczerob.delfino.maplestory.server.maps.AbstractMapObject;
-import dev.jaczerob.delfino.maplestory.server.maps.MapObject;
 import dev.jaczerob.delfino.maplestory.server.maps.MapObjectType;
 import dev.jaczerob.delfino.maplestory.server.maps.MapleMap;
 import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
@@ -23,17 +21,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.*;
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * @author XoticStory
- * @author Ronan
- */
-// TODO: remove dependency on custom Npc.wz. All NPCs with id 9901910 and above are custom additions for player npcs.
-// In summary: NPCs 9901910-9906599 and 9977777 are custom additions to HeavenMS that should be removed.
 public class PlayerNPC extends AbstractMapObject {
     private static final Logger log = LoggerFactory.getLogger(PlayerNPC.class);
     private static final Map<Byte, List<Integer>> availablePlayerNpcScriptIds = new HashMap<>();
@@ -45,8 +46,7 @@ public class PlayerNPC extends AbstractMapObject {
     private int scriptId, face, hair, gender, job;
     private byte skin;
     private String name = "";
-    private int dir, FH, RX0, RX1, CY;
-    private int worldRank, overallRank, worldJobRank, overallJobRank;
+    private int direction, FH, RX0, RX1, CY;
 
     public PlayerNPC(String name, int scriptId, int face, int hair, int gender, byte skin, Map<Short, Integer> equips, int dir, int FH, int RX0, int RX1, int CX, int CY, int oid) {
         this.equips = equips;
@@ -56,7 +56,7 @@ public class PlayerNPC extends AbstractMapObject {
         this.gender = gender;
         this.skin = skin;
         this.name = name;
-        this.dir = dir;
+        this.direction = dir;
         this.FH = FH;
         this.RX0 = RX0;
         this.RX1 = RX1;
@@ -75,16 +75,15 @@ public class PlayerNPC extends AbstractMapObject {
             face = rs.getInt("face");
             skin = rs.getByte("skin");
             gender = rs.getInt("gender");
-            dir = rs.getInt("dir");
+            direction = rs.getInt("dir");
             FH = rs.getInt("fh");
             RX0 = rs.getInt("rx0");
             RX1 = rs.getInt("rx1");
             scriptId = rs.getInt("scriptid");
 
-            worldRank = rs.getInt("worldrank");
-            overallRank = rs.getInt("overallrank");
-            worldJobRank = rs.getInt("worldjobrank");
-            overallJobRank = GameConstants.getOverallJobRankByScriptId(scriptId);
+            rs.getInt("worldrank");
+            rs.getInt("overallrank");
+            rs.getInt("worldjobrank");
             job = rs.getInt("job");
 
             setPosition(new Point(rs.getInt("x"), CY));
@@ -109,91 +108,6 @@ public class PlayerNPC extends AbstractMapObject {
         getRunningOverallRanks(con);
         getRunningWorldRanks(con, worlds);
         getRunningWorldJobRanks(con);
-    }
-
-    public Map<Short, Integer> getEquips() {
-        return equips;
-    }
-
-    public int getScriptId() {
-        return scriptId;
-    }
-
-    public int getJob() {
-        return job;
-    }
-
-    public int getDirection() {
-        return dir;
-    }
-
-    public int getFH() {
-        return FH;
-    }
-
-    public int getRX0() {
-        return RX0;
-    }
-
-    public int getRX1() {
-        return RX1;
-    }
-
-    public int getCY() {
-        return CY;
-    }
-
-    public byte getSkin() {
-        return skin;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public int getFace() {
-        return face;
-    }
-
-    public int getHair() {
-        return hair;
-    }
-
-    public int getGender() {
-        return gender;
-    }
-
-    public int getWorldRank() {
-        return worldRank;
-    }
-
-    public int getOverallRank() {
-        return overallRank;
-    }
-
-    public int getWorldJobRank() {
-        return worldJobRank;
-    }
-
-    public int getOverallJobRank() {
-        return overallJobRank;
-    }
-
-    @Override
-    public MapObjectType getType() {
-        return MapObjectType.PLAYER_NPC;
-    }
-
-    @Override
-    public void sendSpawnData(Client client) {
-        client.sendPacket(ChannelPacketCreator.getInstance().spawnPlayerNPC(this));
-        client.sendPacket(ChannelPacketCreator.getInstance().getPlayerNPC(this));
-    }
-
-    @Override
-    public void sendDestroyData(Client client) {
-        client.sendPacket(ChannelPacketCreator.getInstance().removeNPCController(this.getObjectId()));
-        client.sendPacket(ChannelPacketCreator.getInstance().removePlayerNPC(this.getObjectId()));
     }
 
     private static void getRunningOverallRanks(Connection con) throws SQLException {
@@ -262,27 +176,6 @@ public class PlayerNPC extends AbstractMapObject {
         }
 
         return ret;
-    }
-
-    public void updatePlayerNPCPosition(MapleMap map, Point newPos) {
-        setPosition(newPos);
-        RX0 = newPos.x + 50;
-        RX1 = newPos.x - 50;
-        CY = newPos.y;
-        FH = map.getFootholds().findBelow(newPos).getId();
-
-        try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("UPDATE playernpcs SET x = ?, cy = ?, fh = ?, rx0 = ?, rx1 = ? WHERE id = ?")) {
-            ps.setInt(1, newPos.x);
-            ps.setInt(2, CY);
-            ps.setInt(3, FH);
-            ps.setInt(4, RX0);
-            ps.setInt(5, RX1);
-            ps.setInt(6, getObjectId());
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
     }
 
     private static void fetchAvailableScriptIdsFromDb(byte branch, List<Integer> list) {
@@ -527,96 +420,91 @@ public class PlayerNPC extends AbstractMapObject {
         }
     }
 
-    private static PlayerNPC getPlayerNPCFromWorldMap(String name, int world, int map) {
-        World wserv = Server.getInstance().getWorld(world);
-        for (MapObject pnpcObj : wserv.getChannel(1).getMapFactory().getMap(map).getMapObjectsInRange(new Point(0, 0), Double.POSITIVE_INFINITY, Arrays.asList(MapObjectType.PLAYER_NPC))) {
-            PlayerNPC pn = (PlayerNPC) pnpcObj;
-
-            if (name.contentEquals(pn.getName()) && pn.getScriptId() < NpcId.CUSTOM_DEV) {
-                return pn;
-            }
-        }
-
-        return null;
+    public Map<Short, Integer> getEquips() {
+        return equips;
     }
 
-    public static void removePlayerNPC(Character chr) {
-        if (chr == null) {
-            return;
-        }
-
-        List<Integer> updateMapids = processPlayerNPCInternal(null, null, chr, false).getRight();
-        int worldid = updateMapids.remove(0);
-
-        for (Integer mapid : updateMapids) {
-            PlayerNPC pn = getPlayerNPCFromWorldMap(chr.getName(), worldid, mapid);
-
-            if (pn != null) {
-                for (Channel channel : Server.getInstance().getChannelsFromWorld(worldid)) {
-                    MapleMap m = channel.getMapFactory().getMap(mapid);
-                    m.removeMapObject(pn);
-
-                    m.broadcastMessage(ChannelPacketCreator.getInstance().removeNPCController(pn.getObjectId()));
-                    m.broadcastMessage(ChannelPacketCreator.getInstance().removePlayerNPC(pn.getObjectId()));
-                }
-            }
-        }
+    public int getScriptId() {
+        return scriptId;
     }
 
-    public static void multicastSpawnPlayerNPC(int mapid, int world) {
-        World wserv = Server.getInstance().getWorld(world);
-        if (wserv == null) {
-            return;
-        }
-
-        Client c = Client.createMock();
-        c.setWorld(world);
-        c.setChannel(1);
-
-        for (Character mc : wserv.loadAndGetAllCharactersView()) {
-            mc.setClient(c);
-            spawnPlayerNPC(mapid, mc);
-        }
+    public int getJob() {
+        return job;
     }
 
-    public static void removeAllPlayerNPC() {
+    public int getDirection() {
+        return direction;
+    }
+
+    public int getFH() {
+        return FH;
+    }
+
+    public int getRX0() {
+        return RX0;
+    }
+
+    public int getRX1() {
+        return RX1;
+    }
+
+    public int getCY() {
+        return CY;
+    }
+
+    public byte getSkin() {
+        return skin;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public int getFace() {
+        return face;
+    }
+
+    public int getHair() {
+        return hair;
+    }
+
+    public int getGender() {
+        return gender;
+    }
+
+    @Override
+    public MapObjectType getType() {
+        return MapObjectType.PLAYER_NPC;
+    }
+
+    @Override
+    public void sendSpawnData(Client client) {
+        client.sendPacket(ChannelPacketCreator.getInstance().spawnPlayerNPC(this));
+        client.sendPacket(ChannelPacketCreator.getInstance().getPlayerNPC(this));
+    }
+
+    @Override
+    public void sendDestroyData(Client client) {
+        client.sendPacket(ChannelPacketCreator.getInstance().removeNPCController(this.getObjectId()));
+        client.sendPacket(ChannelPacketCreator.getInstance().removePlayerNPC(this.getObjectId()));
+    }
+
+    public void updatePlayerNPCPosition(MapleMap map, Point newPos) {
+        setPosition(newPos);
+        RX0 = newPos.x + 50;
+        RX1 = newPos.x - 50;
+        CY = newPos.y;
+        FH = map.getFootholds().findBelow(newPos).getId();
+
         try (Connection con = DatabaseConnection.getStaticConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT DISTINCT world, map FROM playernpcs");
-             ResultSet rs = ps.executeQuery()) {
-            int wsize = Server.getInstance().getWorldsSize();
-            while (rs.next()) {
-                int world = rs.getInt("world"), map = rs.getInt("map");
-                if (world >= wsize) {
-                    continue;
-                }
-
-                for (Channel channel : Server.getInstance().getChannelsFromWorld(world)) {
-                    MapleMap m = channel.getMapFactory().getMap(map);
-
-                    for (MapObject pnpcObj : m.getMapObjectsInRange(new Point(0, 0), Double.POSITIVE_INFINITY, Arrays.asList(MapObjectType.PLAYER_NPC))) {
-                        PlayerNPC pn = (PlayerNPC) pnpcObj;
-                        m.removeMapObject(pnpcObj);
-                        m.broadcastMessage(ChannelPacketCreator.getInstance().removeNPCController(pn.getObjectId()));
-                        m.broadcastMessage(ChannelPacketCreator.getInstance().removePlayerNPC(pn.getObjectId()));
-                    }
-                }
-            }
-
-            try (PreparedStatement ps2 = con.prepareStatement("DELETE FROM playernpcs")) {
-                ps2.executeUpdate();
-            }
-
-            try (PreparedStatement ps2 = con.prepareStatement("DELETE FROM playernpcs_equip")) {
-                ps2.executeUpdate();
-            }
-
-            try (PreparedStatement ps2 = con.prepareStatement("DELETE FROM playernpcs_field")) {
-                ps2.executeUpdate();
-            }
-
-            for (World w : Server.getInstance().getWorlds()) {
-                w.resetPlayerNpcMapData();
-            }
+             PreparedStatement ps = con.prepareStatement("UPDATE playernpcs SET x = ?, cy = ?, fh = ?, rx0 = ?, rx1 = ? WHERE id = ?")) {
+            ps.setInt(1, newPos.x);
+            ps.setInt(2, CY);
+            ps.setInt(3, FH);
+            ps.setInt(4, RX0);
+            ps.setInt(5, RX1);
+            ps.setInt(6, getObjectId());
+            ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }

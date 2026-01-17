@@ -1,24 +1,3 @@
-/*
- This file is part of the OdinMS Maple Story Server
- Copyright (C) 2008 Patrick Huy <patrick.huy@frz.cc>
- Matthias Butz <matze@odinms.de>
- Jan Christian Meyer <vimes@odinms.de>
-
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU Affero General Public License as
- published by the Free Software Foundation version 3 as published by
- the Free Software Foundation. You may not use, modify or distribute
- this program under any other version of the GNU Affero General Public
- License.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU Affero General Public License for more details.
-
- You should have received a copy of the GNU Affero General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package dev.jaczerob.delfino.maplestory.packets.handlers;
 
 import dev.jaczerob.delfino.maplestory.client.Character;
@@ -26,11 +5,6 @@ import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.client.Skill;
 import dev.jaczerob.delfino.maplestory.client.SkillFactory;
 import dev.jaczerob.delfino.maplestory.client.SkillMacro;
-import dev.jaczerob.delfino.maplestory.client.creator.veteran.BowmanCreator;
-import dev.jaczerob.delfino.maplestory.client.creator.veteran.MagicianCreator;
-import dev.jaczerob.delfino.maplestory.client.creator.veteran.PirateCreator;
-import dev.jaczerob.delfino.maplestory.client.creator.veteran.ThiefCreator;
-import dev.jaczerob.delfino.maplestory.client.creator.veteran.WarriorCreator;
 import dev.jaczerob.delfino.maplestory.client.inventory.Equip;
 import dev.jaczerob.delfino.maplestory.client.inventory.Equip.ScrollResult;
 import dev.jaczerob.delfino.maplestory.client.inventory.Inventory;
@@ -54,12 +28,10 @@ import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
 import dev.jaczerob.delfino.maplestory.server.Shop;
 import dev.jaczerob.delfino.maplestory.server.ShopFactory;
 import dev.jaczerob.delfino.maplestory.server.TimerManager;
-import dev.jaczerob.delfino.maplestory.server.maps.AbstractMapObject;
 import dev.jaczerob.delfino.maplestory.server.maps.FieldLimit;
 import dev.jaczerob.delfino.maplestory.server.maps.Kite;
 import dev.jaczerob.delfino.maplestory.server.maps.MapleMap;
 import dev.jaczerob.delfino.maplestory.server.maps.MapleTVEffect;
-import dev.jaczerob.delfino.maplestory.server.maps.PlayerShopItem;
 import dev.jaczerob.delfino.maplestory.service.NoteService;
 import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.Pair;
@@ -471,13 +443,7 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
             if (!YamlConfig.config.server.USE_ENFORCE_ITEM_SUGGESTION) {
                 client.getWorldServer().addOwlItemSearch(itemid);
             }
-            player.setOwlSearch(itemid);
-            List<Pair<PlayerShopItem, AbstractMapObject>> hmsAvailable = client.getWorldServer().getAvailableItemBundles(itemid);
-            if (!hmsAvailable.isEmpty()) {
-                remove(client, position, itemId);
-            }
-
-            context.writeAndFlush(ChannelPacketCreator.getInstance().owlOfMinerva(client, itemid, hmsAvailable));
+            context.writeAndFlush(ChannelPacketCreator.getInstance().owlOfMinerva(client, itemid));
             context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
 
         } else if (itemType == 524) {
@@ -532,43 +498,6 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
             }
             remove(client, position, itemId);
             context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
-        } else if (itemType == 543) {
-            if (itemId == ItemId.MAPLE_LIFE_B && !client.gainCharacterSlot()) {
-                player.dropMessage(1, "You have already used up all 12 extra character slots.");
-                context.writeAndFlush(ChannelPacketCreator.getInstance().enableActions());
-                return;
-            }
-
-            String name = packet.readString();
-            int face = packet.readInt();
-            int hair = packet.readInt();
-            int haircolor = packet.readInt();
-            int skin = packet.readInt();
-            int gender = packet.readInt();
-            int jobid = packet.readInt();
-            int improveSp = packet.readInt();
-
-            int createStatus = switch (jobid) {
-                case 0 -> WarriorCreator.createCharacter(client, name, face, hair + haircolor, skin, gender, improveSp);
-                case 1 ->
-                        MagicianCreator.createCharacter(client, name, face, hair + haircolor, skin, gender, improveSp);
-                case 2 -> BowmanCreator.createCharacter(client, name, face, hair + haircolor, skin, gender, improveSp);
-                case 3 -> ThiefCreator.createCharacter(client, name, face, hair + haircolor, skin, gender, improveSp);
-                default -> PirateCreator.createCharacter(client, name, face, hair + haircolor, skin, gender, improveSp);
-            };
-
-            if (createStatus == 0) {
-                context.writeAndFlush(ChannelPacketCreator.getInstance().sendMapleLifeError(0));   // success!
-
-                player.showHint("#bSuccess#k on creation of the new character through the Maple Life card.");
-                remove(client, position, itemId);
-            } else {
-                if (createStatus == -1) {    // check name
-                    context.writeAndFlush(ChannelPacketCreator.getInstance().sendMapleLifeNameError());
-                } else {
-                    context.writeAndFlush(ChannelPacketCreator.getInstance().sendMapleLifeError(-1 * createStatus));
-                }
-            }
         } else if (itemType == 545) { // MiuMiu's travel store
             if (player.getShop() == null) {
                 Shop shop = ShopFactory.getInstance().getShop(1338);

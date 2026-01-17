@@ -5,7 +5,12 @@ import dev.jaczerob.delfino.maplestory.client.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.script.*;
+import javax.script.Bindings;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineFactory;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -28,6 +33,8 @@ public abstract class AbstractScriptManager {
         if (!Files.exists(scriptFile)) {
             return null;
         }
+
+        log.debug("Using script engine for path: {}", path);
 
         ScriptEngine engine = sef.getScriptEngine();
         if (!(engine instanceof GraalJSScriptEngine graalScriptEngine)) {
@@ -53,6 +60,7 @@ public abstract class AbstractScriptManager {
             c.setScriptEngine(path, engine);
         }
 
+        log.debug("Using script engine for path for client: {}", path);
         return engine;
     }
 

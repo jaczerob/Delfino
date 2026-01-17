@@ -23,14 +23,13 @@ package dev.jaczerob.delfino.maplestory.server.maps;
 
 import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
-import dev.jaczerob.delfino.network.packets.Packet;
 import dev.jaczerob.delfino.maplestory.net.server.services.task.channel.OverallService;
 import dev.jaczerob.delfino.maplestory.net.server.services.type.ChannelServices;
 import dev.jaczerob.delfino.maplestory.scripting.reactor.ReactorScriptManager;
 import dev.jaczerob.delfino.maplestory.server.TimerManager;
-import dev.jaczerob.delfino.maplestory.server.partyquest.GuardianSpawnPoint;
 import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.Pair;
+import dev.jaczerob.delfino.network.packets.Packet;
 
 import java.awt.*;
 import java.util.List;
@@ -45,6 +44,8 @@ import java.util.concurrent.locks.ReentrantLock;
 public class Reactor extends AbstractMapObject {
     private final int rid;
     private final ReactorStats stats;
+    private final Lock reactorLock = new ReentrantLock(true);
+    private final Lock hitLock = new ReentrantLock(true);
     private byte state;
     private byte evstate;
     private int delay;
@@ -55,10 +56,7 @@ public class Reactor extends AbstractMapObject {
     private boolean attackHit;
     private ScheduledFuture<?> timeoutTask = null;
     private Runnable delayedRespawnRun = null;
-    private GuardianSpawnPoint guardian = null;
     private byte facingDirection = 0;
-    private final Lock reactorLock = new ReentrantLock(true);
-    private final Lock hitLock = new ReentrantLock(true);
 
     public Reactor(ReactorStats stats, int rid) {
         this.evstate = (byte) 0;
@@ -67,12 +65,12 @@ public class Reactor extends AbstractMapObject {
         this.alive = true;
     }
 
-    public void setShouldCollect(boolean collect) {
-        this.shouldCollect = collect;
-    }
-
     public boolean getShouldCollect() {
         return shouldCollect;
+    }
+
+    public void setShouldCollect(boolean collect) {
+        this.shouldCollect = collect;
     }
 
     public void lockReactor() {
@@ -93,20 +91,20 @@ public class Reactor extends AbstractMapObject {
         hitLock.unlock();
     }
 
-    public void setState(byte state) {
-        this.state = state;
-    }
-
     public byte getState() {
         return state;
     }
 
-    public void setEventState(byte substate) {
-        this.evstate = substate;
+    public void setState(byte state) {
+        this.state = state;
     }
 
     public byte getEventState() {
         return evstate;
+    }
+
+    public void setEventState(byte substate) {
+        this.evstate = substate;
     }
 
     public ReactorStats getStats() {
@@ -117,12 +115,12 @@ public class Reactor extends AbstractMapObject {
         return rid;
     }
 
-    public void setDelay(int delay) {
-        this.delay = delay;
-    }
-
     public int getDelay() {
         return delay;
+    }
+
+    public void setDelay(int delay) {
+        this.delay = delay;
     }
 
     @Override
@@ -138,12 +136,12 @@ public class Reactor extends AbstractMapObject {
         return attackHit;
     }
 
-    public void setMap(MapleMap map) {
-        this.map = map;
-    }
-
     public MapleMap getMap() {
         return map;
+    }
+
+    public void setMap(MapleMap map) {
+        this.map = map;
     }
 
     public Pair<Integer, Integer> getReactItem(byte index) {
@@ -154,12 +152,12 @@ public class Reactor extends AbstractMapObject {
         return alive;
     }
 
-    public boolean isActive() {
-        return alive && stats.getType(state) != -1;
-    }
-
     public void setAlive(boolean alive) {
         this.alive = alive;
+    }
+
+    public boolean isActive() {
+        return alive && stats.getType(state) != -1;
     }
 
     @Override
@@ -400,19 +398,11 @@ public class Reactor extends AbstractMapObject {
         this.name = name;
     }
 
-    public GuardianSpawnPoint getGuardian() {
-        return guardian;
-    }
-
-    public void setGuardian(GuardianSpawnPoint guardian) {
-        this.guardian = guardian;
+    public final byte getFacingDirection() {
+        return facingDirection;
     }
 
     public final void setFacingDirection(final byte facingDirection) {
         this.facingDirection = facingDirection;
-    }
-
-    public final byte getFacingDirection() {
-        return facingDirection;
     }
 }

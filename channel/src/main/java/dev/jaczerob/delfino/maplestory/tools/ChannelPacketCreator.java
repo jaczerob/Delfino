@@ -7,11 +7,9 @@ import dev.jaczerob.delfino.maplestory.client.Character.SkillEntry;
 import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.client.Disease;
 import dev.jaczerob.delfino.maplestory.client.FamilyEntitlement;
-import dev.jaczerob.delfino.maplestory.client.FamilyEntry;
 import dev.jaczerob.delfino.maplestory.client.MonsterBook;
 import dev.jaczerob.delfino.maplestory.client.Mount;
 import dev.jaczerob.delfino.maplestory.client.QuestStatus;
-import dev.jaczerob.delfino.maplestory.client.Ring;
 import dev.jaczerob.delfino.maplestory.client.Skill;
 import dev.jaczerob.delfino.maplestory.client.SkillMacro;
 import dev.jaczerob.delfino.maplestory.client.Stat;
@@ -20,36 +18,25 @@ import dev.jaczerob.delfino.maplestory.client.inventory.Equip.ScrollResult;
 import dev.jaczerob.delfino.maplestory.client.inventory.Inventory;
 import dev.jaczerob.delfino.maplestory.client.inventory.InventoryType;
 import dev.jaczerob.delfino.maplestory.client.inventory.Item;
-import dev.jaczerob.delfino.maplestory.client.inventory.ItemFactory;
 import dev.jaczerob.delfino.maplestory.client.inventory.ModifyInventory;
 import dev.jaczerob.delfino.maplestory.client.inventory.Pet;
 import dev.jaczerob.delfino.maplestory.client.keybind.KeyBinding;
 import dev.jaczerob.delfino.maplestory.client.keybind.QuickslotBinding;
-import dev.jaczerob.delfino.maplestory.client.newyear.NewYearCardRecord;
 import dev.jaczerob.delfino.maplestory.client.status.MonsterStatus;
 import dev.jaczerob.delfino.maplestory.client.status.MonsterStatusEffect;
 import dev.jaczerob.delfino.maplestory.constants.game.ExpTable;
 import dev.jaczerob.delfino.maplestory.constants.game.GameConstants;
 import dev.jaczerob.delfino.maplestory.constants.id.ItemId;
 import dev.jaczerob.delfino.maplestory.constants.id.MapId;
-import dev.jaczerob.delfino.maplestory.constants.id.NpcId;
 import dev.jaczerob.delfino.maplestory.constants.inventory.ItemConstants;
-import dev.jaczerob.delfino.maplestory.constants.skills.Buccaneer;
-import dev.jaczerob.delfino.maplestory.constants.skills.ChiefBandit;
-import dev.jaczerob.delfino.maplestory.constants.skills.Corsair;
-import dev.jaczerob.delfino.maplestory.constants.skills.ThunderBreaker;
 import dev.jaczerob.delfino.maplestory.net.server.PlayerCoolDownValueHolder;
 import dev.jaczerob.delfino.maplestory.net.server.Server;
-import dev.jaczerob.delfino.maplestory.net.server.guild.Alliance;
-import dev.jaczerob.delfino.maplestory.net.server.guild.Guild;
-import dev.jaczerob.delfino.maplestory.net.server.guild.GuildSummary;
 import dev.jaczerob.delfino.maplestory.net.server.world.Party;
 import dev.jaczerob.delfino.maplestory.net.server.world.PartyCharacter;
 import dev.jaczerob.delfino.maplestory.net.server.world.PartyOperation;
 import dev.jaczerob.delfino.maplestory.net.server.world.World;
 import dev.jaczerob.delfino.maplestory.packets.handlers.AbstractDealDamageHandler.AttackTarget;
 import dev.jaczerob.delfino.maplestory.packets.handlers.PlayerInteractionHandler;
-import dev.jaczerob.delfino.maplestory.packets.handlers.SummonDamageHandler.SummonAttackTarget;
 import dev.jaczerob.delfino.maplestory.packets.handlers.WhisperHandler;
 import dev.jaczerob.delfino.maplestory.server.CashShop;
 import dev.jaczerob.delfino.maplestory.server.CashShop.CashItem;
@@ -60,24 +47,16 @@ import dev.jaczerob.delfino.maplestory.server.ItemInformationProvider;
 import dev.jaczerob.delfino.maplestory.server.MTSItemInfo;
 import dev.jaczerob.delfino.maplestory.server.ShopItem;
 import dev.jaczerob.delfino.maplestory.server.Trade;
-import dev.jaczerob.delfino.maplestory.server.events.gm.Snowball;
 import dev.jaczerob.delfino.maplestory.server.life.MobSkill;
 import dev.jaczerob.delfino.maplestory.server.life.MobSkillId;
 import dev.jaczerob.delfino.maplestory.server.life.Monster;
 import dev.jaczerob.delfino.maplestory.server.life.NPC;
 import dev.jaczerob.delfino.maplestory.server.life.PlayerNPC;
-import dev.jaczerob.delfino.maplestory.server.maps.AbstractMapObject;
 import dev.jaczerob.delfino.maplestory.server.maps.Door;
 import dev.jaczerob.delfino.maplestory.server.maps.DoorObject;
-import dev.jaczerob.delfino.maplestory.server.maps.Dragon;
-import dev.jaczerob.delfino.maplestory.server.maps.HiredMerchant;
 import dev.jaczerob.delfino.maplestory.server.maps.MapItem;
 import dev.jaczerob.delfino.maplestory.server.maps.MapleMap;
-import dev.jaczerob.delfino.maplestory.server.maps.MiniGame;
-import dev.jaczerob.delfino.maplestory.server.maps.MiniGame.MiniGameResult;
 import dev.jaczerob.delfino.maplestory.server.maps.Mist;
-import dev.jaczerob.delfino.maplestory.server.maps.PlayerShop;
-import dev.jaczerob.delfino.maplestory.server.maps.PlayerShopItem;
 import dev.jaczerob.delfino.maplestory.server.maps.Reactor;
 import dev.jaczerob.delfino.maplestory.server.maps.Summon;
 import dev.jaczerob.delfino.maplestory.server.movement.LifeMovementFragment;
@@ -90,7 +69,6 @@ import org.springframework.stereotype.Component;
 
 import java.awt.*;
 import java.net.InetAddress;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -194,11 +172,7 @@ public class ChannelPacketCreator {
         p.writeShort(chr.getMp());
         p.writeShort(chr.getClientMaxMp());
         p.writeShort(chr.getRemainingAp());
-        if (GameConstants.hasSPTable(chr.getJob())) {
-            addRemainingSkillInfo(p, chr);
-        } else {
-            p.writeShort(chr.getRemainingSp());
-        }
+        p.writeShort(chr.getRemainingSp());
         p.writeInt(chr.getExp());
         p.writeShort(chr.getFame());
         p.writeInt(chr.getGachaExp());
@@ -237,18 +211,9 @@ public class ChannelPacketCreator {
         addRingInfo(p, chr);
         addTeleportInfo(p, chr);
         addMonsterBookInfo(p, chr);
-        addNewYearInfo(p, chr);
+        p.writeShort(0);
         addAreaInfo(p, chr);
         p.writeShort(0);
-    }
-
-    private void addNewYearInfo(OutPacket p, Character chr) {
-        Set<NewYearCardRecord> received = chr.getReceivedNewYearRecords();
-
-        p.writeShort(received.size());
-        for (NewYearCardRecord nyc : received) {
-            encodeNewYearCard(nyc, p);
-        }
     }
 
     private void addTeleportInfo(OutPacket p, Character chr) {
@@ -653,11 +618,7 @@ public class ChannelPacketCreator {
                 } else if (statupdate.getLeft().getValue() < 0x20) {
                     p.writeByte(statupdate.getRight().shortValue());
                 } else if (statupdate.getLeft().getValue() == 0x8000) {
-                    if (GameConstants.hasSPTable(chr.getJob())) {
-                        addRemainingSkillInfo(p, chr);
-                    } else {
-                        p.writeShort(statupdate.getRight().shortValue());
-                    }
+                    p.writeShort(statupdate.getRight().shortValue());
                 } else if (statupdate.getLeft().getValue() < 0xFFFF) {
                     p.writeShort(statupdate.getRight().shortValue());
                 } else if (statupdate.getLeft().getValue() == 0x20000) {
@@ -1292,29 +1253,13 @@ public class ChannelPacketCreator {
             p.writeString("");
             p.writeBytes(new byte[6]);
         } else {
-            GuildSummary gs = chr.getClient().getWorldServer().getGuildSummary(chr.getGuildId(), chr.getWorld());
-            if (gs != null) {
-                p.writeString(gs.getName());
-                p.writeShort(gs.getLogoBG());
-                p.writeByte(gs.getLogoBGColor());
-                p.writeShort(gs.getLogo());
-                p.writeByte(gs.getLogoColor());
-            } else {
-                p.writeString("");
-                p.writeBytes(new byte[6]);
-            }
+            p.writeString("");
+            p.writeBytes(new byte[6]);
         }
 
         writeForeignBuffs(p, chr);
 
         p.writeShort(chr.getJob().getId());
-
-                /* replace "p.writeShort(chr.getJob().getId())" with this snippet for 3rd person FJ animation on all classes
-                if (chr.getJob().isA(Job.HERMIT) || chr.getJob().isA(Job.DAWNWARRIOR2) || chr.getJob().isA(Job.NIGHTWALKER2)) {
-			p.writeShort(chr.getJob().getId());
-                } else {
-			p.writeShort(412);
-                }*/
 
         addCharLook(p, chr, false);
         p.writeInt(chr.getInventory(InventoryType.CASH).countById(ItemId.HEART_SHAPED_CHOCOLATE));
@@ -1349,25 +1294,7 @@ public class ChannelPacketCreator {
             p.writeInt(chr.getMount().getTiredness());
         }
 
-        PlayerShop mps = chr.getPlayerShop();
-        if (mps != null && mps.isOwner(chr)) {
-            if (mps.hasFreeSlot()) {
-                addAnnounceBox(p, mps, mps.getVisitors().length);
-            } else {
-                addAnnounceBox(p, mps, 1);
-            }
-        } else {
-            MiniGame miniGame = chr.getMiniGame();
-            if (miniGame != null && miniGame.isOwner(chr)) {
-                if (miniGame.hasFreeSlot()) {
-                    addAnnounceBox(p, miniGame, 1, 0);
-                } else {
-                    addAnnounceBox(p, miniGame, 2, miniGame.isMatchInProgress() ? 1 : 0);
-                }
-            } else {
-                p.writeByte(0);
-            }
-        }
+        p.writeByte(0);
 
         if (chr.getChalkboard() != null) {
             p.writeByte(1);
@@ -1386,183 +1313,15 @@ public class ChannelPacketCreator {
     }
 
     private void encodeNewYearCardInfo(OutPacket p, Character chr) {
-        Set<NewYearCardRecord> newyears = chr.getReceivedNewYearRecords();
-        if (!newyears.isEmpty()) {
-            p.writeByte(1);
-
-            p.writeInt(newyears.size());
-            for (NewYearCardRecord nyc : newyears) {
-                p.writeInt(nyc.getId());
-            }
-        } else {
-            p.writeByte(0);
-        }
-    }
-
-    public Packet onNewYearCardRes(Character user, int cardId, int mode, int msg) {
-        NewYearCardRecord newyear = user.getNewYearRecord(cardId);
-        return onNewYearCardRes(user, newyear, mode, msg);
-    }
-
-    public Packet onNewYearCardRes(Character user, NewYearCardRecord newyear, int mode, int msg) {
-        OutPacket p = OutPacket.create(SendOpcode.NEW_YEAR_CARD_RES);
-        p.writeByte(mode);
-        switch (mode) {
-            case 4:
-            case 6:
-                encodeNewYearCard(newyear, p);
-                break;
-
-            case 8:
-                p.writeInt(newyear.getId());
-                break;
-
-            case 5:
-            case 7:
-            case 9:
-            case 0xB:
-
-
-                p.writeByte(msg);
-                break;
-
-            case 0xA:
-                int nSN = 1;
-                p.writeInt(nSN);
-                if ((nSN - 1) <= 98 && nSN > 0) {
-                    for (int i = 0; i < nSN; i++) {
-                        p.writeInt(newyear.getId());
-                        p.writeInt(newyear.getSenderId());
-                        p.writeString(newyear.getSenderName());
-                    }
-                }
-                break;
-
-            case 0xC:
-                p.writeInt(newyear.getId());
-                p.writeString(newyear.getSenderName());
-                break;
-
-            case 0xD:
-                p.writeInt(newyear.getId());
-                p.writeInt(user.getId());
-                break;
-
-            case 0xE:
-                p.writeInt(newyear.getId());
-                break;
-        }
-        return p;
-    }
-
-    private void encodeNewYearCard(NewYearCardRecord newyear, OutPacket p) {
-        p.writeInt(newyear.getId());
-        p.writeInt(newyear.getSenderId());
-        p.writeString(newyear.getSenderName());
-        p.writeBool(newyear.isSenderCardDiscarded());
-        p.writeLong(newyear.getDateSent());
-        p.writeInt(newyear.getReceiverId());
-        p.writeString(newyear.getReceiverName());
-        p.writeBool(newyear.isReceiverCardDiscarded());
-        p.writeBool(newyear.isReceiverCardReceived());
-        p.writeLong(newyear.getDateReceived());
-        p.writeString(newyear.getMessage());
+        p.writeByte(0);
     }
 
     private void addRingLook(final OutPacket p, Character chr, boolean crush) {
-        List<Ring> rings;
-        if (crush) {
-            rings = chr.getCrushRings();
-        } else {
-            rings = chr.getFriendshipRings();
-        }
-        boolean yes = false;
-        for (Ring ring : rings) {
-            if (ring.equipped()) {
-                if (!yes) {
-                    yes = true;
-                    p.writeByte(1);
-                }
-                p.writeInt(ring.getRingId());
-                p.writeInt(0);
-                p.writeInt(ring.getPartnerRingId());
-                p.writeInt(0);
-                p.writeInt(ring.getItemId());
-            }
-        }
-        if (!yes) {
-            p.writeByte(0);
-        }
+        p.writeByte(0);
     }
 
     private void addMarriageRingLook(Client target, final OutPacket p, Character chr) {
         p.writeByte(0);
-    }
-
-    private void addAnnounceBox(final OutPacket p, PlayerShop shop, int availability) {
-        p.writeByte(4);
-        p.writeInt(shop.getObjectId());
-        p.writeString(shop.getDescription());
-        p.writeByte(0);
-        p.writeByte(0);
-        p.writeByte(1);
-        p.writeByte(availability);
-        p.writeByte(0);
-    }
-
-    private void addAnnounceBox(final OutPacket p, MiniGame game, int ammount, int joinable) {
-        p.writeByte(game.getGameType().getValue());
-        p.writeInt(game.getObjectId());
-        p.writeString(game.getDescription());
-        p.writeBool(!game.getPassword().isEmpty());
-        p.writeByte(game.getPieceType());
-        p.writeByte(ammount);
-        p.writeByte(2);
-        p.writeByte(joinable);
-    }
-
-    private void updateHiredMerchantBoxInfo(OutPacket p, HiredMerchant hm) {
-        byte[] roomInfo = hm.getShopRoomInfo();
-
-        p.writeByte(5);
-        p.writeInt(hm.getObjectId());
-        p.writeString(hm.getDescription());
-        p.writeByte(hm.getItemId() % 100);
-        p.writeBytes(roomInfo);
-    }
-
-    public Packet updateHiredMerchantBox(HiredMerchant hm) {
-        final OutPacket p = OutPacket.create(SendOpcode.UPDATE_HIRED_MERCHANT);
-        p.writeInt(hm.getOwnerId());
-        updateHiredMerchantBoxInfo(p, hm);
-        return p;
-    }
-
-    private void updatePlayerShopBoxInfo(OutPacket p, PlayerShop shop) {
-        byte[] roomInfo = shop.getShopRoomInfo();
-
-        p.writeByte(4);
-        p.writeInt(shop.getObjectId());
-        p.writeString(shop.getDescription());
-        p.writeByte(0);
-        p.writeByte(shop.getItemId() % 100);
-        p.writeByte(roomInfo[0]);
-        p.writeByte(roomInfo[1]);
-        p.writeByte(0);
-    }
-
-    public Packet updatePlayerShopBox(PlayerShop shop) {
-        final OutPacket p = OutPacket.create(SendOpcode.UPDATE_CHAR_BOX);
-        p.writeInt(shop.getOwner().getId());
-        updatePlayerShopBoxInfo(p, shop);
-        return p;
-    }
-
-    public Packet removePlayerShopBox(PlayerShop shop) {
-        OutPacket p = OutPacket.create(SendOpcode.UPDATE_CHAR_BOX);
-        p.writeInt(shop.getOwner().getId());
-        p.writeByte(0);
-        return p;
     }
 
     public Packet facialExpression(Character from, int expression) {
@@ -1619,23 +1378,6 @@ public class ChannelPacketCreator {
         return p;
     }
 
-    public Packet summonAttack(int cid, int summonOid, byte direction, List<SummonAttackTarget> targets) {
-        OutPacket p = OutPacket.create(SendOpcode.SUMMON_ATTACK);
-
-        p.writeInt(cid);
-        p.writeInt(summonOid);
-        p.writeByte(0);
-        p.writeByte(direction);
-        p.writeByte(targets.size());
-        for (SummonAttackTarget target : targets) {
-            p.writeInt(target.monsterOid());
-            p.writeByte(6);
-            p.writeInt(target.damage());
-        }
-
-        return p;
-    }
-
     public Packet closeRangeAttack(Character chr, int skill, int skilllevel, int stance,
                                    int numAttackedAndDamage, Map<Integer, AttackTarget> targets, int speed,
                                    int direction, int display) {
@@ -1688,25 +1430,12 @@ public class ChannelPacketCreator {
             if (value != null) {
                 p.writeInt(target.getKey());
                 p.writeByte(0x0);
-                if (skill == ChiefBandit.MESO_EXPLOSION) {
-                    p.writeByte(value.damageLines().size());
-                }
                 for (Integer damageLine : value.damageLines()) {
+
                     p.writeInt(damageLine);
                 }
             }
         }
-    }
-
-    public Packet throwGrenade(int cid, Point pos, int keyDown, int skillId, int skillLevel) {
-        OutPacket p = OutPacket.create(SendOpcode.THROW_GRENADE);
-        p.writeInt(cid);
-        p.writeInt(pos.x);
-        p.writeInt(pos.y);
-        p.writeInt(keyDown);
-        p.writeInt(skillId);
-        p.writeInt(skillLevel);
-        return p;
     }
 
     private int doubleToShortBits(double d) {
@@ -1815,28 +1544,6 @@ public class ChannelPacketCreator {
         return p;
     }
 
-    public Packet showAllCharacter(int totalWorlds, int totalChrs) {
-        OutPacket p = OutPacket.create(SendOpcode.VIEW_ALL_CHAR);
-        p.writeByte(totalChrs > 0 ? 1 : 5);
-        p.writeInt(totalWorlds);
-        p.writeInt(totalChrs);
-        return p;
-    }
-
-    public Packet showAriantScoreBoard() {
-        return OutPacket.create(SendOpcode.ARIANT_ARENA_SHOW_RESULT);
-    }
-
-    public Packet updateAriantPQRanking(Map<Character, Integer> playerScore) {
-        OutPacket p = OutPacket.create(SendOpcode.ARIANT_ARENA_USER_SCORE);
-        p.writeByte(playerScore.size());
-        for (Entry<Character, Integer> e : playerScore.entrySet()) {
-            p.writeString(e.getKey().getName());
-            p.writeInt(e.getValue());
-        }
-        return p;
-    }
-
     public Packet silentRemoveItemFromMap(int objId) {
         return removeItemFromMap(objId, 1, 0);
     }
@@ -1855,14 +1562,6 @@ public class ChannelPacketCreator {
                 p.writeByte(slot);
             }
         }
-        return p;
-    }
-
-    public Packet removeExplodedMesoFromMap(int mapObjectId, short delay) {
-        OutPacket p = OutPacket.create(SendOpcode.REMOVE_ITEM_FROM_MAP);
-        p.writeByte(4);
-        p.writeInt(mapObjectId);
-        p.writeShort(delay);
         return p;
     }
 
@@ -1932,43 +1631,6 @@ public class ChannelPacketCreator {
         return p;
     }
 
-    public Packet charNameResponse(String charname, boolean nameUsed) {
-        final OutPacket p = OutPacket.create(SendOpcode.CHAR_NAME_RESPONSE);
-        p.writeString(charname);
-        p.writeByte(nameUsed ? 1 : 0);
-        return p;
-    }
-
-    public Packet addNewCharEntry(Character chr) {
-        final OutPacket p = OutPacket.create(SendOpcode.ADD_NEW_CHAR_ENTRY);
-        p.writeByte(0);
-        addCharEntry(p, chr, false);
-        return p;
-    }
-
-    public Packet deleteCharResponse(int cid, int state) {
-        final OutPacket p = OutPacket.create(SendOpcode.DELETE_CHAR_RESPONSE);
-        p.writeInt(cid);
-        p.writeByte(state);
-        return p;
-    }
-
-    public Packet selectWorld(int world) {
-        final OutPacket p = OutPacket.create(SendOpcode.LAST_CONNECTED_WORLD);
-        p.writeInt(world);
-        return p;
-    }
-
-    public Packet sendRecommended(List<Pair<Integer, String>> worlds) {
-        final OutPacket p = OutPacket.create(SendOpcode.RECOMMENDED_WORLD_MESSAGE);
-        p.writeByte(worlds.size());
-        for (Pair<Integer, String> world : worlds) {
-            p.writeInt(world.getLeft());
-            p.writeString(world.getRight());
-        }
-        return p;
-    }
-
     public Packet charInfo(Character chr) {
 
         final OutPacket p = OutPacket.create(SendOpcode.CHAR_INFO);
@@ -1979,15 +1641,6 @@ public class ChannelPacketCreator {
         p.writeByte(0);
         String guildName = "";
         String allianceName = "";
-        if (chr.getGuildId() > 0) {
-            Guild mg = Server.getInstance().getGuild(chr.getGuildId());
-            guildName = mg.getName();
-
-            Alliance alliance = Server.getInstance().getAlliance(chr.getGuild().getAllianceId());
-            if (alliance != null) {
-                allianceName = alliance.getName();
-            }
-        }
         p.writeString(guildName);
         p.writeString(allianceName);
         p.writeByte(0);
@@ -2336,48 +1989,10 @@ public class ChannelPacketCreator {
         return p;
     }
 
-    public Packet giveForeignWKChargeEffect(int cid, int buffid, List<Pair<BuffStat, Integer>> statups) {
-        OutPacket p = OutPacket.create(SendOpcode.GIVE_FOREIGN_BUFF);
-        p.writeInt(cid);
-        writeLongMask(p, statups);
-        p.writeInt(buffid);
-        p.writeShort(600);
-        p.writeShort(1000);
-        p.writeByte(1);
-        return p;
-    }
-
     public Packet cancelForeignChairSkillEffect(int chrId) {
         OutPacket p = OutPacket.create(SendOpcode.CANCEL_FOREIGN_BUFF);
         p.writeInt(chrId);
         writeLongMaskChair(p);
-        return p;
-    }
-
-    public Packet getPlayerShopChat(Character chr, String chat, boolean owner) {
-        OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.CHAT.getCode());
-        p.writeByte(PlayerInteractionHandler.Action.CHAT_THING.getCode());
-        p.writeBool(!owner);
-        p.writeString(chr.getName() + " : " + chat);
-        return p;
-    }
-
-    public Packet getPlayerShopNewVisitor(Character chr, int slot) {
-        final OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.VISIT.getCode());
-        p.writeByte(slot);
-        addCharLook(p, chr, false);
-        p.writeString(chr.getName());
-        return p;
-    }
-
-    public Packet getPlayerShopRemoveVisitor(int slot) {
-        OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.EXIT.getCode());
-        if (slot != 0) {
-            p.writeShort(slot);
-        }
         return p;
     }
 
@@ -2413,75 +2028,6 @@ public class ChannelPacketCreator {
         p.writeByte(number);
         p.writeByte(item.getPosition());
         addItemInfo(p, item, true);
-        return p;
-    }
-
-    public Packet getPlayerShopItemUpdate(PlayerShop shop) {
-        final OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.UPDATE_MERCHANT.getCode());
-        p.writeByte(shop.getItems().size());
-        for (PlayerShopItem item : shop.getItems()) {
-            p.writeShort(item.getBundles());
-            p.writeShort(item.getItem().getQuantity());
-            p.writeInt(item.getPrice());
-            addItemInfo(p, item.getItem(), true);
-        }
-        return p;
-    }
-
-    public Packet getPlayerShopOwnerUpdate(PlayerShop.SoldItem item, int position) {
-        final OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.UPDATE_PLAYERSHOP.getCode());
-        p.writeByte(position);
-        p.writeShort(item.getQuantity());
-        p.writeString(item.getBuyer());
-
-        return p;
-    }
-
-    public Packet getPlayerShop(PlayerShop shop, boolean owner) {
-        final OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.ROOM.getCode());
-        p.writeByte(4);
-        p.writeByte(4);
-        p.writeByte(owner ? 0 : 1);
-
-        if (owner) {
-            List<PlayerShop.SoldItem> sold = shop.getSold();
-            p.writeByte(sold.size());
-            for (PlayerShop.SoldItem s : sold) {
-                p.writeInt(s.getItemId());
-                p.writeShort(s.getQuantity());
-                p.writeInt(s.getMesos());
-                p.writeString(s.getBuyer());
-            }
-        } else {
-            p.writeByte(0);
-        }
-
-        addCharLook(p, shop.getOwner(), false);
-        p.writeString(shop.getOwner().getName());
-
-        Character[] visitors = shop.getVisitors();
-        for (int i = 0; i < 3; i++) {
-            if (visitors[i] != null) {
-                p.writeByte(i + 1);
-                addCharLook(p, visitors[i], false);
-                p.writeString(visitors[i].getName());
-            }
-        }
-
-        p.writeByte(0xFF);
-        p.writeString(shop.getDescription());
-        List<PlayerShopItem> items = shop.getItems();
-        p.writeByte(0x10);
-        p.writeByte(items.size());
-        for (PlayerShopItem item : items) {
-            p.writeShort(item.getBundles());
-            p.writeShort(item.getItem().getQuantity());
-            p.writeInt(item.getPrice());
-            addItemInfo(p, item.getItem(), true);
-        }
         return p;
     }
 
@@ -2528,31 +2074,6 @@ public class ChannelPacketCreator {
         return p;
     }
 
-    public Packet getDimensionalMirror(String talk) {
-        final OutPacket p = OutPacket.create(SendOpcode.NPC_TALK);
-        p.writeByte(4);
-        p.writeInt(NpcId.DIMENSIONAL_MIRROR);
-        p.writeByte(0x0E);
-        p.writeByte(0);
-        p.writeInt(0);
-        p.writeString(talk);
-        return p;
-    }
-
-    public Packet getNPCTalkStyle(int npc, String talk, int[] styles) {
-        final OutPacket p = OutPacket.create(SendOpcode.NPC_TALK);
-        p.writeByte(4);
-        p.writeInt(npc);
-        p.writeByte(7);
-        p.writeByte(0);
-        p.writeString(talk);
-        p.writeByte(styles.length);
-        for (int style : styles) {
-            p.writeInt(style);
-        }
-        return p;
-    }
-
     public Packet getNPCTalkNum(int npc, String talk, int def, int min, int max) {
         final OutPacket p = OutPacket.create(SendOpcode.NPC_TALK);
         p.writeByte(4);
@@ -2563,18 +2084,6 @@ public class ChannelPacketCreator {
         p.writeInt(def);
         p.writeInt(min);
         p.writeInt(max);
-        p.writeInt(0);
-        return p;
-    }
-
-    public Packet getNPCTalkText(int npc, String talk, String def) {
-        final OutPacket p = OutPacket.create(SendOpcode.NPC_TALK);
-        p.writeByte(4);
-        p.writeInt(npc);
-        p.writeByte(2);
-        p.writeByte(0);
-        p.writeString(talk);
-        p.writeString(def);
         p.writeInt(0);
         return p;
     }
@@ -2594,44 +2103,12 @@ public class ChannelPacketCreator {
         return p;
     }
 
-    public Packet showBuffEffect(int chrId, int skillId, int skillLv, int effectId, byte direction) {
-        OutPacket p = OutPacket.create(SendOpcode.SHOW_FOREIGN_EFFECT);
-        p.writeInt(chrId);
-        p.writeByte(effectId);
-        p.writeInt(skillId);
-        p.writeByte(0);
-        p.writeByte(skillLv);
-        p.writeByte(direction);
-        return p;
-    }
-
     public Packet showOwnBuffEffect(int skillId, int effectId) {
         OutPacket p = OutPacket.create(SendOpcode.SHOW_ITEM_GAIN_INCHAT);
         p.writeByte(effectId);
         p.writeInt(skillId);
         p.writeByte(0xA9);
         p.writeByte(1);
-        return p;
-    }
-
-    public Packet showOwnBerserk(int skilllevel, boolean Berserk) {
-        final OutPacket p = OutPacket.create(SendOpcode.SHOW_ITEM_GAIN_INCHAT);
-        p.writeByte(1);
-        p.writeInt(1320006);
-        p.writeByte(0xA9);
-        p.writeByte(skilllevel);
-        p.writeByte(Berserk ? 1 : 0);
-        return p;
-    }
-
-    public Packet showBerserk(int chrId, int skillLv, boolean berserk) {
-        OutPacket p = OutPacket.create(SendOpcode.SHOW_FOREIGN_EFFECT);
-        p.writeInt(chrId);
-        p.writeByte(1);
-        p.writeInt(1320006);
-        p.writeByte(0xA9);
-        p.writeByte(skillLv);
-        p.writeBool(berserk);
         return p;
     }
 
@@ -3370,7 +2847,6 @@ public class ChannelPacketCreator {
         return p;
     }
 
-
     public Packet sendHint(String hint, int width, int height) {
         if (width < 1) {
             width = hint.length() * 10;
@@ -3396,17 +2872,6 @@ public class ChannelPacketCreator {
         p.writeByte(0);
         p.writeInt(messengerid);
         p.writeByte(0);
-        return p;
-    }
-
-    public Packet OnCoupleMessage(String fiance, String text, boolean spouse) {
-        OutPacket p = OutPacket.create(SendOpcode.SPOUSE_CHAT);
-        p.writeByte(spouse ? 5 : 4);
-        if (spouse) {
-            p.writeString(fiance);
-        }
-        p.writeByte(spouse ? 5 : 1);
-        p.writeString(text);
         return p;
     }
 
@@ -3643,18 +3108,6 @@ public class ChannelPacketCreator {
         return p;
     }
 
-    public Packet showAllCharacterInfo(int worldid, List<Character> chars, boolean usePic) {
-        final OutPacket p = OutPacket.create(SendOpcode.VIEW_ALL_CHAR);
-        p.writeByte(0);
-        p.writeByte(worldid);
-        p.writeByte(chars.size());
-        for (Character chr : chars) {
-            addCharEntry(p, chr, true);
-        }
-        p.writeByte(usePic ? 1 : 2);
-        return p;
-    }
-
     public Packet updateMount(int charid, Mount mount, boolean levelup) {
         final OutPacket p = OutPacket.create(SendOpcode.SET_TAMING_MOB_INFO);
         p.writeInt(charid);
@@ -3679,376 +3132,11 @@ public class ChannelPacketCreator {
         return p;
     }
 
-    public Packet getMiniGame(Client c, MiniGame minigame, boolean owner, int piece) {
-        OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.ROOM.getCode());
-        p.writeByte(1);
-        p.writeByte(0);
-        p.writeBool(!owner);
-        p.writeByte(0);
-        addCharLook(p, minigame.getOwner(), false);
-        p.writeString(minigame.getOwner().getName());
-        if (minigame.getVisitor() != null) {
-            Character visitor = minigame.getVisitor();
-            p.writeByte(1);
-            addCharLook(p, visitor, false);
-            p.writeString(visitor.getName());
-        }
-        p.writeByte(0xFF);
-        p.writeByte(0);
-        p.writeInt(1);
-        p.writeInt(minigame.getOwner().getMiniGamePoints(MiniGameResult.WIN, true));
-        p.writeInt(minigame.getOwner().getMiniGamePoints(MiniGameResult.TIE, true));
-        p.writeInt(minigame.getOwner().getMiniGamePoints(MiniGameResult.LOSS, true));
-        p.writeInt(minigame.getOwnerScore());
-        if (minigame.getVisitor() != null) {
-            Character visitor = minigame.getVisitor();
-            p.writeByte(1);
-            p.writeInt(1);
-            p.writeInt(visitor.getMiniGamePoints(MiniGameResult.WIN, true));
-            p.writeInt(visitor.getMiniGamePoints(MiniGameResult.TIE, true));
-            p.writeInt(visitor.getMiniGamePoints(MiniGameResult.LOSS, true));
-            p.writeInt(minigame.getVisitorScore());
-        }
-        p.writeByte(0xFF);
-        p.writeString(minigame.getDescription());
-        p.writeByte(piece);
-        p.writeByte(0);
-        return p;
-    }
-
-    public Packet getMiniGameReady(MiniGame game) {
-        OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.READY.getCode());
-        return p;
-    }
-
-    public Packet getMiniGameUnReady(MiniGame game) {
-        OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.UN_READY.getCode());
-        return p;
-    }
-
-    public Packet getMiniGameStart(MiniGame game, int loser) {
-        OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.START.getCode());
-        p.writeByte(loser);
-        return p;
-    }
-
-    public Packet getMiniGameSkipOwner(MiniGame game) {
-        OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.SKIP.getCode());
-        p.writeByte(0x01);
-        return p;
-    }
-
-    public Packet getMiniGameRequestTie(MiniGame game) {
-        OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.REQUEST_TIE.getCode());
-        return p;
-    }
-
-    public Packet getMiniGameDenyTie(MiniGame game) {
-        OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.ANSWER_TIE.getCode());
-        return p;
-    }
-
     public Packet getMiniRoomError(int status) {
         OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
         p.writeByte(PlayerInteractionHandler.Action.ROOM.getCode());
         p.writeByte(0);
         p.writeByte(status);
-        return p;
-    }
-
-    public Packet getMiniGameSkipVisitor(MiniGame game) {
-        OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeShort(PlayerInteractionHandler.Action.SKIP.getCode());
-        return p;
-    }
-
-    public Packet getMiniGameMoveOmok(MiniGame game, int move1, int move2, int move3) {
-        OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.MOVE_OMOK.getCode());
-        p.writeInt(move1);
-        p.writeInt(move2);
-        p.writeByte(move3);
-        return p;
-    }
-
-    public Packet getMiniGameNewVisitor(MiniGame minigame, Character chr, int slot) {
-        OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.VISIT.getCode());
-        p.writeByte(slot);
-        addCharLook(p, chr, false);
-        p.writeString(chr.getName());
-        p.writeInt(1);
-        p.writeInt(chr.getMiniGamePoints(MiniGameResult.WIN, true));
-        p.writeInt(chr.getMiniGamePoints(MiniGameResult.TIE, true));
-        p.writeInt(chr.getMiniGamePoints(MiniGameResult.LOSS, true));
-        p.writeInt(minigame.getVisitorScore());
-        return p;
-    }
-
-    public Packet getMiniGameRemoveVisitor() {
-        OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.EXIT.getCode());
-        p.writeByte(1);
-        return p;
-    }
-
-    private Packet getMiniGameResult(MiniGame game, int tie, int result, int forfeit) {
-        OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.GET_RESULT.getCode());
-
-        int matchResultType;
-        if (tie == 0 && forfeit != 1) {
-            matchResultType = 0;
-        } else if (tie != 0) {
-            matchResultType = 1;
-        } else {
-            matchResultType = 2;
-        }
-
-        p.writeByte(matchResultType);
-        p.writeBool(result == 2);
-
-        boolean omok = game.isOmok();
-        if (matchResultType == 1) {
-            p.writeByte(0);
-            p.writeShort(0);
-            p.writeInt(game.getOwner().getMiniGamePoints(MiniGameResult.WIN, omok));
-            p.writeInt(game.getOwner().getMiniGamePoints(MiniGameResult.TIE, omok));
-            p.writeInt(game.getOwner().getMiniGamePoints(MiniGameResult.LOSS, omok));
-            p.writeInt(game.getOwnerScore());
-
-            p.writeInt(0);
-            p.writeInt(game.getVisitor().getMiniGamePoints(MiniGameResult.WIN, omok));
-            p.writeInt(game.getVisitor().getMiniGamePoints(MiniGameResult.TIE, omok));
-            p.writeInt(game.getVisitor().getMiniGamePoints(MiniGameResult.LOSS, omok));
-            p.writeInt(game.getVisitorScore());
-            p.writeByte(0);
-        } else {
-            p.writeInt(0);
-            p.writeInt(game.getOwner().getMiniGamePoints(MiniGameResult.WIN, omok));
-            p.writeInt(game.getOwner().getMiniGamePoints(MiniGameResult.TIE, omok));
-            p.writeInt(game.getOwner().getMiniGamePoints(MiniGameResult.LOSS, omok));
-            p.writeInt(game.getOwnerScore());
-            p.writeInt(0);
-            p.writeInt(game.getVisitor().getMiniGamePoints(MiniGameResult.WIN, omok));
-            p.writeInt(game.getVisitor().getMiniGamePoints(MiniGameResult.TIE, omok));
-            p.writeInt(game.getVisitor().getMiniGamePoints(MiniGameResult.LOSS, omok));
-            p.writeInt(game.getVisitorScore());
-        }
-
-        return p;
-    }
-
-    public Packet getMiniGameOwnerWin(MiniGame game, boolean forfeit) {
-        return getMiniGameResult(game, 0, 1, forfeit ? 1 : 0);
-    }
-
-    public Packet getMiniGameVisitorWin(MiniGame game, boolean forfeit) {
-        return getMiniGameResult(game, 0, 2, forfeit ? 1 : 0);
-    }
-
-    public Packet getMiniGameTie(MiniGame game) {
-        return getMiniGameResult(game, 1, 3, 0);
-    }
-
-    public Packet getMiniGameClose(boolean visitor, int type) {
-        OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.EXIT.getCode());
-        p.writeBool(visitor);
-        p.writeByte(type);
-        return p;
-    }
-
-    public Packet getMatchCard(Client c, MiniGame minigame, boolean owner, int piece) {
-        OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.ROOM.getCode());
-        p.writeByte(2);
-        p.writeByte(2);
-        p.writeBool(!owner);
-        p.writeByte(0);
-        addCharLook(p, minigame.getOwner(), false);
-        p.writeString(minigame.getOwner().getName());
-        if (minigame.getVisitor() != null) {
-            Character visitor = minigame.getVisitor();
-            p.writeByte(1);
-            addCharLook(p, visitor, false);
-            p.writeString(visitor.getName());
-        }
-        p.writeByte(0xFF);
-        p.writeByte(0);
-        p.writeInt(2);
-        p.writeInt(minigame.getOwner().getMiniGamePoints(MiniGameResult.WIN, false));
-        p.writeInt(minigame.getOwner().getMiniGamePoints(MiniGameResult.TIE, false));
-        p.writeInt(minigame.getOwner().getMiniGamePoints(MiniGameResult.LOSS, false));
-
-
-        p.writeInt(minigame.getOwnerScore());
-        if (minigame.getVisitor() != null) {
-            Character visitor = minigame.getVisitor();
-            p.writeByte(1);
-            p.writeInt(2);
-            p.writeInt(visitor.getMiniGamePoints(MiniGameResult.WIN, false));
-            p.writeInt(visitor.getMiniGamePoints(MiniGameResult.TIE, false));
-            p.writeInt(visitor.getMiniGamePoints(MiniGameResult.LOSS, false));
-            p.writeInt(minigame.getVisitorScore());
-        }
-        p.writeByte(0xFF);
-        p.writeString(minigame.getDescription());
-        p.writeByte(piece);
-        p.writeByte(0);
-        return p;
-    }
-
-    public Packet getMatchCardStart(MiniGame game, int loser) {
-        final OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.START.getCode());
-        p.writeByte(loser);
-
-        int last;
-        if (game.getMatchesToWin() > 10) {
-            last = 30;
-        } else if (game.getMatchesToWin() > 6) {
-            last = 20;
-        } else {
-            last = 12;
-        }
-
-        p.writeByte(last);
-        for (int i = 0; i < last; i++) {
-            p.writeInt(game.getCardId(i));
-        }
-        return p;
-    }
-
-    public Packet getMatchCardNewVisitor(MiniGame minigame, Character chr, int slot) {
-        OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.VISIT.getCode());
-        p.writeByte(slot);
-        addCharLook(p, chr, false);
-        p.writeString(chr.getName());
-        p.writeInt(1);
-        p.writeInt(chr.getMiniGamePoints(MiniGameResult.WIN, false));
-        p.writeInt(chr.getMiniGamePoints(MiniGameResult.TIE, false));
-        p.writeInt(chr.getMiniGamePoints(MiniGameResult.LOSS, false));
-        p.writeInt(minigame.getVisitorScore());
-        return p;
-    }
-
-    public Packet getMatchCardSelect(MiniGame game, int turn, int slot, int firstslot, int type) {
-        OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.SELECT_CARD.getCode());
-        p.writeByte(turn);
-        if (turn == 1) {
-            p.writeByte(slot);
-        } else if (turn == 0) {
-            p.writeByte(slot);
-            p.writeByte(firstslot);
-            p.writeByte(type);
-        }
-        return p;
-    }
-
-    public Packet rpsMesoError(int mesos) {
-        OutPacket p = OutPacket.create(SendOpcode.RPS_GAME);
-        p.writeByte(0x06);
-        if (mesos != -1) {
-            p.writeInt(mesos);
-        }
-        return p;
-    }
-
-    public Packet rpsSelection(byte selection, byte answer) {
-        OutPacket p = OutPacket.create(SendOpcode.RPS_GAME);
-        p.writeByte(0x0B);
-        p.writeByte(selection);
-        p.writeByte(answer);
-        return p;
-    }
-
-    public Packet rpsMode(byte mode) {
-        OutPacket p = OutPacket.create(SendOpcode.RPS_GAME);
-        p.writeByte(mode);
-        return p;
-    }
-
-    public Packet fredrickMessage(byte operation) {
-        final OutPacket p = OutPacket.create(SendOpcode.FREDRICK_MESSAGE);
-        p.writeByte(operation);
-        return p;
-    }
-
-    public Packet getFredrick(byte op) {
-        final OutPacket p = OutPacket.create(SendOpcode.FREDRICK);
-        p.writeByte(op);
-
-        switch (op) {
-            case 0x24:
-                p.skip(8);
-                break;
-            default:
-                p.writeByte(0);
-                break;
-        }
-
-        return p;
-    }
-
-    public Packet getFredrick(Character chr) {
-        final OutPacket p = OutPacket.create(SendOpcode.FREDRICK);
-        p.writeByte(0x23);
-        p.writeInt(NpcId.FREDRICK);
-        p.writeInt(32272);
-        p.skip(5);
-        p.writeInt(chr.getMerchantNetMeso());
-        p.writeByte(0);
-        try {
-            List<Pair<Item, InventoryType>> items = ItemFactory.MERCHANT.loadItems(chr.getId(), false);
-            p.writeByte(items.size());
-
-            for (Pair<Item, InventoryType> item : items) {
-                addItemInfo(p, item.getLeft(), true);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        p.skip(3);
-        return p;
-    }
-
-    public Packet addOmokBox(Character chr, int amount, int type) {
-        OutPacket p = OutPacket.create(SendOpcode.UPDATE_CHAR_BOX);
-        p.writeInt(chr.getId());
-        addAnnounceBox(p, chr.getMiniGame(), amount, type);
-        return p;
-    }
-
-    public Packet addMatchCardBox(Character chr, int amount, int type) {
-        OutPacket p = OutPacket.create(SendOpcode.UPDATE_CHAR_BOX);
-        p.writeInt(chr.getId());
-        addAnnounceBox(p, chr.getMiniGame(), amount, type);
-        return p;
-    }
-
-    public Packet removeMinigameBox(Character chr) {
-        OutPacket p = OutPacket.create(SendOpcode.UPDATE_CHAR_BOX);
-        p.writeInt(chr.getId());
-        p.writeByte(0);
-        return p;
-    }
-
-    public Packet getPlayerShopChat(Character chr, String chat, byte slot) {
-        final OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.CHAT.getCode());
-        p.writeByte(PlayerInteractionHandler.Action.CHAT_THING.getCode());
-        p.writeByte(slot);
-        p.writeString(chr.getName() + " : " + chat);
         return p;
     }
 
@@ -4061,60 +3149,12 @@ public class ChannelPacketCreator {
         return p;
     }
 
-    public Packet hiredMerchantBox() {
-        final OutPacket p = OutPacket.create(SendOpcode.ENTRUSTED_SHOP_CHECK_RESULT);
-        p.writeByte(0x07);
-        return p;
-    }
-
-
-    public Packet getOwlMessage(int msg) {
-        OutPacket p = OutPacket.create(SendOpcode.SHOP_LINK_RESULT);
-        p.writeByte(msg);
-        return p;
-    }
-
-    public Packet owlOfMinerva(Client c, int itemId, List<Pair<PlayerShopItem, AbstractMapObject>> hmsAvailable) {
-        byte itemType = ItemConstants.getInventoryType(itemId).getType();
-
+    public Packet owlOfMinerva(Client c, int itemId) {
         OutPacket p = OutPacket.create(SendOpcode.SHOP_SCANNER_RESULT);
         p.writeByte(6);
         p.writeInt(0);
         p.writeInt(itemId);
-        p.writeInt(hmsAvailable.size());
-        for (Pair<PlayerShopItem, AbstractMapObject> hme : hmsAvailable) {
-            PlayerShopItem item = hme.getLeft();
-            AbstractMapObject mo = hme.getRight();
-
-            if (mo instanceof PlayerShop ps) {
-                Character owner = ps.getOwner();
-
-                p.writeString(owner.getName());
-                p.writeInt(owner.getMapId());
-                p.writeString(ps.getDescription());
-                p.writeInt(item.getBundles());
-                p.writeInt(item.getItem().getQuantity());
-                p.writeInt(item.getPrice());
-                p.writeInt(owner.getId());
-                p.writeByte(owner.getClient().getChannel() - 1);
-            } else {
-                HiredMerchant hm = (HiredMerchant) mo;
-
-                p.writeString(hm.getOwner());
-                p.writeInt(hm.getMapId());
-                p.writeString(hm.getDescription());
-                p.writeInt(item.getBundles());
-                p.writeInt(item.getItem().getQuantity());
-                p.writeInt(item.getPrice());
-                p.writeInt(hm.getOwnerId());
-                p.writeByte(hm.getChannel() - 1);
-            }
-
-            p.writeByte(itemType);
-            if (itemType == InventoryType.EQUIP.getType()) {
-                addItemInfo(p, item.getItem(), true);
-            }
-        }
+        p.writeInt(0);
         return p;
     }
 
@@ -4126,195 +3166,6 @@ public class ChannelPacketCreator {
             p.writeInt(i);
         }
 
-        return p;
-    }
-
-    public Packet retrieveFirstMessage() {
-        final OutPacket p = OutPacket.create(SendOpcode.ENTRUSTED_SHOP_CHECK_RESULT);
-        p.writeByte(0x09);
-        return p;
-    }
-
-    public Packet remoteChannelChange(byte ch) {
-        final OutPacket p = OutPacket.create(SendOpcode.ENTRUSTED_SHOP_CHECK_RESULT);
-        p.writeByte(0x10);
-        p.writeInt(0);
-        p.writeByte(ch);
-        return p;
-    }
-
-    public Packet getHiredMerchant(Character chr, HiredMerchant hm, boolean firstTime) {
-        final OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.ROOM.getCode());
-        p.writeByte(0x05);
-        p.writeByte(0x04);
-        p.writeShort(hm.getVisitorSlotThreadsafe(chr) + 1);
-        p.writeInt(hm.getItemId());
-        p.writeString("Hired Merchant");
-
-        Character[] visitors = hm.getVisitorCharacters();
-        for (int i = 0; i < 3; i++) {
-            if (visitors[i] != null) {
-                p.writeByte(i + 1);
-                addCharLook(p, visitors[i], false);
-                p.writeString(visitors[i].getName());
-            }
-        }
-        p.writeByte(-1);
-        if (hm.isOwner(chr)) {
-            List<Pair<String, Byte>> msgList = hm.getMessages();
-
-            p.writeShort(msgList.size());
-            for (Pair<String, Byte> stringBytePair : msgList) {
-                p.writeString(stringBytePair.getLeft());
-                p.writeByte(stringBytePair.getRight());
-            }
-        } else {
-            p.writeShort(0);
-        }
-        p.writeString(hm.getOwner());
-        if (hm.isOwner(chr)) {
-            p.writeShort(0);
-            p.writeShort(hm.getTimeOpen());
-            p.writeByte(firstTime ? 1 : 0);
-            List<HiredMerchant.SoldItem> sold = hm.getSold();
-            p.writeByte(sold.size());
-            for (HiredMerchant.SoldItem s : sold) {
-                p.writeInt(s.getItemId());
-                p.writeShort(s.getQuantity());
-                p.writeInt(s.getMesos());
-                p.writeString(s.getBuyer());
-            }
-            p.writeInt(chr.getMerchantMeso());
-        }
-        p.writeString(hm.getDescription());
-        p.writeByte(0x10);
-        p.writeInt(hm.isOwner(chr) ? chr.getMerchantMeso() : chr.getMeso());
-        p.writeByte(hm.getItems().size());
-        if (hm.getItems().isEmpty()) {
-            p.writeByte(0);
-        } else {
-            for (PlayerShopItem item : hm.getItems()) {
-                p.writeShort(item.getBundles());
-                p.writeShort(item.getItem().getQuantity());
-                p.writeInt(item.getPrice());
-                addItemInfo(p, item.getItem(), true);
-            }
-        }
-        return p;
-    }
-
-    public Packet updateHiredMerchant(HiredMerchant hm, Character chr) {
-        final OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.UPDATE_MERCHANT.getCode());
-        p.writeInt(hm.isOwner(chr) ? chr.getMerchantMeso() : chr.getMeso());
-        p.writeByte(hm.getItems().size());
-        for (PlayerShopItem item : hm.getItems()) {
-            p.writeShort(item.getBundles());
-            p.writeShort(item.getItem().getQuantity());
-            p.writeInt(item.getPrice());
-            addItemInfo(p, item.getItem(), true);
-        }
-        return p;
-    }
-
-    public Packet hiredMerchantChat(String message, byte slot) {
-        final OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.CHAT.getCode());
-        p.writeByte(PlayerInteractionHandler.Action.CHAT_THING.getCode());
-        p.writeByte(slot);
-        p.writeString(message);
-        return p;
-    }
-
-    public Packet hiredMerchantVisitorLeave(int slot) {
-        final OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.EXIT.getCode());
-        if (slot != 0) {
-            p.writeByte(slot);
-        }
-        return p;
-    }
-
-    public Packet hiredMerchantOwnerLeave() {
-        final OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.REAL_CLOSE_MERCHANT.getCode());
-        p.writeByte(0);
-        return p;
-    }
-
-    public Packet hiredMerchantOwnerMaintenanceLeave() {
-        final OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.REAL_CLOSE_MERCHANT.getCode());
-        p.writeByte(5);
-        return p;
-    }
-
-    public Packet hiredMerchantMaintenanceMessage() {
-        OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.ROOM.getCode());
-        p.writeByte(0x00);
-        p.writeByte(0x12);
-        return p;
-    }
-
-    public Packet leaveHiredMerchant(int slot, int status2) {
-        final OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.EXIT.getCode());
-        p.writeByte(slot);
-        p.writeByte(status2);
-        return p;
-    }
-
-    public Packet viewMerchantVisitorHistory(List<HiredMerchant.PastVisitor> pastVisitors) {
-        final OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.VIEW_VISITORS.getCode());
-        p.writeShort(pastVisitors.size());
-        for (HiredMerchant.PastVisitor pastVisitor : pastVisitors) {
-            p.writeString(pastVisitor.chrName());
-            p.writeInt((int) pastVisitor.visitDuration().toMillis());
-        }
-        return p;
-    }
-
-    public Packet viewMerchantBlacklist(Set<String> chrNames) {
-        final OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.VIEW_BLACKLIST.getCode());
-        p.writeShort(chrNames.size());
-        for (String chrName : chrNames) {
-            p.writeString(chrName);
-        }
-        return p;
-    }
-
-    public Packet hiredMerchantVisitorAdd(Character chr, int slot) {
-        final OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
-        p.writeByte(PlayerInteractionHandler.Action.VISIT.getCode());
-        p.writeByte(slot);
-        addCharLook(p, chr, false);
-        p.writeString(chr.getName());
-        return p;
-    }
-
-    public Packet spawnHiredMerchantBox(HiredMerchant hm) {
-        final OutPacket p = OutPacket.create(SendOpcode.SPAWN_HIRED_MERCHANT);
-        p.writeInt(hm.getOwnerId());
-        p.writeInt(hm.getItemId());
-        p.writeShort((short) hm.getPosition().getX());
-        p.writeShort((short) hm.getPosition().getY());
-        p.writeShort(0);
-        p.writeString(hm.getOwner());
-        p.writeByte(0x05);
-        p.writeInt(hm.getObjectId());
-        p.writeString(hm.getDescription());
-        p.writeByte(hm.getItemId() % 100);
-        p.writeBytes(new byte[]{1, 4});
-        return p;
-    }
-
-    public Packet removeHiredMerchantBox(int id) {
-        final OutPacket p = OutPacket.create(SendOpcode.DESTROY_HIRED_MERCHANT);
-        p.writeInt(id);
         return p;
     }
 
@@ -4394,38 +3245,6 @@ public class ChannelPacketCreator {
         p.writeByte(0xFF);
         p.writeString(tip);
         p.writeShort(0);
-        return p;
-    }
-
-    public Packet givePirateBuff(List<Pair<BuffStat, Integer>> statups, int buffid, int duration) {
-        OutPacket p = OutPacket.create(SendOpcode.GIVE_BUFF);
-        boolean infusion = buffid == Buccaneer.SPEED_INFUSION || buffid == ThunderBreaker.SPEED_INFUSION || buffid == Corsair.SPEED_INFUSION;
-        writeLongMask(p, statups);
-        p.writeShort(0);
-        for (Pair<BuffStat, Integer> stat : statups) {
-            p.writeInt(stat.getRight().shortValue());
-            p.writeInt(buffid);
-            p.skip(infusion ? 10 : 5);
-            p.writeShort(duration);
-        }
-        p.skip(3);
-        return p;
-    }
-
-    public Packet giveForeignPirateBuff(int cid, int buffid, int time, List<Pair<BuffStat, Integer>> statups) {
-        OutPacket p = OutPacket.create(SendOpcode.GIVE_FOREIGN_BUFF);
-        boolean infusion = buffid == Buccaneer.SPEED_INFUSION || buffid == ThunderBreaker.SPEED_INFUSION || buffid == Corsair.SPEED_INFUSION;
-        p.writeInt(cid);
-        writeLongMask(p, statups);
-        p.writeShort(0);
-        for (Pair<BuffStat, Integer> statup : statups) {
-            p.writeInt(statup.getRight().shortValue());
-            p.writeInt(buffid);
-            p.skip(infusion ? 10 : 5);
-            p.writeShort(time);
-        }
-        p.writeShort(0);
-        p.writeByte(2);
         return p;
     }
 
@@ -4721,14 +3540,6 @@ public class ChannelPacketCreator {
         return p;
     }
 
-    public Packet showOXQuiz(int questionSet, int questionId, boolean askQuestion) {
-        OutPacket p = OutPacket.create(SendOpcode.OX_QUIZ);
-        p.writeByte(askQuestion ? 1 : 0);
-        p.writeByte(questionSet);
-        p.writeShort(questionId);
-        return p;
-    }
-
     public Packet updateGender(Character chr) {
         OutPacket p = OutPacket.create(SendOpcode.SET_GENDER);
         p.writeByte(chr.getGender());
@@ -4741,7 +3552,7 @@ public class ChannelPacketCreator {
         return p;
     }
 
-    public Packet loadFamily(Character player) {
+    public Packet loadFamily() {
         final OutPacket p = OutPacket.create(SendOpcode.FAMILY_PRIVILEGE_LIST);
         p.writeInt(FamilyEntitlement.values().length);
         for (int i = 0; i < FamilyEntitlement.values().length; i++) {
@@ -4762,30 +3573,7 @@ public class ChannelPacketCreator {
         return p;
     }
 
-    public Packet getFamilyInfo(FamilyEntry f) {
-        if (f == null) {
-            return getEmptyFamilyInfo();
-        }
-
-        OutPacket p = OutPacket.create(SendOpcode.FAMILY_INFO_RESULT);
-        p.writeInt(f.getReputation());
-        p.writeInt(f.getTotalReputation());
-        p.writeInt(f.getTodaysRep());
-        p.writeShort(f.getJuniorCount());
-        p.writeShort(2);
-        p.writeShort(0);
-        p.writeInt(f.getFamily().getLeader().getChrId());
-        p.writeString(f.getFamily().getName());
-        p.writeString(f.getFamily().getMessage());
-        p.writeInt(FamilyEntitlement.values().length);
-        for (FamilyEntitlement entitlement : FamilyEntitlement.values()) {
-            p.writeInt(entitlement.ordinal());
-            p.writeInt(f.isEntitlementUsed(entitlement) ? 1 : 0);
-        }
-        return p;
-    }
-
-    private Packet getEmptyFamilyInfo() {
+    public Packet getFamilyInfo() {
         OutPacket p = OutPacket.create(SendOpcode.FAMILY_INFO_RESULT);
         p.writeInt(0);
         p.writeInt(0);
@@ -4798,101 +3586,6 @@ public class ChannelPacketCreator {
         p.writeString("");
         p.writeInt(0);
         return p;
-    }
-
-    public Packet showPedigree(FamilyEntry entry) {
-        final OutPacket p = OutPacket.create(SendOpcode.FAMILY_CHART_RESULT);
-        p.writeInt(entry.getChrId());
-        List<FamilyEntry> superJuniors = new ArrayList<>(4);
-        boolean hasOtherJunior = false;
-        int entryCount = 2;
-        entryCount += Math.min(2, entry.getTotalSeniors());
-
-        if (entry.getSenior() != null) {
-            if (entry.getSenior().getJuniorCount() == 2) {
-                entryCount++;
-                hasOtherJunior = true;
-            }
-        }
-        for (FamilyEntry junior : entry.getJuniors()) {
-            if (junior == null) {
-                continue;
-            }
-            entryCount++;
-            for (FamilyEntry superJunior : junior.getJuniors()) {
-                if (superJunior == null) {
-                    continue;
-                }
-                entryCount++;
-                superJuniors.add(superJunior);
-            }
-        }
-
-        boolean missingEntries = entryCount == 2;
-        if (missingEntries) {
-            entryCount++;
-        }
-        p.writeInt(entryCount);
-        addPedigreeEntry(p, entry.getFamily().getLeader());
-        if (entry.getSenior() != null) {
-            if (entry.getSenior().getSenior() != null) {
-                addPedigreeEntry(p, entry.getSenior().getSenior());
-            }
-            addPedigreeEntry(p, entry.getSenior());
-        }
-        addPedigreeEntry(p, entry);
-        if (hasOtherJunior) {
-            FamilyEntry otherJunior = entry.getSenior().getOtherJunior(entry);
-            if (otherJunior != null) {
-                addPedigreeEntry(p, otherJunior);
-            }
-        }
-        if (missingEntries) {
-            addPedigreeEntry(p, entry);
-        }
-        for (FamilyEntry junior : entry.getJuniors()) {
-            if (junior == null) {
-                continue;
-            }
-            addPedigreeEntry(p, junior);
-            for (FamilyEntry superJunior : junior.getJuniors()) {
-                if (superJunior != null) {
-                    addPedigreeEntry(p, superJunior);
-                }
-            }
-        }
-        p.writeInt(2 + superJuniors.size());
-
-        p.writeInt(-1);
-        p.writeInt(entry.getFamily().getTotalMembers());
-        p.writeInt(0);
-        p.writeInt(entry.getTotalSeniors());
-        for (FamilyEntry superJunior : superJuniors) {
-            p.writeInt(superJunior.getChrId());
-            p.writeInt(superJunior.getTotalJuniors());
-        }
-        p.writeInt(0);
-
-
-        p.writeShort(entry.getJuniorCount() >= 2 ? 0 : 2);
-        return p;
-    }
-
-    private void addPedigreeEntry(OutPacket p, FamilyEntry entry) {
-        Character chr = entry.getChr();
-        boolean isOnline = chr != null;
-        p.writeInt(entry.getChrId());
-        p.writeInt(entry.getSenior() != null ? entry.getSenior().getChrId() : 0);
-        p.writeShort(entry.getJob().getId());
-        p.writeByte(entry.getLevel());
-        p.writeBool(isOnline);
-        p.writeInt(entry.getReputation());
-        p.writeInt(entry.getTotalReputation());
-        p.writeInt(entry.getRepsToSenior());
-        p.writeInt(entry.getTodaysRep());
-        p.writeInt(isOnline ? ((chr.isAwayFromWorld() || chr.getCashShop().isOpened()) ? -1 : chr.getClient().getChannel() - 1) : 0);
-        p.writeInt(isOnline ? (int) (chr.getLoggedInTime() / 60000) : 0);
-        p.writeString(entry.getName());
     }
 
     public Packet updateAreaInfo(int area, String info) {
@@ -4900,13 +3593,6 @@ public class ChannelPacketCreator {
         p.writeByte(0x0A);
         p.writeShort(area);
         p.writeString(info);
-        return p;
-    }
-
-    public Packet getGPMessage(int gpChange) {
-        OutPacket p = OutPacket.create(SendOpcode.SHOW_STATUS_INFO);
-        p.writeByte(6);
-        p.writeInt(gpChange);
         return p;
     }
 
@@ -5398,33 +4084,11 @@ public class ChannelPacketCreator {
         return p;
     }
 
-    public Packet marriageMessage(int type, String charname) {
-        final OutPacket p = OutPacket.create(SendOpcode.NOTIFY_MARRIAGE);
-        p.writeByte(type);
-        p.writeString("> " + charname);
-
-        return p;
-    }
-
     public Packet jobMessage(int type, int job, String charname) {
         OutPacket p = OutPacket.create(SendOpcode.NOTIFY_JOB_CHANGE);
         p.writeByte(type);
         p.writeInt(job);
         p.writeString("> " + charname);
-        return p;
-    }
-
-    public Packet getEnergy(String info, int amount) {
-        final OutPacket p = OutPacket.create(SendOpcode.SESSION_VALUE);
-        p.writeString(info);
-        p.writeString(Integer.toString(amount));
-        return p;
-    }
-
-    public Packet dojoWarpUp() {
-        final OutPacket p = OutPacket.create(SendOpcode.DOJO_WARP_UP);
-        p.writeByte(0);
-        p.writeByte(6);
         return p;
     }
 
@@ -5483,57 +4147,6 @@ public class ChannelPacketCreator {
 
     public Packet leftKnockBack() {
         return OutPacket.create(SendOpcode.LEFT_KNOCK_BACK);
-    }
-
-    public Packet rollSnowBall(boolean entermap, int state, Snowball ball0, Snowball ball1) {
-        OutPacket p = OutPacket.create(SendOpcode.SNOWBALL_STATE);
-        if (entermap) {
-            p.skip(21);
-        } else {
-            p.writeByte(state);
-            p.writeInt(ball0.getSnowmanHP() / 75);
-            p.writeInt(ball1.getSnowmanHP() / 75);
-            p.writeShort(ball0.getPosition());
-            p.writeByte(-1);
-            p.writeShort(ball1.getPosition());
-            p.writeByte(-1);
-        }
-        return p;
-    }
-
-    public Packet hitSnowBall(int what, int damage) {
-        OutPacket p = OutPacket.create(SendOpcode.HIT_SNOWBALL);
-        p.writeByte(what);
-        p.writeInt(damage);
-        return p;
-    }
-
-    public Packet snowballMessage(int team, int message) {
-        OutPacket p = OutPacket.create(SendOpcode.SNOWBALL_MESSAGE);
-        p.writeByte(team);
-        p.writeInt(message);
-        return p;
-    }
-
-    public Packet coconutScore(int team1, int team2) {
-        OutPacket p = OutPacket.create(SendOpcode.COCONUT_SCORE);
-        p.writeShort(team1);
-        p.writeShort(team2);
-        return p;
-    }
-
-    public Packet hitCoconut(boolean spawn, int id, int type) {
-        OutPacket p = OutPacket.create(SendOpcode.COCONUT_HIT);
-        if (spawn) {
-            p.writeShort(-1);
-            p.writeShort(5000);
-            p.writeByte(0);
-        } else {
-            p.writeShort(id);
-            p.writeShort(1000);
-            p.writeByte(type);
-        }
-        return p;
     }
 
     public Packet customPacket(byte[] packet) {
@@ -5621,16 +4234,6 @@ public class ChannelPacketCreator {
         p.writeByte(0x57);
         addCashItemInformation(p, item, accountId);
 
-        return p;
-    }
-
-    public Packet showBoughtCashRing(Item ring, String recipient, int accountId) {
-        final OutPacket p = OutPacket.create(SendOpcode.CASHSHOP_OPERATION);
-        p.writeByte(0x87);
-        addCashItemInformation(p, ring, accountId);
-        p.writeString(recipient);
-        p.writeInt(ring.getItemId());
-        p.writeShort(1);
         return p;
     }
 
@@ -5798,95 +4401,6 @@ public class ChannelPacketCreator {
     public Packet earnTitleMessage(String msg) {
         final OutPacket p = OutPacket.create(SendOpcode.SCRIPT_PROGRESS_MESSAGE);
         p.writeString(msg);
-        return p;
-    }
-
-    public Packet CPUpdate(boolean party, int curCP, int totalCP, int team) {
-        final OutPacket p;
-        if (!party) {
-            p = OutPacket.create(SendOpcode.MONSTER_CARNIVAL_OBTAINED_CP);
-        } else {
-            p = OutPacket.create(SendOpcode.MONSTER_CARNIVAL_PARTY_CP);
-            p.writeByte(team);
-        }
-        p.writeShort(curCP);
-        p.writeShort(totalCP);
-        return p;
-    }
-
-    public Packet CPQMessage(byte message) {
-        OutPacket p = OutPacket.create(SendOpcode.MONSTER_CARNIVAL_MESSAGE);
-        p.writeByte(message);
-        return p;
-    }
-
-    public Packet playerSummoned(String name, int tab, int number) {
-        OutPacket p = OutPacket.create(SendOpcode.MONSTER_CARNIVAL_SUMMON);
-        p.writeByte(tab);
-        p.writeByte(number);
-        p.writeString(name);
-        return p;
-    }
-
-    public Packet playerDiedMessage(String name, int lostCP, int team) {
-        OutPacket p = OutPacket.create(SendOpcode.MONSTER_CARNIVAL_DIED);
-        p.writeByte(team);
-        p.writeString(name);
-        p.writeByte(lostCP);
-        return p;
-    }
-
-    public Packet startMonsterCarnival(Character chr, int team, int opposition) {
-        OutPacket p = OutPacket.create(SendOpcode.MONSTER_CARNIVAL_START);
-        p.writeByte(team);
-        p.writeShort(chr.getCP());
-        p.writeShort(chr.getTotalCP());
-        p.writeShort(chr.getMonsterCarnival().getCP(team));
-        p.writeShort(chr.getMonsterCarnival().getTotalCP(team));
-        p.writeShort(chr.getMonsterCarnival().getCP(opposition));
-        p.writeShort(chr.getMonsterCarnival().getTotalCP(opposition));
-        p.writeShort(0);
-        p.writeLong(0);
-        return p;
-    }
-
-    public Packet pyramidGauge(int gauge) {
-        OutPacket p = OutPacket.create(SendOpcode.PYRAMID_GAUGE);
-        p.writeInt(gauge);
-        return p;
-    }
-
-    public Packet pyramidScore(byte score, int exp) {
-        OutPacket p = OutPacket.create(SendOpcode.PYRAMID_SCORE);
-        p.writeByte(score);
-        p.writeInt(exp);
-        return p;
-    }
-
-    public Packet spawnDragon(Dragon dragon) {
-        OutPacket p = OutPacket.create(SendOpcode.SPAWN_DRAGON);
-        p.writeInt(dragon.getOwner().getId());
-        p.writeShort(dragon.getPosition().x);
-        p.writeShort(0);
-        p.writeShort(dragon.getPosition().y);
-        p.writeShort(0);
-        p.writeByte(dragon.getStance());
-        p.writeByte(0);
-        p.writeShort(dragon.getOwner().getJob().getId());
-        return p;
-    }
-
-    public Packet moveDragon(Dragon dragon, Point startPos, InPacket movementPacket, long movementDataLength) {
-        final OutPacket p = OutPacket.create(SendOpcode.MOVE_DRAGON);
-        p.writeInt(dragon.getOwner().getId());
-        p.writePos(startPos);
-        rebroadcastMovementList(p, movementPacket, movementDataLength);
-        return p;
-    }
-
-    public Packet removeDragon(int chrId) {
-        OutPacket p = OutPacket.create(SendOpcode.REMOVE_DRAGON);
-        p.writeInt(chrId);
         return p;
     }
 

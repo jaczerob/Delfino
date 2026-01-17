@@ -33,8 +33,14 @@ import dev.jaczerob.delfino.maplestory.provider.wz.WZFiles;
 import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.Pair;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -44,22 +50,17 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class PartySearchCoordinator {
 
+    private static final Map<Integer, Set<Integer>> mapNeighbors = fetchNeighbouringMaps();
+    private static final Map<Integer, Job> jobTable = instantiateJobTable();
     private final Map<Job, PartySearchStorage> storage = new HashMap<>();
     private final Map<Job, PartySearchEchelon> upcomers = new HashMap<>();
-
     private final List<Character> leaderQueue = new LinkedList<>();
     private final Lock leaderQueueRLock;
     private final Lock leaderQueueWLock;
-
     private final Map<Integer, Character> searchLeaders = new HashMap<>();
     private final Map<Integer, LeaderSearchMetadata> searchSettings = new HashMap<>();
-
     private final Map<Character, LeaderSearchMetadata> timeoutLeaders = new HashMap<>();
-
     private int updateCount = 0;
-
-    private static final Map<Integer, Set<Integer>> mapNeighbors = fetchNeighbouringMaps();
-    private static final Map<Integer, Job> jobTable = instantiateJobTable();
 
     public PartySearchCoordinator() {
         for (Job job : jobTable.values()) {
@@ -114,21 +115,13 @@ public class PartySearchCoordinator {
     private static Map<Integer, Job> instantiateJobTable() {
         Map<Integer, Job> table = new HashMap<>();
 
-        List<Pair<Integer, Integer>> jobSearchTypes = new LinkedList<Pair<Integer, Integer>>() {{
-            add(new Pair<>(Job.MAPLELEAF_BRIGADIER.getId(), 0));
+        List<Pair<Integer, Integer>> jobSearchTypes = new LinkedList<>() {{
             add(new Pair<>(0, 0));
-            add(new Pair<>(Job.ARAN1.getId(), 0));
             add(new Pair<>(100, 3));
-            add(new Pair<>(Job.DAWNWARRIOR1.getId(), 0));
             add(new Pair<>(200, 3));
-            add(new Pair<>(Job.BLAZEWIZARD1.getId(), 0));
             add(new Pair<>(500, 2));
-            add(new Pair<>(Job.THUNDERBREAKER1.getId(), 0));
             add(new Pair<>(400, 2));
-            add(new Pair<>(Job.NIGHTWALKER1.getId(), 0));
             add(new Pair<>(300, 2));
-            add(new Pair<>(Job.WINDARCHER1.getId(), 0));
-            add(new Pair<>(Job.EVAN1.getId(), 0));
         }};
 
         int i = 0;
@@ -145,50 +138,16 @@ public class PartySearchCoordinator {
         return table;
     }
 
-    private class LeaderSearchMetadata {
-        private final int minLevel;
-        private final int maxLevel;
-        private final List<Job> searchedJobs;
-
-        private int reentryCount;
-
-        private List<Job> decodeSearchedJobs(int jobsSelected) {
-            List<Job> searchedJobs = new LinkedList<>();
-
-            int topByte = (int) ((Math.log(jobsSelected) / Math.log(2)) + 1e-5);
-
-            for (int i = 0; i <= topByte; i++) {
-                if (jobsSelected % 2 == 1) {
-                    Job job = jobTable.get(i);
-                    if (job != null) {
-                        searchedJobs.add(job);
-                    }
-                }
-
-                jobsSelected = jobsSelected >> 1;
-                if (jobsSelected == 0) {
-                    break;
-                }
-            }
-
-            return searchedJobs;
-        }
-
-        private LeaderSearchMetadata(int minLevel, int maxLevel, int jobs) {
-            this.minLevel = minLevel;
-            this.maxLevel = maxLevel;
-            this.searchedJobs = decodeSearchedJobs(jobs);
-            this.reentryCount = 0;
-        }
-
+    private Job getPartySearchJob() {
+        return Job.BEGINNER;
     }
 
     public void attachPlayer(Character chr) {
-        upcomers.get(getPartySearchJob(chr.getJob())).attachPlayer(chr);
+        upcomers.get(getPartySearchJob()).attachPlayer(chr);
     }
 
     public void detachPlayer(Character chr) {
-        Job psJob = getPartySearchJob(chr.getJob());
+        Job psJob = getPartySearchJob();
 
         if (!upcomers.get(psJob).detachPlayer(chr)) {
             storage.get(psJob).detachPlayer(chr);
@@ -201,20 +160,8 @@ public class PartySearchCoordinator {
         }
     }
 
-    private static Job getPartySearchJob(Job job) {
-        if (job.getJobNiche() == 0) {
-            return Job.BEGINNER;
-        } else if (job.getId() < 600) { // explorers
-            return Job.getById((job.getId() / 10) * 10);
-        } else if (job.getId() >= 1000) {
-            return Job.getById((job.getId() / 100) * 100);
-        } else {
-            return Job.MAPLELEAF_BRIGADIER;
-        }
-    }
-
     private Character fetchPlayer(int callerCid, int callerMapid, Job job, int minLevel, int maxLevel) {
-        return storage.get(getPartySearchJob(job)).callPlayer(callerCid, callerMapid, minLevel, maxLevel);
+        return storage.get(getPartySearchJob()).callPlayer(callerCid, callerMapid, minLevel, maxLevel);
     }
 
     private void addQueueLeader(Character leader) {
@@ -430,6 +377,44 @@ public class PartySearchCoordinator {
         if (updateCount % 77 == 0) {
             reinstateLongTermPartyLeaders();
         }
+    }
+
+    private class LeaderSearchMetadata {
+        private final int minLevel;
+        private final int maxLevel;
+        private final List<Job> searchedJobs;
+
+        private int reentryCount;
+
+        private LeaderSearchMetadata(int minLevel, int maxLevel, int jobs) {
+            this.minLevel = minLevel;
+            this.maxLevel = maxLevel;
+            this.searchedJobs = decodeSearchedJobs(jobs);
+            this.reentryCount = 0;
+        }
+
+        private List<Job> decodeSearchedJobs(int jobsSelected) {
+            List<Job> searchedJobs = new LinkedList<>();
+
+            int topByte = (int) ((Math.log(jobsSelected) / Math.log(2)) + 1e-5);
+
+            for (int i = 0; i <= topByte; i++) {
+                if (jobsSelected % 2 == 1) {
+                    Job job = jobTable.get(i);
+                    if (job != null) {
+                        searchedJobs.add(job);
+                    }
+                }
+
+                jobsSelected = jobsSelected >> 1;
+                if (jobsSelected == 0) {
+                    break;
+                }
+            }
+
+            return searchedJobs;
+        }
+
     }
 
 }

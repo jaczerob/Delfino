@@ -1,7 +1,6 @@
 package dev.jaczerob.delfino.maplestory.packets.handlers;
 
 import dev.jaczerob.delfino.maplestory.client.Client;
-import dev.jaczerob.delfino.maplestory.client.Job;
 import dev.jaczerob.delfino.maplestory.constants.id.NpcId;
 import dev.jaczerob.delfino.maplestory.packets.AbstractPacketHandler;
 import dev.jaczerob.delfino.maplestory.scripting.npc.NPCScriptManager;
@@ -22,11 +21,6 @@ public class ClickGuideHandler extends AbstractPacketHandler {
 
     @Override
     public void handlePacket(final InPacket packet, final Client client, final ChannelHandlerContext context) {
-        if (client.getPlayer().getJob().equals(Job.NOBLESSE)) {
-            NPCScriptManager.getInstance().start(client, NpcId.MIMO, null);
-        } else {
-            NPCScriptManager.getInstance().start(client, NpcId.LILIN, null);
-        }
+        NPCScriptManager.getInstance().start(client, NpcId.LILIN, null);
     }
-
 }

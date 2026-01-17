@@ -3,21 +3,16 @@ package dev.jaczerob.delfino.elm.coordinators;
 import dev.jaczerob.delfino.common.cache.login.LoggedInUserService;
 import dev.jaczerob.delfino.common.cache.login.LoginStatus;
 import dev.jaczerob.delfino.elm.client.Client;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 public class SessionCoordinator {
-    private static SessionCoordinator INSTANCE;
-
-    public static SessionCoordinator getInstance() {
-        return INSTANCE;
-    }
-
     private final LoggedInUserService loggedInUserService;
 
     public SessionCoordinator(final LoggedInUserService loggedInUserService) {
         this.loggedInUserService = loggedInUserService;
-        INSTANCE = this;
     }
 
     public LoginStatus getLoggedInUserStatus(final Client client) {
@@ -53,6 +48,7 @@ public class SessionCoordinator {
 
         if (client.getAccount() != null) {
             final var accountId = client.getAccount().getId();
+            log.debug("Logging out account ID {}", accountId);
             this.loggedInUserService.removeLoggedInUser(accountId);
         }
 
