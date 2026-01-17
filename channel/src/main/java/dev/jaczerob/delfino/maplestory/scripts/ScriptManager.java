@@ -8,36 +8,20 @@ import dev.jaczerob.delfino.network.packets.Packet;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import moe.maple.api.script.logic.ScriptAPI;
-import moe.maple.api.script.model.BaseScript;
-import moe.maple.api.script.model.FieldScript;
-import moe.maple.api.script.model.NpcScript;
-import moe.maple.api.script.model.PortalScript;
-import moe.maple.api.script.model.QuestScript;
-import moe.maple.api.script.model.ReactorScript;
+import moe.maple.api.script.model.*;
 import moe.maple.api.script.model.object.user.UserObject;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
 public class ScriptManager {
     private static ScriptManager INSTANCE = null;
 
-    private final Map<String, NpcScript> npcScripts;
-    private final Map<String, FieldScript> fieldScripts;
-    private final Map<String, PortalScript> portalScripts;
-    private final Map<String, QuestScript> questScripts;
-    private final Map<String, ReactorScript> reactorScripts;
+    private final ApplicationContext applicationContext;
 
-    public ScriptManager(final List<BaseScript> scripts) {
-        this.npcScripts = this.loadScripts(scripts, NpcScript.class);
-        this.fieldScripts = this.loadScripts(scripts, FieldScript.class);
-        this.portalScripts = this.loadScripts(scripts, PortalScript.class);
-        this.questScripts = this.loadScripts(scripts, QuestScript.class);
-        this.reactorScripts = this.loadScripts(scripts, ReactorScript.class);
+    public ScriptManager(final ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
 
         INSTANCE = this;
     }
@@ -51,13 +35,13 @@ public class ScriptManager {
         this.setUpMessengers();
     }
 
-    public void runScript(final String scriptName, final ScriptType scriptType) {
+    public void runScript(final Client client, final String scriptName, final ScriptType scriptType) {
         final BaseScript script = switch (scriptType) {
-            case NPC -> this.npcScripts.get(scriptName);
-            case FIELD -> this.fieldScripts.get(scriptName);
-            case PORTAL -> this.portalScripts.get(scriptName);
-            case QUEST -> this.questScripts.get(scriptName);
-            case REACTOR -> this.reactorScripts.get(scriptName);
+            case NPC -> this.loadScript(scriptName, NpcScript.class);
+            case FIELD -> this.loadScript(scriptName, FieldScript.class);
+            case PORTAL -> this.loadScript(scriptName, PortalScript.class);
+            case QUEST -> this.loadScript(scriptName, QuestScript.class);
+            case REACTOR -> this.loadScript(scriptName, ReactorScript.class);
         };
 
         if (script == null) {
@@ -65,17 +49,12 @@ public class ScriptManager {
             return;
         }
 
+        script.setUserObject(new ScriptUserObject(client.getPlayer()));
         script.start();
     }
 
-    private <T extends BaseScript> Map<String, T> loadScripts(final List<BaseScript> scripts, final Class<T> clazz) {
-        return scripts.stream()
-                .filter(clazz::isInstance)
-                .map(script -> (T) script)
-                .collect(Collectors.toMap(
-                        BaseScript::name,
-                        script -> script
-                ));
+    private <T extends BaseScript> T loadScript(final String scriptName, final Class<T> clazz) {
+        return this.applicationContext.getBean(scriptName, clazz);
     }
 
     private Packet createNPCTalkPacket(

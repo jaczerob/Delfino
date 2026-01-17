@@ -25,7 +25,6 @@ import dev.jaczerob.delfino.maplestory.client.Client;
 import dev.jaczerob.delfino.maplestory.config.YamlConfig;
 import dev.jaczerob.delfino.maplestory.net.server.services.task.channel.OverallService;
 import dev.jaczerob.delfino.maplestory.net.server.services.type.ChannelServices;
-import dev.jaczerob.delfino.maplestory.scripting.reactor.ReactorScriptManager;
 import dev.jaczerob.delfino.maplestory.server.TimerManager;
 import dev.jaczerob.delfino.maplestory.tools.ChannelPacketCreator;
 import dev.jaczerob.delfino.maplestory.tools.Pair;
