@@ -22,6 +22,7 @@
         <module>channel</module>
         <module>elm</module>
         <module>world</module>
+        <module>tools</module>
     </modules>
 
     <properties>
